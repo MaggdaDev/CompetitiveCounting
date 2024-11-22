@@ -1,19 +1,17 @@
-name: Build Fat Jar
+name: Build and Release Fat Jar
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch: # Allows manual triggering of the workflow.
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the code
+    # Checkout the repository
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -37,13 +35,23 @@ jobs:
     - name: Make Gradle Wrapper executable
       run: chmod +x ./gradlew
 
-    # Build the fat JAR
+    # Build Fat Jar
     - name: Build Fat Jar
-      run: ./gradlew fatJar
+      run: ./gradlew build fatJar
 
-    # Save the artifact (optional)
-    - name: Upload Fat Jar
-      uses: actions/upload-artifact@v3
+    # Verify the Fat Jar exists
+    - name: List app/build/libs directory
+      run: ls -la app/build/libs/
+
+    # Publish the Fat Jar as a GitHub release
+    - name: Create GitHub Release
+      uses: ncipollo/release-action@v1
       with:
-        name: fatJar
-        path: app/build/libs/CompetitiveCounting.jar
+        tag: v${{ github.run_number }} # Auto-generate a version tag
+        name: "Release ${{ github.run_number }}"
+        body: |
+          This release contains the latest build of the Fat Jar.
+        artifacts: app/build/libs/CompetitiveCounting.jar
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
