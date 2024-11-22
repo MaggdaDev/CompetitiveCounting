@@ -108,6 +108,7 @@ public class CountingBot {
     private void shunlock(Message message) {
         write(message, "Coming soon...");
     }
+
     private void basesOwnedInfo(Message message) {
         Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
         if (author.getUnlockedBases().length == 0) {
@@ -120,35 +121,43 @@ public class CountingBot {
             write(message, "You only own base " + author.getUnlockedBases()[0] + ".");
         } else {
             String msg = "You own the following bases: ";
-            for (int i = 0; i < author.getUnlockedBases().length-1; i++) {
+            for (int i = 0; i < author.getUnlockedBases().length - 1; i++) {
                 msg += author.getUnlockedBases()[i] + ", ";
             }
-            msg += author.getUnlockedBases()[author.getUnlockedBases().length-1] + ".";
+            msg += author.getUnlockedBases()[author.getUnlockedBases().length - 1] + ".";
             write(message, msg);
         }
     }
 
     private void trophiesInfo(Message message) {
         Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
-        StringBuilder msg = new StringBuilder("You have the following trophies:");
-        // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
-        Integer[] ownedTrophies = author.getOwnedTrophies();
-        int start = 0;
-        for (int i = 1; i < ownedTrophies.length; i++) {
-            if (ownedTrophies[i] != ownedTrophies[i - 1] + 1) {
-                if (start == i - 1) {
-                    msg.append("\nTrophy ").append(ownedTrophies[start]);
-                } else {
-                    msg.append("\nTrophies ").append(ownedTrophies[start]).append(" to ").append(ownedTrophies[i - 1]);
-                }
-                start = i;
-            }
-        }
-        msg.append("\n\nCounting these numbers in any base will give you twice the money.");
+        StringBuilder msg = new StringBuilder();
 
-        if(author.getTrophyShards() == 1) {
+        if (author.getOwnedTrophies().length == 0) {
+            msg.append("You don't own any trophies. Keep counting, and keep an eye out for numbers with a trophy emoji on them!");
+        } else if (author.getOwnedTrophies().length == 1) {
+            msg.append("You own the " + author.getOwnedTrophies()[0] + "-trophy.");
+            msg.append("\n\nCounting this number in any base will give you twice the money.");
+        } else {
+            // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
+            Integer[] ownedTrophies = author.getOwnedTrophies();
+            int start = 0;
+            for (int i = 1; i < ownedTrophies.length; i++) {
+                if (ownedTrophies[i] != ownedTrophies[i - 1] + 1) {
+                    if (start == i - 1) {
+                        msg.append("\nTrophy ").append(ownedTrophies[start]);
+                    } else {
+                        msg.append("\nTrophies ").append(ownedTrophies[start]).append(" to ").append(ownedTrophies[i - 1]);
+                    }
+                    start = i;
+                }
+            }
+            msg.append("\n\nCounting these numbers in any base will give you twice the money.");
+        }
+
+        if (author.getTrophyShards() == 1) {
             msg.append("\n\nAdditionally, you own 1 trophy shard.");
-        } else if(author.getTrophyShards() > 1) {
+        } else if (author.getTrophyShards() > 1) {
             msg.append("\n\nAdditionally, you own ").append(author.getTrophyShards()).append(" trophy shards.");
         }
 
@@ -411,7 +420,7 @@ public class CountingBot {
         });
         String message = "Scoreboard:";
         for (Counter counter : countersSorted) {
-            if(counter.getPrestiges() == 0 && counter.getScore() == 0) {
+            if (counter.getPrestiges() == 0 && counter.getScore() == 0) {
                 break;
             }
             if (counter.getPrestiges() != 0) {
