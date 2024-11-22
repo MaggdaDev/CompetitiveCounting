@@ -46,4 +46,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: fatJar
-        path: build/libs/*.jar
+        path: app/build/libs/CompetitiveCounting.jar
