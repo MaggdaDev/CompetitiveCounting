@@ -43,21 +43,15 @@ jobs:
     - name: List app/build/libs directory
       run: ls -la app/build/libs/
 
-    # Upload Fat Jar as an artifact (optional for debugging)
-    - name: Upload Fat Jar Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: fatJar
-        path: app/build/libs/CompetitiveCounting.jar
-
     # Publish the Fat Jar as a GitHub release
     - name: Create GitHub Release
       uses: ncipollo/release-action@v1
       with:
         tag: v${{ github.run_number }} # Auto-generate a version tag
-        release_name: "Release ${{ github.run_number }}"
+        name: "Release ${{ github.run_number }}"
         body: |
           This release contains the latest build of the Fat Jar.
-        files: app/build/libs/CompetitiveCounting.jar
+        artifacts: app/build/libs/CompetitiveCounting.jar
         draft: false
         prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
