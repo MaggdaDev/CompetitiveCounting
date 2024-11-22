@@ -325,18 +325,23 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter a number!");
                     return;
                 }
-                int div = 0;
+                int divInDecimal = 0;
                 try {
-                    div = Integer.parseInt(splitted[2]);
+                    String probablyNumber = splitted[2];
+                    if(!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
+                        CountingBot.write(message, "Error: Please enter a number in the current base system!");
+                        return;
+                    }
+                    divInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
                 } catch (NumberFormatException e) {
                     CountingBot.write(message, "Error: Please enter an integer without special characters!");
                     return;
                 }
-                if (div < 2) {
+                if (divInDecimal < 2) {
                     CountingBot.write(message, "Error: Please enter an integer greater than 1!");
                     return;
                 }
-                NumberRule.DividerRule add = new NumberRule.DividerRule(ownerId, div);
+                NumberRule.DividerRule add = new NumberRule.DividerRule(ownerId, divInDecimal, currentBase);
                 addNumberRule(add);
                 CountingBot.write(message, "You paid " + currDivPrize + " to add: " + add.toString());
                 author.subtractScore(currDivPrize);
@@ -350,18 +355,23 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter a number!");
                     return;
                 }
-                int digsum = 0;
+                int digsumInDecimal = 0;
                 try {
-                    digsum = Integer.parseInt(splitted[2]);
+                    String probablyNumber = splitted[2];
+                    if(!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
+                        CountingBot.write(message, "Error: Please enter a number in the current base system!");
+                        return;
+                    }
+                    digsumInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
                 } catch (NumberFormatException e) {
                     CountingBot.write(message, "Error: Please enter an integer without special characters!");
                     return;
                 }
-                if (digsum < 1) {
+                if (digsumInDecimal < 1) {
                     CountingBot.write(message, "Error: Please enter an integer greater than 0!");
                     return;
                 }
-                DigSumRule addDigSum = new DigSumRule(ownerId, digsum);
+                DigSumRule addDigSum = new DigSumRule(ownerId, digsumInDecimal, currentBase);
                 addNumberRule(addDigSum);
                 CountingBot.write(message, "You paid " + currDigPrize + " to add: " + addDigSum.toString());
                 author.subtractScore(currDigPrize);
@@ -375,18 +385,23 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter a number!");
                     return;
                 }
-                int root = 0;
+                int rootInDecimal = 0;
                 try {
-                    root = Integer.parseInt(splitted[2]);
+                    String probablyNumber = splitted[2];
+                    if(!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
+                        CountingBot.write(message, "Error: Please enter a number in the current base system!");
+                        return;
+                    }
+                    rootInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
                 } catch (NumberFormatException e) {
                     CountingBot.write(message, "Error: Please enter an integer without special characters!");
                     return;
                 }
-                if (root < 2) {
+                if (rootInDecimal < 2) {
                     CountingBot.write(message, "Error: Please enter an integer greater than 1!");
                     return;
                 }
-                RootRule addRootRule = new RootRule(ownerId, root);
+                RootRule addRootRule = new RootRule(ownerId, rootInDecimal, currentBase);
                 addNumberRule(addRootRule);
                 CountingBot.write(message, "You paid " + currRootPrize + " to add: " + addRootRule.toString());
                 author.subtractScore(currRootPrize);

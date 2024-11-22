@@ -5,6 +5,8 @@
  */
 package CompetitiveCounting.Rules;
 
+import CompetitiveCounting.BaseSystems;
+
 /**
  *
  * @author DavidPrivat
@@ -12,9 +14,11 @@ package CompetitiveCounting.Rules;
 public class DigSumRule extends NumberRule{
 
     private final int digSum;
-    public DigSumRule(String owner, int digSum) {
+    private final double base;
+    public DigSumRule(String owner, int digSum, int base) {
         super(owner);
-        this.digSum = digSum;        
+        this.digSum = digSum;
+        this.base = base;
     }
     
     
@@ -24,8 +28,8 @@ public class DigSumRule extends NumberRule{
         int restOfNumber = number;
         int counter = 1;
         while(restOfNumber > 0) {
-            int dig = restOfNumber % ((int)Math.pow(10.0d, (double)counter));
-            calculatedDigSum += dig / Math.pow(10.d, (double)(counter - 1));
+            int dig = restOfNumber % ((int)Math.pow(base, (double)counter));
+            calculatedDigSum += (int) (dig / Math.pow(base, (double)(counter - 1)));
             restOfNumber -= dig;
             
             counter++;
@@ -35,7 +39,7 @@ public class DigSumRule extends NumberRule{
 
     @Override
     public String toString() {
-        return "Every number with the digsum " + digSum + " has to be skipped!";
+        return "Every number with the digsum " + BaseSystems.decimalToSystem(digSum, (int)base) + " has to be skipped!";
     }
     
 }

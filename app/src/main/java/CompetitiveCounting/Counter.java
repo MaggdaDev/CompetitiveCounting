@@ -177,6 +177,7 @@ public class Counter {
 
     public void addTrophy(int trophy) {
         ownedTrophies.add(trophy);
+        ownedTrophies.sort(Comparator.naturalOrder());
         CountingBot.getInstance().safeCounters();
     }
 

@@ -4,16 +4,20 @@
  * and open the template in the editor.
  */
 package CompetitiveCounting.Rules;
+
+import CompetitiveCounting.BaseSystems;
+
 /**
  *
  * @author DavidPrivat
  */
 public class RootRule extends NumberRule{
 
-    private final int root;
-    public RootRule(String owner, int nthRoot) {
+    private final int root, base;
+    public RootRule(String owner, int nthRoot, int base) {
         super(owner);
-        this.root = nthRoot;    
+        this.root = nthRoot;
+        this.base = base;
     }
     
     
@@ -27,7 +31,7 @@ public class RootRule extends NumberRule{
 
     @Override
     public String toString() {
-        String ord = String.valueOf(root);
+        String ord = String.valueOf(BaseSystems.decimalToSystem(root, base));
         if (ord.endsWith("1")) {
             ord += "st";
         } else if (ord.endsWith("2")) {

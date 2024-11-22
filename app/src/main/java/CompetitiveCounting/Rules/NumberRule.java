@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package CompetitiveCounting.Rules;
+import CompetitiveCounting.BaseSystems;
 import CompetitiveCounting.Counter;
 
 /**
@@ -27,10 +28,11 @@ public abstract class NumberRule implements Rule {
     }
     
     public static class DividerRule extends NumberRule {
-        private final int divider;
-        public DividerRule(String ownerId, int divider) {
+        private final int divider, base;
+        public DividerRule(String ownerId, int divider, int base) {
             super(ownerId);
             this.divider = divider;
+            this.base = base;
         }
         
         @Override 
@@ -40,7 +42,7 @@ public abstract class NumberRule implements Rule {
         
         @Override
         public String toString() {
-            return "Numbers must not be divisible by: " + divider;
+            return "Numbers must not be divisible by: " + BaseSystems.decimalToSystem(divider, base);
         }
         
     }

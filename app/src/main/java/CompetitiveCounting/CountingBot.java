@@ -411,6 +411,9 @@ public class CountingBot {
         });
         String message = "Scoreboard:";
         for (Counter counter : countersSorted) {
+            if(counter.getPrestiges() == 0 && counter.getScore() == 0) {
+                break;
+            }
             if (counter.getPrestiges() != 0) {
                 message += "\n" + counter.getName() + " : " + counter.getPossibleTotal() + " money (Amount of Prestiges: " + counter.getPrestiges() + ")";
             } else {
