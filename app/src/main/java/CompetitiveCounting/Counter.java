@@ -28,7 +28,8 @@ public class Counter {
     private int[] unlockedSystems;
     private BonusStreak[] bonusStreaks;
     private List<Contract> contracts;
-    private List<Integer> ownedTrophies;
+    private ArrayList<Integer> ownedTrophies;
+    private int trophyShards;
     private transient List<Contract> incomingContracts;
     private transient HashMap<String, TradeOffer> tradeOffers = new HashMap<String, TradeOffer>();
     private transient ContractHandler contractHandler;
@@ -176,6 +177,14 @@ public class Counter {
 
     public void addTrophy(int trophy) {
         ownedTrophies.add(trophy);
+        CountingBot.getInstance().safeCounters();
+    }
+
+    public int getTrophyShards() {
+        return trophyShards;
+    }
+    public void addTrophyShard() {
+        trophyShards++;
         CountingBot.getInstance().safeCounters();
     }
 
@@ -358,6 +367,10 @@ public class Counter {
         return 1.0;
     }
 
+    public Integer[] getOwnedTrophies() {
+        return ownedTrophies.toArray(new Integer[0]);
+    }
+
     public double getBonusFact(CountingStreak streak) {
         return getFactFromSys(streak.getBase()) * streak.getCurrentBonusFactor();
     }
@@ -455,6 +468,11 @@ public class Counter {
             }
         }
         return false;
+    }
+
+
+    public int[] getUnlockedBases() {
+        return unlockedSystems;
     }
 
     public int getPrestigePoints() {

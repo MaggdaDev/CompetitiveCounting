@@ -6,7 +6,7 @@ import discord4j.core.object.entity.User;
 import java.util.function.Consumer;
 
 public class TrophyHandler {
-    private final static double BASE_TROPHY_CHANCE = 0.005d;
+    private final static double BASE_TROPHY_CHANCE = 0.007d;
     private final EmojiReactHandler reactHandler;
 
     public TrophyHandler(EmojiReactHandler reactHandler) {
@@ -18,9 +18,15 @@ public class TrophyHandler {
         if (randBool(BASE_TROPHY_CHANCE)) {
             message.addReaction(Emojis.TROPHY).subscribe();
             reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
-                if(messageReactedTo.getId().equals(message.getId())) {
+                if (messageReactedTo.getId().equals(message.getId())) {
                     if (user.hasTrophy(number)) {
-                        CountingBot.write(message, "You already have this trophy and hence get nothing, " + user.getName() + ". Sorry! (trophy shards coming soon...)");
+                        user.addTrophyShard();
+                        if (user.getTrophyShards() <= 1) {
+                            CountingBot.write(message, "You have already found this trophy and hence get nothing, " +  user.getName() +
+                                    "!\n\nJust joking. Congratulations for finding your first trophy shard! Trophy shards are extremely rare and can be spent in the ~shunlock shop.");
+                        } else {
+                            CountingBot.write(message, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + user.getName() + ". You now have " + user.getTrophyShards() + " trophy shards!");
+                        }
                     } else {
                         user.addTrophy(number);
                         CountingBot.write(message, "Congratulations " + user.getName() + "! You have earned the " + number + "-trophy! You now have " + user.getTrophyAmount() + " trophies!");

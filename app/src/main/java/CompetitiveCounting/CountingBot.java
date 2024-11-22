@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- *
  * @author DavidPrivat
  */
 public class CountingBot {
@@ -83,6 +82,8 @@ public class CountingBot {
                     prestige(message);
                 } else if (content.startsWith(commandIndicator + "bonus")) {
                     bonus(message);
+                } else if (content.startsWith(commandIndicator + "bases")) {
+                    basesOwnedInfo(message);
                 } else if (content.startsWith(commandIndicator + "base")) {
                     baseInfo(message);
                 } else if (content.startsWith(commandIndicator + "tradeoffer")) {
@@ -93,19 +94,73 @@ public class CountingBot {
                     personInfo(message);
                 } else if (content.startsWith(commandIndicator + "fact") || content.startsWith(commandIndicator + "mult")) {
                     factorInfo(message);
+                } else if (content.startsWith(commandIndicator + "trophies") || content.startsWith(commandIndicator + "trophy")) {
+                    trophiesInfo(message);
+                } else if (content.startsWith(commandIndicator + "shunlock")) {
+                    shunlock(message);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
+    private void shunlock(Message message) {
+        write(message, "Coming soon...");
+    }
+    private void basesOwnedInfo(Message message) {
+        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        if (author.getUnlockedBases().length == 0) {
+            if (author.getPrestiges() == 0) {
+                write(message, "How do you know about bases? You don't even have any prestige points yet!");
+            } else {
+                write(message, "You don't own any base yet. Unlock them in the ~unlock shop for some prestige points!");
+            }
+        } else if (author.getUnlockedBases().length == 1) {
+            write(message, "You only own base " + author.getUnlockedBases()[0] + ".");
+        } else {
+            String msg = "You own the following bases: ";
+            for (int i = 0; i < author.getUnlockedBases().length-1; i++) {
+                msg += author.getUnlockedBases()[i] + ", ";
+            }
+            msg += author.getUnlockedBases()[author.getUnlockedBases().length-1] + ".";
+            write(message, msg);
+        }
+    }
+
+    private void trophiesInfo(Message message) {
+        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        StringBuilder msg = new StringBuilder("You have the following trophies:");
+        // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
+        Integer[] ownedTrophies = author.getOwnedTrophies();
+        int start = 0;
+        for (int i = 1; i < ownedTrophies.length; i++) {
+            if (ownedTrophies[i] != ownedTrophies[i - 1] + 1) {
+                if (start == i - 1) {
+                    msg.append("\nTrophy ").append(ownedTrophies[start]);
+                } else {
+                    msg.append("\nTrophies ").append(ownedTrophies[start]).append(" to ").append(ownedTrophies[i - 1]);
+                }
+                start = i;
+            }
+        }
+        msg.append("\n\nCounting these numbers in any base will give you twice the money.");
+
+        if(author.getTrophyShards() == 1) {
+            msg.append("\n\nAdditionally, you own 1 trophy shard.");
+        } else if(author.getTrophyShards() > 1) {
+            msg.append("\n\nAdditionally, you own ").append(author.getTrophyShards()).append(" trophy shards.");
+        }
+
+        write(message, msg.toString());
+    }
+
     private void factorInfo(Message message) {
         String channelId = message.getChannelId().asString();
         Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
         if (streaks.containsKey(channelId)) {
             CountingStreak streak = streaks.get(channelId);
-            String msg = "Your collected score in this streak gets a " + Math.round(author.getBonusFact(streak)*100.0)/100.0 + "x bonus multiplier.";
+            String msg = "Your collected score in this streak gets a " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x bonus multiplier.";
             write(message, msg);
         } else {
             write(message, "There is no active streak in this channel.");
@@ -231,16 +286,16 @@ public class CountingBot {
     private void prestige(Message message) {
         Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
         if (author.prestige(message)) {
-            if(author.getPrestiges() < 2) {
-            CountingBot.write(message, "GG WP, you just prestiged! You get:\n "
-                    + "- 1 prestige point for buying new bases (try out the upgraded ~unlock shop!)\n "
-                    + "- a global boost of " + Math.round(Counter.MULT_PLUS_PER_PRESTIGE*100.0d) + "% for counting");
+            if (author.getPrestiges() < 2) {
+                CountingBot.write(message, "GG WP, you just prestiged! You get:\n "
+                        + "- 1 prestige point for buying new bases (try out the upgraded ~unlock shop!)\n "
+                        + "- a global boost of " + Math.round(Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% for counting");
             } else {
                 CountingBot.write(message, "GG WP, you prestiged again! You get:\n "
-                    + "- 1 additional prestige point for buying new bases\n "
-                    + "- an upgrade to your global boost (" + Math.round((author.getPrestiges()-1)*Counter.MULT_PLUS_PER_PRESTIGE*100.0d) + "% => " + Math.round((author.getPrestiges())*Counter.MULT_PLUS_PER_PRESTIGE*100.0d));
+                        + "- 1 additional prestige point for buying new bases\n "
+                        + "- an upgrade to your global boost (" + Math.round((author.getPrestiges() - 1) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% => " + Math.round((author.getPrestiges()) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d));
             }
-            
+
         } else {
             return;
         }
@@ -380,7 +435,7 @@ public class CountingBot {
                 return;
             }
             deleteStreak = !streak.count(message, counters.get(generateKeyFromUser(user)), content);
-            if(deleteStreak) {
+            if (deleteStreak) {
                 streak.dispose();
             }
         } else {
@@ -390,8 +445,8 @@ public class CountingBot {
                     streaks.put(channelKey, new CountingStreak(channelKey, 10));
                 } else {
                     int base = Integer.parseInt(splitted[2]);
-                    if(author != null && author.isBaseUnlocked(base)) {
-                    streaks.put(channelKey, new CountingStreak(channelKey, base));
+                    if (author != null && author.isBaseUnlocked(base)) {
+                        streaks.put(channelKey, new CountingStreak(channelKey, base));
                     } else {
                         CountingBot.write(message, "Unlock this base with prestige-points to start a streak.");
                         return;
@@ -452,7 +507,7 @@ public class CountingBot {
 
     public Disposable subscribeEmojiReactHandler(EmojiReactHandler handler, String channelId) {
         return client.on(ReactionAddEvent.class).filter(
-                (reactionEvent) -> reactionEvent.getChannelId().asString().equals(channelId))
+                        (reactionEvent) -> reactionEvent.getChannelId().asString().equals(channelId))
                 .doOnNext(handler).subscribe();
     }
 
