@@ -135,23 +135,36 @@ public class CountingBot {
         StringBuilder msg = new StringBuilder();
 
         if (author.getOwnedTrophies().length == 0) {
-            msg.append("You don't own any trophies. Keep counting, and keep an eye out for numbers with a trophy emoji on them!");
+            msg.append("You don't own any trophies. Keep counting large numbers, and keep an eye out for numbers with a trophy emoji on them!");
         } else if (author.getOwnedTrophies().length == 1) {
-            msg.append("You own the " + author.getOwnedTrophies()[0] + "-trophy.");
-            msg.append("\n\nCounting this number in any base will give you twice the money.");
+            String specialTrophyMessage = getSpecialTrophyMessage(author.getOwnedTrophies()[0]);
+            if (!specialTrophyMessage.isEmpty()) {
+                msg.append("You own one trophy:\n").append(specialTrophyMessage);
+            } else {
+                msg.append("You own the ").append(author.getOwnedTrophies()[0]).append("-trophy.");
+                msg.append("\n\nCounting this number in any base will give you twice the money.");
+            }
         } else {
             // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
             Integer[] ownedTrophies = author.getOwnedTrophies();
             int streakStartIndex;
-            for(int i = 0; i < ownedTrophies.length; i++) {
+            for (int i = 0; i < ownedTrophies.length; i++) {
+                // special trophies
+                String specialTrophyMessage = getSpecialTrophyMessage(ownedTrophies[i]);
+                if (!specialTrophyMessage.isEmpty()) {
+                    msg.append("\n").append(specialTrophyMessage);
+                    continue;
+                }
+
+                // Usual trophies
                 streakStartIndex = i;
-                while(i < ownedTrophies.length-1 && ownedTrophies[i + 1] == ownedTrophies[i] + 1) {
+                while (i < ownedTrophies.length - 1 && ownedTrophies[i + 1] == ownedTrophies[i] + 1) {
                     i++;
                 }
-                if(i - streakStartIndex == 0) {
-                    msg.append("\nTrophy ").append(ownedTrophies[i]);
+                if (i - streakStartIndex == 0) {
+                    msg.append("\n").append(ownedTrophies[i]).append(" trophy");
                 } else {
-                    msg.append("\nTrophies ").append(ownedTrophies[streakStartIndex]).append(" to ").append(ownedTrophies[i]);
+                    msg.append("\ntrophies ").append(ownedTrophies[streakStartIndex]).append(" to ").append(ownedTrophies[i]);
                 }
             }
             msg.append("\n\nCounting these numbers in any base will give you twice the money.");
@@ -164,6 +177,18 @@ public class CountingBot {
         }
 
         write(message, msg.toString());
+    }
+
+    private String getSpecialTrophyMessage(int trophy) {
+        String startText = trophy + " trophy: ";
+        switch (trophy) {
+            case -753:
+                return startText + "_Relic of Prestige from the Fallen Empire_";
+            case -2147483648:
+                return startText + "_To Infinity!_";
+            default:
+                return "";
+        }
     }
 
     private void factorInfo(Message message) {
@@ -489,7 +514,8 @@ public class CountingBot {
     }
 
     public static void write(Message message, String s) {
-        write(message, s, (msg) -> {});
+        write(message, s, (msg) -> {
+        });
     }
 
     public static void sendDMTo(Counter counter) {
