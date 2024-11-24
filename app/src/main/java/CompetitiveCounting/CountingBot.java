@@ -329,7 +329,7 @@ public class CountingBot {
             } else {
                 CountingBot.write(message, "GG WP, you prestiged again! You get:\n "
                         + "- 1 additional prestige point for buying new bases\n "
-                        + "- an upgrade to your global boost (" + Math.round((author.getPrestiges() - 1) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% => " + Math.round((author.getPrestiges()) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d));
+                        + "- an upgrade to your global boost (" + Math.round((author.getPrestiges() - 1) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% => " + Math.round((author.getPrestiges()) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "%)");
             }
 
         } else {
@@ -447,7 +447,7 @@ public class CountingBot {
         });
         String message = "Scoreboard:";
         for (Counter counter : countersSorted) {
-            if (counter.getPrestiges() == 0 && counter.getScore() == 0) {
+            if (counter.getPrestiges() == 0 && counter.getPossibleTotal() == 0) {
                 break;
             }
             if (counter.getPrestiges() != 0) {
