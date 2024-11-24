@@ -12,6 +12,7 @@ import reactor.core.Disposable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author DavidPrivat
@@ -23,19 +24,25 @@ public class CountingStreak {
     private int counter, lastCount;
     private Counter lastCounter;
     private HashMap<String, Counter> counters;
+
+    private HashMap<String, Long> lastCaptureTimes = new HashMap<>();
+    private final List<String> captureBlockedUsers = new ArrayList<>();
+
     private ArrayList<NumberRule> numberRules;
     private SlowModeRule slowModeRule;
     private TimeLimitRule timeLimitRule;
     private boolean timeLimitNewlyAdded = false;
     private int currDivPrize = 50, divPrizeAdd = 50;
-    private int currDigPrize = 100, digPrizeFact = 2;
+    private int currDigPrize = 100, digPrizeFact = 2, digPrizeLowBaseFact = 4;
     private int currRootPrize = 150;
     private int currTimePrize = 250, timePrizeFact = 2;
     private int currentBase;
 
     private final TrophyHandler trophyHandler;
-
+    private final CaptureHandler captureHandler;
     private final EmojiReactHandler emojiReactHandler;
+
+    private boolean destroyedByWrongCapture = false;
 
     public CountingStreak(String key, int base) {
         this.key = key;
@@ -48,9 +55,16 @@ public class CountingStreak {
         emojiReactHandler = new EmojiReactHandler(key);
         emojiReactSubscription = CountingBot.getInstance().subscribeEmojiReactHandler(emojiReactHandler, key);
         trophyHandler = new TrophyHandler(emojiReactHandler);
+        captureHandler = new CaptureHandler(emojiReactHandler);
     }
 
-    public boolean count(Message message, Counter user, String content) {
+    public boolean count(Message message, Counter user, String content, Runnable asyncStreakDelete) {
+        if(destroyedByWrongCapture) {
+            return false;
+        }
+        if (captureBlockedUsers.contains(user.getId())) {
+            return true;
+        }
         if (!counters.containsKey(user.getId())) {
             addCounter(user, message);
         }
@@ -68,6 +82,16 @@ public class CountingStreak {
             lastCount = number;
             incrementCounter();
             user.notifyCount(number, this);
+
+            if(captureHandler.raisedCapture(message, number, user.getId(), lastCaptureTimes, () -> {    // onCaptureFailed
+                destroyedByWrongCapture = true;
+                fail(message, number, user);
+                asyncStreakDelete.run();
+            }, () -> {  // onCaptureSucceeded
+                captureBlockedUsers.remove(user.getId());
+            })) {   // Capture was raised
+                captureBlockedUsers.add(user.getId());
+            }
 
             trophyHandler.considerSpawningTrophy(number, message, user);
 
@@ -98,6 +122,7 @@ public class CountingStreak {
     private void addCounter(Counter add, Message message) {
         counters.put(add.getId(), add);
         add.addStreakToCurrAdd(this);
+        lastCaptureTimes.put(add.getId(), System.currentTimeMillis());
         if (!add.isBaseUnlocked(currentBase)) {
             CountingBot.write(message, add.getPing() + " you haven't unlocked this base yet, so you will only get " + Counter.SYSTEM_NOT_OWNED_FACT + "x score");
         }
@@ -375,7 +400,13 @@ public class CountingStreak {
                 addNumberRule(addDigSum);
                 CountingBot.write(message, "You paid " + currDigPrize + " to add: " + addDigSum.toString());
                 author.subtractScore(currDigPrize);
-                currDigPrize *= digPrizeFact;
+                if(currentBase == 1) {
+                    currDigPrize ++;
+                } else if(currentBase < 5) {
+                    currDigPrize *= digPrizeLowBaseFact;
+                } else {
+                    currDigPrize *= digPrizeFact;
+                }
                 break;
             case "root":
                 if (!canBuyRootRule(author, message)) {

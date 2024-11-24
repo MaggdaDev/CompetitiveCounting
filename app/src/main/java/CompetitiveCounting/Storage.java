@@ -15,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.lang.String;
 import java.util.HashMap;
@@ -27,18 +28,35 @@ import java.util.Map;
 public class Storage {
 
     private final static String COUNTERS_PATH = "./src/data/counters.txt";
+    private final static String CAPTURES_PATH = "./src/data/captures.txt";
     public final static String CONFIG_PATH = "./src/data/config.txt";
 
     private HashMap<String,Counter> counters;
+    private List<CaptureHandler.Capture> captures;
+
+    private static Storage instance;
+
+    public static Storage getInstance() {
+        if(instance == null) {
+            instance = new Storage();
+        }
+        if(instance.captures == null) {
+            instance.loadCaptures();
+        }
+        if(instance.counters == null) {
+            instance.loadCounters();
+        }
+        return instance;
+    }
 
     public static String loadConfig() throws Exception {
         FileInputStream countersIn = new FileInputStream(CONFIG_PATH);
         return new String(countersIn.readAllBytes(), Charset.forName("UTF-8"));
     }
 
-    public String loadJson() {
+    public String loadJson(String path) {
         try {
-            FileInputStream countersIn = new FileInputStream(COUNTERS_PATH);
+            FileInputStream countersIn = new FileInputStream(path);
             String content = new String(countersIn.readAllBytes(), Charset.forName("UTF-8"));
             countersIn.close();
             
@@ -50,7 +68,10 @@ public class Storage {
     }
     
     public HashMap<String, Counter> loadCounters() {
-        String asString = loadJson();
+        if(counters != null) {
+            return counters;
+        }
+        String asString = loadJson(COUNTERS_PATH);
         Gson gson = new Gson();
         counters = gson.fromJson(asString, (new TypeToken<HashMap<String,Counter>>(){}).getType());
         if(counters == null) {
@@ -63,6 +84,24 @@ public class Storage {
             counter.initIncomingContracts(counters);
         });
         return counters;
+    }
+
+    public List<CaptureHandler.Capture> loadCaptures() {
+        if(captures != null) {
+            return captures;
+        }
+        String asString = loadJson(CAPTURES_PATH);
+        Gson gson = new Gson();
+        Captures capturesObjects = gson.fromJson(asString, (new TypeToken<Captures>(){}).getType());
+        captures = capturesObjects.captures;
+        if(captures == null) {
+            throw new RuntimeException("Captures not found");
+        }
+        return captures;
+    }
+
+    public static class Captures {
+        public List<CaptureHandler.Capture> captures;
     }
     
     public void safeCounters(HashMap<String, Counter> counters) {

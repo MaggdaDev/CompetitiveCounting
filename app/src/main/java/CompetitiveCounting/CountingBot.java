@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author DavidPrivat
@@ -141,15 +142,16 @@ public class CountingBot {
         } else {
             // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
             Integer[] ownedTrophies = author.getOwnedTrophies();
-            int start = 0;
-            for (int i = 1; i < ownedTrophies.length; i++) {
-                if (ownedTrophies[i] != ownedTrophies[i - 1] + 1) {
-                    if (start == i - 1) {
-                        msg.append("\nTrophy ").append(ownedTrophies[start]);
-                    } else {
-                        msg.append("\nTrophies ").append(ownedTrophies[start]).append(" to ").append(ownedTrophies[i - 1]);
-                    }
-                    start = i;
+            int streakStartIndex;
+            for(int i = 0; i < ownedTrophies.length; i++) {
+                streakStartIndex = i;
+                while(i < ownedTrophies.length-1 && ownedTrophies[i + 1] == ownedTrophies[i] + 1) {
+                    i++;
+                }
+                if(i - streakStartIndex == 0) {
+                    msg.append("\nTrophy ").append(ownedTrophies[i]);
+                } else {
+                    msg.append("\nTrophies ").append(ownedTrophies[streakStartIndex]).append(" to ").append(ownedTrophies[i]);
                 }
             }
             msg.append("\n\nCounting these numbers in any base will give you twice the money.");
@@ -433,6 +435,10 @@ public class CountingBot {
     }
 
     private void count(Message message) {
+        Runnable streakDeleteRunnable = () -> {
+            String channelId = message.getChannelId().asString();
+            streaks.remove(channelId);
+        };
         User user = message.getAuthor().get();
         String channelKey = message.getChannelId().asString();
         String content = message.getContent();
@@ -446,10 +452,7 @@ public class CountingBot {
             if ((!BaseSystems.isNumInSystem(content, streak.getBase()))) {
                 return;
             }
-            deleteStreak = !streak.count(message, counters.get(generateKeyFromUser(user)), content);
-            if (deleteStreak) {
-                streak.dispose();
-            }
+            deleteStreak = !streak.count(message, counters.get(generateKeyFromUser(user)), content, streakDeleteRunnable);
         } else {
             String[] splitted = content.split(" ");
             if (content.equals("1") || (splitted[0].equals("1") && splitted.length == 3 && splitted[1].equals("base") && Util.isNumber(splitted[2]))) {
@@ -464,11 +467,11 @@ public class CountingBot {
                         return;
                     }
                 }
-                deleteStreak = !streaks.get(channelKey).count(message, counters.get(generateKeyFromUser(user)), splitted[0]);
+                deleteStreak = !streaks.get(channelKey).count(message, counters.get(generateKeyFromUser(user)), splitted[0], streakDeleteRunnable);
             }
         }
         if (deleteStreak) {
-            streaks.remove(channelKey);
+            streakDeleteRunnable.run();
         }
 
     }
@@ -481,8 +484,12 @@ public class CountingBot {
         storage.safeCounters(counters);
     }
 
+    public static void write(Message message, String s, Consumer<? super Message> onMessageSent) {
+        message.getChannel().block().createMessage(s).subscribe(onMessageSent);
+    }
+
     public static void write(Message message, String s) {
-        message.getChannel().block().createMessage(s).subscribe();
+        write(message, s, (msg) -> {});
     }
 
     public static void sendDMTo(Counter counter) {
