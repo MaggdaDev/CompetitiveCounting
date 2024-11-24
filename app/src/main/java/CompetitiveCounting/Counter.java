@@ -17,7 +17,7 @@ public class Counter {
 
     public final static int PRESTIGE_WORTH = 1000000;
     public final static double SYSTEM_NOT_OWNED_FACT = 0.5;
-    public final static double MULT_PLUS_PER_PRESTIGE = 0.25;
+    public final static double MULT_PLUS_PER_PRESTIGE = 0.2;
 
     public final static double TROPHY_BONUS_MULT = 2;
     private final String key, name;
