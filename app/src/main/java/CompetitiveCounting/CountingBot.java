@@ -91,7 +91,7 @@ public class CountingBot {
                     tradeOffer(message);
                 } else if (content.startsWith(commandIndicator + "contracts")) {
                     contractInfo(message);
-                } else if (content.startsWith(commandIndicator + "person")) {
+                } else if (content.startsWith(commandIndicator + "person") || content.startsWith(commandIndicator + "counter") || content.startsWith(commandIndicator + "last")) {
                     personInfo(message);
                 } else if (content.startsWith(commandIndicator + "fact") || content.startsWith(commandIndicator + "mult")) {
                     factorInfo(message);
