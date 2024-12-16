@@ -10,12 +10,21 @@ package CompetitiveCounting;
  * @author DavidPrivat
  */
 public class Contract {
-
+    public final static String ACCEPT_REMOVE_CONTRACT_PREIFX = "accept_remove_contract:";
+    public final static String DECLINE_REMOVE_CONTRACT_PREIFX = "decline_remove_contract:";
+    private static int currRemoveId = 0;
     public int paidBack;
     public int percentage;  //1 - 100
     public int limit;       //  limti = -1 := no limit
     public String toId;
     public transient Counter owner; // default: null
+
+    public transient String requested_remove_id = null;
+
+    public void requestRemove() {
+        requested_remove_id = String.valueOf(currRemoveId);
+        currRemoveId++;
+    }
 
     public Contract(Counter getter, int percentage, int limit) {
         toId = getter.getId();
@@ -51,10 +60,11 @@ public class Contract {
 
     @Override
     public String toString() {
+        String countersInfo = owner.getName() + " -> " + CountingBot.getInstance().getCounter(toId).getName();
         if (limit == -1) {
-            return percentage + "% of income (" + paidBack + " paid so far)";
+            return countersInfo + ": " + percentage + "% of income (" + paidBack + " paid so far)";
         } else {
-            return percentage + "% of income until " + limit + " paid (" + paidBack + " paid so far)";
+            return countersInfo + ": " + percentage + "% of income until " + limit + " paid (" + paidBack + " paid so far)";
         }
     }
 }

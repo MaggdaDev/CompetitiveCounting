@@ -35,4 +35,12 @@ public class Util {
             return new String[]{splitted[0], snd};
         }
     }
+
+    public static String pingToUserId(String ping) {
+        return ping.substring(2, ping.length() - 1);
+    }
+
+    public static String userIdToPing(String id) {
+        return "<@" + id + ">";
+    }
 }

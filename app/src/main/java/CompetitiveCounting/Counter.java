@@ -8,9 +8,9 @@ package CompetitiveCounting;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
- *
  * @author DavidPrivat
  */
 public class Counter {
@@ -59,7 +59,7 @@ public class Counter {
         if (incomingContracts == null) {
             incomingContracts = new ArrayList<>();
         }
-        
+
         if (currScoreAdds == null) {
             currScoreAdds = new HashMap<>();
         }
@@ -184,6 +184,7 @@ public class Counter {
     public int getTrophyShards() {
         return trophyShards;
     }
+
     public void addTrophyShard() {
         trophyShards++;
         CountingBot.getInstance().safeCounters();
@@ -240,7 +241,30 @@ public class Counter {
             } else {
                 return "This offer doesn't match any of yours";
             }
-        } else if (tradeOffers.containsKey(customId)) {
+        } else if (customId.startsWith(Contract.ACCEPT_REMOVE_CONTRACT_PREIFX)) {
+            String contractRemoveId = customId.split(":")[1];
+            // iterate through both incoming contracts and contracts at once
+            ArrayList<Contract> contractsToIterate = new ArrayList<>(contracts);
+            contractsToIterate.addAll(incomingContracts);
+            for (Contract currContract : contractsToIterate) {
+                if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
+                    contractHandler.removeContract(currContract);
+                    return "Contract removed successfully!";
+                }
+            }
+            return "This contract doesn't match any of yours";
+        } else if(customId.startsWith(Contract.DECLINE_REMOVE_CONTRACT_PREIFX)) {
+            String contractRemoveId = customId.split(":")[1];
+            ArrayList<Contract> contractsToIterate = new ArrayList<>(contracts);
+            contractsToIterate.addAll(incomingContracts);
+            for (Contract currContract : contractsToIterate) {
+                if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
+                    currContract.requested_remove_id = null;
+                    return "Contract removal declined!";
+                }
+            }
+            return "This contract doesn't match any of yours";
+        }else if (tradeOffers.containsKey(customId)) {
             TradeOffer offer = tradeOffers.get(customId);
             String answ = offer.isTradeOfferValid();
             if (answ.toUpperCase().equals("VALID")) {
@@ -318,17 +342,17 @@ public class Counter {
             return;
         }
         if (contracts.size() == 1) {
-            mess += "You pay to\n" + CountingBot.getInstance().getCounter(contracts.get(0).toId).getName() + ": " + contracts.get(0).toString();
+            mess += "Outgoing:\n" + contracts.get(0).toString();
         } else if (contracts.size() > 1) {
             mess += "You pay " + contractHandler.getCurrentTotalPerc() + "% of your income to";
             for (Contract curr : contracts) {
-                mess += "\n" + CountingBot.getInstance().getCounter(curr.toId).getName() + ": " + curr.toString();
+                mess += "\n" + curr.toString();
             }
         }
         if (incomingContracts.size() > 0) {
-            mess += "\n\nYou get from";
+            mess += "\n\nIncoming:";
             for (Contract curr : incomingContracts) {
-                mess += "\n" + curr.owner.getName() + ": " + curr.toString();
+                mess += "\n" + curr;
             }
         }
         CountingBot.write(message, mess);
@@ -362,7 +386,7 @@ public class Counter {
     }
 
     private double getTrophyBonus(int number) {
-        if(hasTrophy(number)) {
+        if (hasTrophy(number)) {
             return TROPHY_BONUS_MULT;
         }
         return 1.0;
@@ -378,6 +402,10 @@ public class Counter {
 
     public void notifyWin(int win, int base, Message message) {
         addBonusScore(win, message);
+    }
+
+    public Stream<Contract> streamIncomingAndOutgoingContracts() {
+        return Stream.concat(contracts.stream(), incomingContracts.stream());
     }
 
     public void succeed(CountingStreak streak, Message message) {
@@ -429,7 +457,7 @@ public class Counter {
     public int getScore() {
         return score;
     }
-    
+
     public int getPossibleTotalInStreak(CountingStreak streak) {
         return score + currScoreAdds.get(streak.getKey());
     }
@@ -497,7 +525,7 @@ public class Counter {
     }
 
     public void addStreakToCurrAdd(CountingStreak streak) {
-        if(!this.currScoreAdds.containsKey(streak.getKey())) {
+        if (!this.currScoreAdds.containsKey(streak.getKey())) {
             this.currScoreAdds.put(streak.getKey(), 0);
         }
     }

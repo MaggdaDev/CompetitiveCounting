@@ -62,7 +62,9 @@ public class ContractHandler {
     }
 
     public void removeContract(Contract contract) {
-        contracts.remove(contract);
+        contract.owner.getContracts().remove(contract);
+        CountingBot.getInstance().getCounter(contract.toId).getIncomingContracts().remove(contract);
+        CountingBot.getInstance().safeCounters();
     }
 
     public int getCurrentTotalPerc() {

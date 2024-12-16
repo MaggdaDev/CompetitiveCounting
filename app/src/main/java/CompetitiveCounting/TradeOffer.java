@@ -48,7 +48,7 @@ public class TradeOffer {
         }
         splitted = init.split(" ");
         userPing = splitted[1].replaceAll(" ", "");
-        userId = userPing.substring(2, userPing.length() - 1);
+        userId = Util.pingToUserId(userPing);
         requCounter = CountingBot.getInstance().getCounter(userId);
 
         try {
@@ -130,7 +130,7 @@ public class TradeOffer {
             return true;
         } 
         CountingBot.write(message, isValid);
-        return true;
+        return false;
     }
 
     private boolean containsEndContracts(Tradable[] t) {

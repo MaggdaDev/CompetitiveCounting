@@ -21,6 +21,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author DavidPrivat
@@ -91,6 +93,8 @@ public class CountingBot {
                     tradeOffer(message);
                 } else if (content.startsWith(commandIndicator + "contracts")) {
                     contractInfo(message);
+                } else if (content.startsWith(commandIndicator + "removecontract")) {
+                    removeContract(message);
                 } else if (content.startsWith(commandIndicator + "person") || content.startsWith(commandIndicator + "counter") || content.startsWith(commandIndicator + "last")) {
                     personInfo(message);
                 } else if (content.startsWith(commandIndicator + "fact") || content.startsWith(commandIndicator + "mult")) {
@@ -226,6 +230,71 @@ public class CountingBot {
     private void contractInfo(Message message) {
         Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
         author.contractInfo(message);
+    }
+
+    private void removeContract(Message message) {
+        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        if(author.getContracts().size() == 0 && author.getIncomingContracts().size() == 0) {
+            CountingBot.write(message, "You don't have any contracts.");
+            return;
+        }
+        if(message.getContent().split(" ").length != 2 && message.getContent().split(" ").length != 3) {
+            CountingBot.write(message, "Usage: ~removecontract [@OtherCounter] _[in case of multiple contracts with that person: contract number]_");
+            return;
+        }
+        int contractNumber = -1;
+        if(message.getContent().split(" ").length == 3) {
+            if(!Util.isNumber(message.getContent().split(" ")[2]) || Integer.parseInt(message.getContent().split(" ")[2]) < 0) {
+                CountingBot.write(message, "Please provide an integer number greater or equal to 0 to specify the contract.");
+                return;
+            }
+            contractNumber = Integer.parseInt(message.getContent().split(" ")[2]);
+        }
+        String otherCounterId = Util.pingToUserId(message.getContent().split(" ")[1]);
+        if(author.getId().equals(otherCounterId)) {
+            CountingBot.write(message, "You can't remove a contract with yourself.");
+            return;
+        }
+
+        List<Contract> contractsMatchingToGivenId = author.streamIncomingAndOutgoingContracts().filter(
+                contract -> contract.toId.equals(otherCounterId) || (contract.owner != null && contract.owner.getId().equals(otherCounterId))).collect(Collectors.toList());
+        if(contractsMatchingToGivenId.isEmpty()) {
+            CountingBot.write(message, "You don't have a contracts with this person.");
+            return;
+        } else if(contractsMatchingToGivenId.size() > 1) {
+            if(contractNumber == -1) {
+                StringBuilder content = new StringBuilder("Please specify the contract you want to remove by providing the corresponding number after the user ping. " +
+                        "You have the following contracts with this person:");
+                for(int i = 0; i < contractsMatchingToGivenId.size(); i++) {
+                    content.append("\n").append(i).append("): ").append(contractsMatchingToGivenId.get(i).toString());
+                }
+                CountingBot.write(message, content.toString());
+                return;
+            } else if(contractNumber >= contractsMatchingToGivenId.size()) {
+                CountingBot.write(message, "This number does not match a contract.");
+                return;
+            } else {
+                initiateRemoveContractButtonInteraction(message, author, this.getCounter(otherCounterId), contractsMatchingToGivenId.get(contractNumber));
+            }
+        } else {
+            Contract contract = contractsMatchingToGivenId.get(0);
+            initiateRemoveContractButtonInteraction(message, author, this.getCounter(otherCounterId), contract);
+        }
+
+    }
+
+    private void initiateRemoveContractButtonInteraction(Message message, Counter author, Counter requestedUser, Contract contractToRemove) {
+        if(contractToRemove.requested_remove_id != null) {
+            CountingBot.write(message, "This contract has already been requested to be removed.");
+            return;
+        }
+        String content = Util.userIdToPing(requestedUser.getId()) + " do you accept to remove the following contract with " + author.getId() + "?\n"
+                + contractToRemove.toString();
+        contractToRemove.requestRemove();
+        Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREIFX + contractToRemove.requested_remove_id, "Accept");
+        Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREIFX + contractToRemove.requested_remove_id, "Decline");
+        MessageCreateSpec spec = MessageCreateSpec.builder().addComponent(ActionRow.of(List.of(declineButton, acceptButton))).build().withContent(content);
+        message.getChannel().block().createMessage(spec).subscribe();
     }
 
     private void tradeOffer(Message message) {
