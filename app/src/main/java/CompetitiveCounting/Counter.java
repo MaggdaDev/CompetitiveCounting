@@ -111,6 +111,16 @@ public class Counter {
         }
     }
 
+    public void unlockRuleCostUpgrade(Message message) {
+        for(Unlockable currentRuleCostUpgradeToEvaluate: Unlockable.getRuleCostUpgrades()) {
+            if (!this.isUnlocked(currentRuleCostUpgradeToEvaluate)) {
+                unlock(currentRuleCostUpgradeToEvaluate, message);
+                return;
+            }
+        }
+        CountingBot.write(message, "You have already unlocked all rule cost upgrades.");
+    }
+
     private void addUnlocked(Message message, Unlockable unlockable) {
         int[] newUnlocked = new int[unlocked.length + 1];
         for (int i = 0; i < this.unlocked.length; i++) {
@@ -169,6 +179,15 @@ public class Counter {
         CountingBot.write(message, "You unlocked the 'base-" + base + "-system' and paid " + Unlockable.getBasePrize(base) + " prestige points. Counting in this System will no longer give you reduced score, and you can start streaks with this system now.");
         CountingBot.getInstance().safeCounters();
 
+    }
+
+    public double getAddruleDiscountFactor() {
+        for (Unlockable currUnlockable : Unlockable.getRuleCostUpgradesDescending()) {
+            if (isUnlocked(currUnlockable)) {
+                return Unlockable.RULE_COST_UPGRADE_TO_COST_MULTIPLIER(currUnlockable);
+            }
+        }
+        return 1.0;
     }
 
     public boolean hasTrophy(int trophy) {
@@ -232,6 +251,7 @@ public class Counter {
         if (tradeOffers == null) {
             tradeOffers = new HashMap<>();
         }
+        String contractRemoveRequestExpiredPleaseCreateNewOneMessage = "This request to remove the contract has expired and a new request has already been created.";
         if (customId.startsWith("-")) {  // DECLINE
             System.out.println("Tradeoffer declined!");
             String newId = customId.substring(1);
@@ -250,6 +270,8 @@ public class Counter {
                 if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
                     contractHandler.removeContract(currContract);
                     return "Contract removed successfully!";
+                } else if(currContract.isExpiredRemoveRequestId(contractRemoveId)) {
+                    return contractRemoveRequestExpiredPleaseCreateNewOneMessage;
                 }
             }
             return "This contract doesn't match any of yours";
@@ -261,6 +283,8 @@ public class Counter {
                 if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
                     currContract.requested_remove_id = null;
                     return "Contract removal declined!";
+                } else if(currContract.isExpiredRemoveRequestId(contractRemoveId)) {
+                    return contractRemoveRequestExpiredPleaseCreateNewOneMessage;
                 }
             }
             return "This contract doesn't match any of yours";
@@ -529,6 +553,7 @@ public class Counter {
             this.currScoreAdds.put(streak.getKey(), 0);
         }
     }
+
 
 
 }

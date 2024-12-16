@@ -5,8 +5,9 @@
  */
 package CompetitiveCounting;
 
+import java.util.ArrayList;
+
 /**
- *
  * @author DavidPrivat
  */
 public class Contract {
@@ -20,10 +21,26 @@ public class Contract {
     public transient Counter owner; // default: null
 
     public transient String requested_remove_id = null;
+    public transient long remove_request_time = 0;
+
+    public final static long REMOVE_REQUEST_TIMEOUT = 1000 * 60 * 60 * 24; // 24 hours
+
+    public final transient ArrayList<String> expired_remove_request_ids = new ArrayList<>();
 
     public void requestRemove() {
+        if (requested_remove_id != null) {
+            expired_remove_request_ids.add(requested_remove_id);
+        }
+        remove_request_time = System.currentTimeMillis();
         requested_remove_id = String.valueOf(currRemoveId);
         currRemoveId++;
+    }
+
+    public boolean isRemoveRequestTimedOut() {
+        if (requested_remove_id == null) {
+            return false;
+        }
+        return System.currentTimeMillis() - remove_request_time > REMOVE_REQUEST_TIMEOUT;
     }
 
     public Contract(Counter getter, int percentage, int limit) {
@@ -44,6 +61,10 @@ public class Contract {
             }
         }
         return paid;
+    }
+
+    public boolean isExpiredRemoveRequestId(String id) {
+        return expired_remove_request_ids.contains(id);
     }
 
     public boolean isValid() {

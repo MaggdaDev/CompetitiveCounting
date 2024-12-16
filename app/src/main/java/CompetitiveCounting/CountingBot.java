@@ -284,8 +284,9 @@ public class CountingBot {
     }
 
     private void initiateRemoveContractButtonInteraction(Message message, Counter author, Counter requestedUser, Contract contractToRemove) {
-        if(contractToRemove.requested_remove_id != null) {
-            CountingBot.write(message, "This contract has already been requested to be removed.");
+        if(contractToRemove.requested_remove_id != null && !contractToRemove.isRemoveRequestTimedOut()) {
+            CountingBot.write(message, "This contract has already been requested to be removed. The request will expire in "
+                    +Math.round((float) (10.0 * (Contract.REMOVE_REQUEST_TIMEOUT + contractToRemove.remove_request_time - System.currentTimeMillis())) /(1000.0 * 60.0 * 60.0))/10.0 + "h.");
             return;
         }
         String content = Util.userIdToPing(requestedUser.getId()) + " do you accept to remove the following contract with " + author.getId() + "?\n"
@@ -420,6 +421,10 @@ public class CountingBot {
                 author.unlockBase(message, splitted[2]);
                 return;
             }
+            if (toUnlock.equals(Unlockable.RULE_COST_UPGRADE_1.getName())) {
+                author.unlockRuleCostUpgrade(message);
+                return;
+            }
             for (int i = 0; i < Unlockable.values().length; i++) {
                 Unlockable currUnlockable = Unlockable.values()[i];
 
@@ -445,6 +450,7 @@ public class CountingBot {
             String answ = "Unlock new stuff with the '~unlock' command!\nUsage: ~unlock [unlock name]\n\nYet to unlock:";
             boolean anyUnlockable = false;
             int currCount = 1;
+            boolean ruleCostUpgradeAlreadyDisplayed = false;
             for (int i = 0; i < Unlockable.values().length; i++) {
                 Unlockable currUnlockable = Unlockable.values()[i];
                 if (i >= Unlockable.BASE_1.ordinal()) {
@@ -457,6 +463,11 @@ public class CountingBot {
                     answ += " (" + Math.abs(currUnlockable.getPrize()) + " prestige point(s))";
                     anyUnlockable = true;
                 } else if (!author.isUnlocked(currUnlockable)) {
+                    if (currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName()) && ruleCostUpgradeAlreadyDisplayed) {
+                        continue;
+                    } else if(currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName())) {
+                        ruleCostUpgradeAlreadyDisplayed = true;
+                    }
                     answ += "\n" + String.valueOf(currCount) + ".  '" + currUnlockable.getName() + "': " + currUnlockable.getDescription();
                     currCount++;
                     if (currUnlockable.getPrize() > 0) {
@@ -602,6 +613,10 @@ public class CountingBot {
             msg = "Your current score is " + counter.getPossibleTotal() + " money (" + counter.getScore() + " in your bank + " + counter.getCurrentScoreAdd() + " possible from current streaks)\nYou have " + counter.getPrestigePoints() + " prestige points";
         }
         CountingBot.write(message, msg);
+    }
+
+    public boolean isCounter(String id) {
+        return counters.containsKey(id);
     }
 
     private int getScore(User user) {

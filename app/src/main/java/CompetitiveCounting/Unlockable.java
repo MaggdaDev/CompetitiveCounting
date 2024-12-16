@@ -17,7 +17,13 @@ public enum Unlockable {
     
     SLOWMODE_RULE(50000, "slowmode_rule", "A certain time n has to pass between counts"),
     TIMELIMIT_RULE(100000, "timelimit_rule", "The next number must have been counted before a certain time n has passed"),
-    
+
+    RULE_COST_UPGRADE_1(150000, "rule_cost_upgrade", "Adding a rule to a streak costs 10% less"),
+    RULE_COST_UPGRADE_2(200000, "rule_cost_upgrade", "Adding a rule to a streak costs 20% less"),
+    RULE_COST_UPGRADE_3(400000, "rule_cost_upgrade", "Adding a rule to a streak costs 30% less"),
+    RULE_COST_UPGRADE_4(700000, "rule_cost_upgrade", "Adding a rule to a streak costs 40% less"),
+    RULE_COST_UPGRADE_5(1000000, "rule_cost_upgrade", "Adding a rule to a streak costs 50% less"),
+
     BASE_1(-1, "base1", "Counting in unary: 1"),
     BASE_2(-1, "base2", "Counting in binary"),
     BASE_3(-1, "base3", "Counting in ternary"),
@@ -50,5 +56,30 @@ public enum Unlockable {
     
     public String getDescription() {
         return description;
+    }
+
+    public static Unlockable[] getRuleCostUpgrades() {
+        return new Unlockable[] {RULE_COST_UPGRADE_1, RULE_COST_UPGRADE_2, RULE_COST_UPGRADE_3, RULE_COST_UPGRADE_4, RULE_COST_UPGRADE_5};
+    }
+
+    public static Unlockable[] getRuleCostUpgradesDescending() {
+        return new Unlockable[] {RULE_COST_UPGRADE_5, RULE_COST_UPGRADE_4, RULE_COST_UPGRADE_3, RULE_COST_UPGRADE_2, RULE_COST_UPGRADE_1};
+    }
+
+    public static double RULE_COST_UPGRADE_TO_COST_MULTIPLIER(Unlockable ruleCostUpgrade) {
+        switch (ruleCostUpgrade) {
+            case RULE_COST_UPGRADE_1:
+                return 0.9;
+            case RULE_COST_UPGRADE_2:
+                return 0.8;
+            case RULE_COST_UPGRADE_3:
+                return 0.7;
+            case RULE_COST_UPGRADE_4:
+                return 0.6;
+            case RULE_COST_UPGRADE_5:
+                return 0.5;
+            default:
+                throw new IllegalArgumentException("Not a rule cost upgrade: " + ruleCostUpgrade);
+        }
     }
 }

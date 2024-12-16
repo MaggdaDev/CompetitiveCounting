@@ -15,17 +15,23 @@ public class TrophyHandler {
             message.addReaction(Emojis.TROPHY).subscribe();
             reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
                 if (messageReactedTo.getId().equals(message.getId())) {
-                    if (user.hasTrophy(number)) {
-                        user.addTrophyShard();
-                        if (user.getTrophyShards() <= 1) {
-                            CountingBot.write(message, "You have already found this trophy and hence get nothing, " +  user.getName() +
+                    String reactingUserId = reactingUser.getId().asString();
+                    if(!CountingBot.getInstance().isCounter(reactingUserId)) {
+                        CountingBot.write(message, "You cannot claim trophies without having counted at least once, " + reactingUser.getUsername() + "!");
+                        return false;
+                    }
+                    Counter reactingCounter = CountingBot.getInstance().getCounter(reactingUserId);
+                    if (reactingCounter.hasTrophy(number)) {
+                        reactingCounter.addTrophyShard();
+                        if (reactingCounter.getTrophyShards() <= 1) {
+                            CountingBot.write(message, "You have already found this trophy and hence get nothing, " +  reactingCounter.getName() +
                                     "!\n\nJust joking. Congratulations for finding your first trophy shard! Trophy shards are extremely rare and can be spent in the ~shunlock shop.");
                         } else {
-                            CountingBot.write(message, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + user.getName() + ". You now have " + user.getTrophyShards() + " trophy shards!");
+                            CountingBot.write(message, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + reactingCounter.getName() + ". You now have " + reactingCounter.getTrophyShards() + " trophy shards!");
                         }
                     } else {
-                        user.addTrophy(number);
-                        CountingBot.write(message, "Congratulations " + user.getName() + "! You have earned the " + number + "-trophy! You now have " + user.getTrophyAmount() + " trophies!");
+                        reactingCounter.addTrophy(number);
+                        CountingBot.write(message, "Congratulations " + reactingCounter.getName() + "! You have earned the " + number + "-trophy! You now have " + reactingCounter.getTrophyAmount() + " trophies!");
                     }
                     return true;
                 } else {
