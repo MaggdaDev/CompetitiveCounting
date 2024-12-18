@@ -22,6 +22,8 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         private final ArrayList<BiFunction<Message, User, Boolean>> onTrophyReact = new ArrayList<>();
 
         private final ArrayList<TriFunction<Message, User, Integer, Boolean>> onNumberReact = new ArrayList<>();
+
+        private final ArrayList<TriFunction<Message, User, ReactionEmoji.Unicode, Boolean>> onAnyReact = new ArrayList<>();
         public EmojiReactHandler(String channelIdAsString) {
             this.channelIdAsString = channelIdAsString;
         }
@@ -39,7 +41,7 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
             if(user == null || user.isBot()) {
                 return;
             }
-
+            onAnyReact.removeIf(func -> func.apply(event.getMessage().block(), user, emoji));
             if (emoji.equals(TROPHY_UNICODE)) {
                 onTrophyReact.removeIf(func -> func.apply(event.getMessage().block(), user));   // Call all functions and remove them if they return true
             } else if (Arrays.stream(Emojis.ALL_NUMBER_EMOJIS).filter(e -> e.equals(emoji)).count() > 0) {
@@ -58,7 +60,11 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
             onNumberReact.add(consumer);
         }
 
-        @FunctionalInterface
+    public void addOnAnyReact(TriFunction<Message, User, ReactionEmoji.Unicode, Boolean> consumer) {
+            onAnyReact.add(consumer);
+    }
+
+    @FunctionalInterface
         public interface TriFunction<T, U, V, R> {
             R apply(T t, U u, V v);
         }

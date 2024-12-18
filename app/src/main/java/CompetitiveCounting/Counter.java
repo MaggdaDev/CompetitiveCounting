@@ -149,8 +149,8 @@ public class Counter {
     }
 
     public void unlockBase(Message message, String base) {
-        if (!BaseSystems.isNumInSystem(base, 10) || Integer.parseInt(base) > 1000 || Integer.parseInt(base) < 1) {
-            CountingBot.write(message, "Invalid base! (note: base can not exceed 1000.)");
+        if (!BaseSystems.isNumInSystem(base, 10) || Integer.parseInt(base) > BaseSystems.MAX_BASE || Integer.parseInt(base) < 1) {
+            CountingBot.write(message, "Invalid base! (note: base can not exceed 72.)");
             return;
         }
         int system = Integer.parseInt(base);

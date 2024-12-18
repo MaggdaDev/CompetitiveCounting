@@ -6,7 +6,6 @@
 package CompetitiveCounting;
 
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
-import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
@@ -22,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author DavidPrivat
@@ -141,7 +139,7 @@ public class CountingBot {
         if (author.getOwnedTrophies().length == 0) {
             msg.append("You don't own any trophies. Keep counting large numbers, and keep an eye out for numbers with a trophy emoji on them!");
         } else if (author.getOwnedTrophies().length == 1) {
-            String specialTrophyMessage = getSpecialTrophyMessage(author.getOwnedTrophies()[0]);
+            String specialTrophyMessage = TrophyHandler.getTrophyDescription(author.getOwnedTrophies()[0]);
             if (!specialTrophyMessage.isEmpty()) {
                 msg.append("You own one trophy:\n").append(specialTrophyMessage);
             } else {
@@ -154,7 +152,7 @@ public class CountingBot {
             int streakStartIndex;
             for (int i = 0; i < ownedTrophies.length; i++) {
                 // special trophies
-                String specialTrophyMessage = getSpecialTrophyMessage(ownedTrophies[i]);
+                String specialTrophyMessage = TrophyHandler.getTrophyDescription(ownedTrophies[i]);
                 if (!specialTrophyMessage.isEmpty()) {
                     msg.append("\n").append(specialTrophyMessage);
                     continue;
@@ -183,17 +181,7 @@ public class CountingBot {
         write(message, msg.toString());
     }
 
-    private String getSpecialTrophyMessage(int trophy) {
-        String startText = trophy + " trophy: ";
-        switch (trophy) {
-            case -753:
-                return startText + "_Relic of Prestige from the Fallen Empire_";
-            case -2147483648:
-                return startText + "_To Infinity!_";
-            default:
-                return "";
-        }
-    }
+
 
     private void factorInfo(Message message) {
         String channelId = message.getChannelId().asString();
@@ -554,6 +542,7 @@ public class CountingBot {
         }
         if (streaks.containsKey(channelKey)) {
             CountingStreak streak = streaks.get(channelKey);
+            checkIllegalCharacters(message, content, streak);
             if ((!BaseSystems.isNumInSystem(content, streak.getBase()))) {
                 return;
             }
@@ -579,6 +568,32 @@ public class CountingBot {
             streakDeleteRunnable.run();
         }
 
+    }
+
+    private void checkIllegalCharacters(Message message, String content, CountingStreak streak) {
+        int amountOfNeitherDangerousCharactersNorNumbers = 0;
+        int amountOfDangerousCharacters = 0;
+        int amountOfNumbers = 0;
+        for(char c: content.toCharArray()) {
+            if(BaseSystems.isNumInSystem(String.valueOf(c), streak.getBase())) {
+                amountOfNumbers++;
+                continue;
+            }
+            if(c == 'O') {
+                amountOfDangerousCharacters++;
+                continue;
+            }
+            int cInt = (int)c;
+            if(cInt < 33 || ( cInt > 126 && cInt < 161) || cInt == 173 || cInt > 191) {
+                amountOfDangerousCharacters++;
+                continue;
+            }
+            amountOfNeitherDangerousCharactersNorNumbers++;
+        }
+        if(amountOfNumbers != 0 && amountOfNeitherDangerousCharactersNorNumbers == 0 && amountOfDangerousCharacters > 0) {
+            message.addReaction(Emojis.WARNING).subscribe();
+            streak.getTrophyHandler().considerSpawningIllegalCharacterTrophy(message, streak.getLastNum());
+        }
     }
 
     public void removeStreak(String streakId) {

@@ -9,6 +9,8 @@ package CompetitiveCounting;
  * @author DavidPrivat
  */
 public class BaseSystems {
+
+    public static int MAX_BASE = 72;
     
     public static boolean isNumInSystem(String num, int base) {
         for(int i = 0; i < num.length(); i++) {

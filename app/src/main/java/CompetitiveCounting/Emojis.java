@@ -9,7 +9,8 @@ public interface Emojis {
             THREE = ReactionEmoji.unicode("\u0033\u20E3"),
             BOLT = ReactionEmoji.unicode("\u26A1"),
             TROPHY = ReactionEmoji.unicode("\uD83C\uDFC6"),
-            GOLDEN_KEKMARK = ReactionEmoji.of(Long.parseLong("1309598712896557196"), "goldenkekmark", false);
+            GOLDEN_KEKMARK = ReactionEmoji.of(Long.parseLong("1309598712896557196"), "goldenkekmark", false),
+            WARNING = ReactionEmoji.unicode("\u26A0");
 
     ReactionEmoji[] ALL_NUMBER_EMOJIS = {
             ReactionEmoji.unicode("\u0030\u20E3"),

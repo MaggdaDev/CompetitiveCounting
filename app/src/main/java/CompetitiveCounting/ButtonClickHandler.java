@@ -21,11 +21,16 @@ public class ButtonClickHandler extends BaseSubscriber<ButtonInteractionEvent>{
     
     @Override
     public void hookOnNext(ButtonInteractionEvent event) {
-        String customId = event.getCustomId();
-        String userId = event.getInteraction().getUser().getId().asString();
-        Counter counter = countingBot.getCounter(userId);
-        if(counter != null) {
-            event.reply(counter.buttonClick(customId, event.getMessage().get())).subscribe();
+        try {
+            String customId = event.getCustomId();
+            String userId = event.getInteraction().getUser().getId().asString();
+            Counter counter = countingBot.getCounter(userId);
+            if (counter != null) {
+                event.reply(counter.buttonClick(customId, event.getMessage().get())).subscribe();
+            }
+        } catch (Exception ex) {
+            System.err.println("Error in ButtonClickHandler:");
+            ex.printStackTrace();
         }
     }
 }

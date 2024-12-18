@@ -23,7 +23,7 @@ public class Contract {
     public transient String requested_remove_id = null;
     public transient long remove_request_time = 0;
 
-    public final static long REMOVE_REQUEST_TIMEOUT = 1000 * 60 * 60 * 24; // 24 hours
+    public final static long REMOVE_REQUEST_TIMEOUT = 1000 * 60 * 60; // 1h
 
     public final transient ArrayList<String> expired_remove_request_ids = new ArrayList<>();
 

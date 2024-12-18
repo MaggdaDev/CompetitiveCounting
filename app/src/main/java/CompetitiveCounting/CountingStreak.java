@@ -89,7 +89,7 @@ public class CountingStreak {
                 asyncStreakDelete.run();
             }, () -> {  // onCaptureSucceeded
                 captureBlockedUsers.remove(user.getId());
-            })) {   // Capture was raised
+            }, trophyHandler)) {   // Capture was raised
                 captureBlockedUsers.add(user.getId());
             }
 
@@ -609,5 +609,9 @@ public class CountingStreak {
             timeLimitRule.cancel();
         }
         emojiReactSubscription.dispose();
+    }
+
+    public TrophyHandler getTrophyHandler() {
+        return trophyHandler;
     }
 }
