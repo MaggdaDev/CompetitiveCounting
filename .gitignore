@@ -8,4 +8,4 @@ build/
 .idea/
 
 # database stuff
-.src/
+src/
