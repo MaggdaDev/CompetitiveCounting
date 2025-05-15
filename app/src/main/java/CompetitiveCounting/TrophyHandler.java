@@ -1,8 +1,10 @@
 package CompetitiveCounting;
 
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageEditSpec;
 import discord4j.discordjson.possible.Possible;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -67,12 +69,16 @@ public class TrophyHandler {
         });
     }
 
-    public void spawnMooseTrophy(Message message, String originalContent) {
+    public void spawnMooseTrophy(Message message, String originalContent, ReactionEmoji uEmoji) {
         String newContent = originalContent.replaceAll("(?i)mouse", "moose");
-        message.edit(MessageEditSpec.create().withContent(Possible.of(Optional.of(newContent)))).doOnSuccess((Message msg) -> {
-            CountingBot.write(msg, "https://media1.tenor.com/m/ZsBt_qqcXtcAAAAd/moose-avegerman.gif");
-            spawnTrophy(msg, -2019);
-        }).subscribe();
+        message.removeReactions(uEmoji)
+                .then(message.edit(MessageEditSpec.create().withContent(Possible.of(Optional.of(newContent)))))
+                .flatMap((Message msg) -> {
+                    CountingBot.write(msg, "https://media1.tenor.com/m/ZsBt_qqcXtcAAAAd/moose-avegerman.gif");
+                    spawnTrophy(msg, -2019);
+                    return Mono.empty();
+                }).subscribe();
+
     }
 
     public static String getTrophyDescription(int trophy) {
@@ -102,7 +108,6 @@ public class TrophyHandler {
     private boolean randBool(double prop) {
         return Math.random() < prop;
     }
-
 
 
 }
