@@ -124,7 +124,9 @@ public class CountingStreak {
         add.addStreakToCurrAdd(this);
         lastCaptureTimes.put(add.getId(), System.currentTimeMillis());
         if (!add.isBaseUnlocked(currentBase)) {
-            CountingBot.write(message, add.getPing() + " you haven't unlocked this base yet, so you will only get " + Counter.SYSTEM_NOT_OWNED_FACT + "x score");
+            CountingBot.write(message, add.getPing() + " you haven't unlocked this base yet, so you will not get the additional " + Counter.SYSTEM_OWNED_FACT + "x bonus.");
+        } else if (currentBase != 10) {
+            CountingBot.write(message, "Wow " + add.getPing() + ", it seems like you own this streak's base and are getting a " + Counter.SYSTEM_OWNED_FACT + "x bonus!"); // wow!
         }
     }
 

@@ -16,7 +16,8 @@ import java.util.stream.Stream;
 public class Counter {
 
     public final static int PRESTIGE_WORTH = 1000000;
-    public final static double SYSTEM_NOT_OWNED_FACT = 0.5;
+//    public final static double SYSTEM_NOT_OWNED_FACT = 1;
+    public final static double SYSTEM_OWNED_FACT = 1.5;
     public final static double MULT_PLUS_PER_PRESTIGE = 0.2;
 
     public final static double TROPHY_BONUS_MULT = 2;
@@ -214,11 +215,7 @@ public class Counter {
     }
 
     public double getFactFromSys(int base) {
-        if (isBaseUnlocked(base)) {
-            return 1.0 + MULT_PLUS_PER_PRESTIGE * prestiges;
-        } else {
-            return SYSTEM_NOT_OWNED_FACT;
-        }
+        return (1.0 + MULT_PLUS_PER_PRESTIGE * prestiges) * ((isBaseUnlocked(base) && base != 10) ? SYSTEM_OWNED_FACT : 1.0);
     }
 
     public boolean isUnlocked(Unlockable unlockable) {
