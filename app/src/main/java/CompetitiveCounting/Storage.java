@@ -27,8 +27,8 @@ import java.util.Map;
  */
 public class Storage {
 
-    private final static String COUNTERS_PATH = "./src/data/counters.txt";
-    private final static String CAPTURES_PATH = "./src/data/captures.txt";
+    private final static String COUNTERS_PATH = "./src/data/counters.json";
+    private final static String CAPTURES_PATH = "./src/data/captures.json";
     public final static String CONFIG_PATH = "./src/data/config.txt";
 
     private HashMap<String,Counter> counters;
@@ -91,6 +91,9 @@ public class Storage {
             return captures;
         }
         String asString = loadJson(CAPTURES_PATH);
+        if (asString == null || asString.isEmpty()) {
+            throw new RuntimeException("Captures not found");
+        }
         Gson gson = new Gson();
         Captures capturesObjects = gson.fromJson(asString, (new TypeToken<Captures>(){}).getType());
         captures = capturesObjects.captures;
