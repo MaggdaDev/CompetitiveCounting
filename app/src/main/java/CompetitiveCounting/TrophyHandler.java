@@ -41,11 +41,12 @@ public class TrophyHandler {
         reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
             if (messageReactedTo.getId().equals(message.getId())) {
                 String reactingUserId = reactingUser.getId().asString();
-                if (!CountingBot.getInstance().isCounter(reactingUserId)) {
+                if (!CountingBot.getInstance().isCounter(message.getGuildId().get().asString(), reactingUserId)) {
                     CountingBot.write(message, "You cannot claim trophies without having counted at least once, " + reactingUser.getUsername() + "!");
                     return false;
                 }
-                Counter reactingCounter = CountingBot.getInstance().getCounter(reactingUserId);
+                String guildId = message.getGuildId().get().asString();
+                Counter reactingCounter = CountingBot.getInstance().getCounter(guildId, reactingUserId);
                 if (reactingCounter.hasTrophy(number)) {
                     if (number > 0) {
                         reactingCounter.addTrophyShard();
@@ -102,7 +103,7 @@ public class TrophyHandler {
 
 
     private double trophyChanceFromNumber(double number) {
-        return 1.0 / (200.0 + 600.0 * Math.exp(-0.0045 * number) + 225.0 * Math.exp(-0.0015 * number));
+        return 1.0 / (200.0 + 600.0 * Math.exp(-0.045 * number) + 225.0 * Math.exp(-0.0015 * number));
     }
 
     private boolean randBool(double prop) {

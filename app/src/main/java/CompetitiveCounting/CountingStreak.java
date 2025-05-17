@@ -32,10 +32,10 @@ public class CountingStreak {
     private SlowModeRule slowModeRule;
     private TimeLimitRule timeLimitRule;
     private boolean timeLimitNewlyAdded = false;
-    private int currDivPrize = 50, divPrizeAdd = 50;
-    private int currDigPrize = 100, digPrizeFact = 2, digPrizeLowBaseFact = 4;
-    private int currRootPrize = 150;
-    private int currTimePrize = 250, timePrizeFact = 2;
+    private int currDivPrice = 50, divPriceAdd = 50;
+    private int currDigPrice = 100, digPriceFact = 2, digPriceLowBaseFact = 4;
+    private int currRootPrice = 150;
+    private int currTimePrice = 250, timePriceFact = 2;
     private int currentBase;
 
     private final TrophyHandler trophyHandler;
@@ -188,7 +188,7 @@ public class CountingStreak {
                 counter.succeed(this, message);
             }
         });
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().save();
     }
 
     private Rule getWinnerRule(int number) {
@@ -226,8 +226,8 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currDivPrize * author.getAddruleDiscountFactor() > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDivPrize  * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        if (currDivPrice * author.getAddruleDiscountFactor() > author.getScore()) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDivPrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
             return false;
         }
 
@@ -239,8 +239,8 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currDigPrize * author.getAddruleDiscountFactor() > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDigPrize  * author.getAddruleDiscountFactor()) + " money to add this new rule.");
+        if (currDigPrice * author.getAddruleDiscountFactor() > author.getScore()) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDigPrice * author.getAddruleDiscountFactor()) + " money to add this new rule.");
             return false;
         }
 
@@ -252,8 +252,8 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currRootPrize * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currRootPrize * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        if (currRootPrice * author.getAddruleDiscountFactor()  > author.getScore()) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currRootPrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
             return false;
         }
 
@@ -265,8 +265,8 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currTimePrize * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrize * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        if (currTimePrice * author.getAddruleDiscountFactor()  > author.getScore()) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
             return false;
         }
 
@@ -279,8 +279,8 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currTimePrize * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrize * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        if (currTimePrice * author.getAddruleDiscountFactor()  > author.getScore()) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
             return false;
         }
         return true;
@@ -290,27 +290,27 @@ public class CountingStreak {
         String answer = "You can choose to add the following rules:\n";
         boolean anyRule = false;
         if (timeLimitRule != null || slowModeRule != null) {
-            answer += "\n'notime': Remove the current slowmode/timelimit. " + createAddruleCostString(author, currTimePrize);
+            answer += "\n'notime': Remove the current slowmode/timelimit. " + createAddruleCostString(author, currTimePrice);
             anyRule = true;
         }
         if (author.isUnlocked(Unlockable.DIV_RULE)) {
-            answer += "\n'div': Numbers with the divisor n have to be skipped. " + createAddruleCostString(author, currDivPrize);
+            answer += "\n'div': Numbers with the divisor n have to be skipped. " + createAddruleCostString(author, currDivPrice);
             anyRule = true;
         }
         if (author.isUnlocked(Unlockable.ROOT_RULE)) {
-            answer += "\n'root': Numbers which have an integer nth root must be skipped. " + createAddruleCostString(author, currRootPrize);
+            answer += "\n'root': Numbers which have an integer nth root must be skipped. " + createAddruleCostString(author, currRootPrice);
             anyRule = true;
         }
         if (author.isUnlocked(Unlockable.DIGSUM_RULE)) {
-            answer += "\n'digsum': Numbers with digsum n must be skipped. " + createAddruleCostString(author, currDigPrize);
+            answer += "\n'digsum': Numbers with digsum n must be skipped. " + createAddruleCostString(author, currDigPrice);
             anyRule = true;
         }
         if (author.isUnlocked(Unlockable.SLOWMODE_RULE)) {
-            answer += "\n'slowmode': A certain time n has to pass between counts. " + createAddruleCostString(author, currTimePrize);
+            answer += "\n'slowmode': A certain time n has to pass between counts. " + createAddruleCostString(author, currTimePrice);
             anyRule = true;
         }
         if (author.isUnlocked(Unlockable.TIMELIMIT_RULE)) {
-            answer += "\n'timelimit': The next number must have been counted before 10s have passed. " + createAddruleCostString(author, currTimePrize);
+            answer += "\n'timelimit': The next number must have been counted before 10s have passed. " + createAddruleCostString(author, currTimePrice);
             anyRule = true;
         }
         answer += "\n\n syntax: '~addrule [name] ([argument])";
@@ -332,7 +332,8 @@ public class CountingStreak {
 
     public void addRule(Message message, String ownerId) {
         if (!counters.containsKey(ownerId)) {
-            addCounter(CountingBot.getInstance().getCounter(ownerId), message);
+            String guildId = message.getGuildId().get().asString();
+            addCounter(CountingBot.getInstance().getCounter(guildId, ownerId), message);
         }
         String content = message.getContent();
         String[] splitted = content.split(" ");
@@ -379,9 +380,9 @@ public class CountingStreak {
                 }
                 NumberRule.DividerRule add = new NumberRule.DividerRule(ownerId, divInDecimal, currentBase);
                 addNumberRule(add);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currDivPrize, add.toString()));
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currDivPrize));
-                currDivPrize += divPrizeAdd;
+                CountingBot.write(message, createYouPaidToAddRuleString(author, currDivPrice, add.toString()));
+                author.subtractScore((int) (author.getAddruleDiscountFactor() * currDivPrice));
+                currDivPrice += divPriceAdd;
                 break;
             case "digsum":
                 if (!canBuyDigSumRule(author, message)) {
@@ -409,14 +410,14 @@ public class CountingStreak {
                 }
                 DigSumRule addDigSum = new DigSumRule(ownerId, digsumInDecimal, currentBase);
                 addNumberRule(addDigSum);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currDigPrize, addDigSum.toString()));
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currDigPrize));
+                CountingBot.write(message, createYouPaidToAddRuleString(author, currDigPrice, addDigSum.toString()));
+                author.subtractScore((int) (author.getAddruleDiscountFactor() * currDigPrice));
                 if(currentBase == 1) {
-                    currDigPrize ++;
+                    currDigPrice++;
                 } else if(currentBase < 5) {
-                    currDigPrize *= digPrizeLowBaseFact;
+                    currDigPrice *= digPriceLowBaseFact;
                 } else {
-                    currDigPrize *= digPrizeFact;
+                    currDigPrice *= digPriceFact;
                 }
                 break;
             case "root":
@@ -445,8 +446,8 @@ public class CountingStreak {
                 }
                 RootRule addRootRule = new RootRule(ownerId, rootInDecimal, currentBase);
                 addNumberRule(addRootRule);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currRootPrize, addRootRule.toString()));
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currRootPrize));
+                CountingBot.write(message, createYouPaidToAddRuleString(author, currRootPrice, addRootRule.toString()));
+                author.subtractScore((int) (author.getAddruleDiscountFactor() * currRootPrice));
                 break;
             case "slowmode":
                 if (!canBuySlowmodeRule(author, message)) {
@@ -468,13 +469,13 @@ public class CountingStreak {
                     return;
                 }
                 slowModeRule = new SlowModeRule(slow, ownerId);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currTimePrize, slowModeRule.toString()));
+                CountingBot.write(message, createYouPaidToAddRuleString(author, currTimePrice, slowModeRule.toString()));
                 if (timeLimitRule != null) {
                     CountingBot.write(message, "This rule is being replaced: " + timeLimitRule.toString());
                     timeLimitRule = null;
                 }
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrize));
-                currTimePrize *= timePrizeFact;
+                author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
+                currTimePrice *= timePriceFact;
                 break;
             case "timelimit":
                 if (!canBuyTimelimitRule(author, message)) {
@@ -483,31 +484,31 @@ public class CountingStreak {
                 this.timeLimitNewlyAdded = true;
                 timeLimitRule = new TimeLimitRule(ownerId, this);
 
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currTimePrize, timeLimitRule.toString()));
+                CountingBot.write(message, createYouPaidToAddRuleString(author, currTimePrice, timeLimitRule.toString()));
                 if (slowModeRule != null) {
                     CountingBot.write(message, "This rule is being replaced: " + slowModeRule.toString());
                     slowModeRule = null;
                 }
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrize));
-                currTimePrize *= timePrizeFact;
+                author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
+                currTimePrice *= timePriceFact;
                 break;
             case "notime":
-                if (author.getScore() < currTimePrize) {
-                    CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + currTimePrize + " money to remove the current time rule.");
+                if (author.getScore() < currTimePrice) {
+                    CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + currTimePrice + " money to remove the current time rule.");
                     break;
                 }
                 if (slowModeRule != null) {
                     slowModeRule.stop();
-                    CountingBot.write(message, "Removed the rule " + slowModeRule.toString() + " for " + currTimePrize + " money.");
+                    CountingBot.write(message, "Removed the rule " + slowModeRule.toString() + " for " + currTimePrice + " money.");
                     slowModeRule = null;
-                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrize));
-                    currTimePrize *= timePrizeFact;
+                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
+                    currTimePrice *= timePriceFact;
                 } else if (timeLimitRule != null) {
                     timeLimitRule.cancel();
-                    CountingBot.write(message, "Removed the rule " + timeLimitRule.toString() + " for " + currTimePrize + " money.");
+                    CountingBot.write(message, "Removed the rule " + timeLimitRule.toString() + " for " + currTimePrice + " money.");
                     timeLimitRule = null;
-                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrize));
-                    currTimePrize *= timePrizeFact;
+                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
+                    currTimePrice *= timePriceFact;
                 } else {
                     CountingBot.write(message, "No active time rule to remove!");
                 }

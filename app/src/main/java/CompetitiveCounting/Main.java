@@ -34,18 +34,12 @@ public class Main {
     private static CountingBot bot;
 
     public static void main(String[] args) {
-       //String subj = "~tradeoffer c";
-       //System.out.println(subj + " valid?" + String.valueOf(TradeOfferChecker.isValid(subj, null)));
-        
-        
-        // test end
         System.out.println(TimeHandler.nowInEpochDay());
         GatewayDiscordClient client;
         try {
             
             String sec = Storage.loadConfig();
             sec = sec.replaceAll("\n", "");
-            System.out.println(sec);
             client = DiscordClientBuilder.create(sec)
                 .build()
                 .login()

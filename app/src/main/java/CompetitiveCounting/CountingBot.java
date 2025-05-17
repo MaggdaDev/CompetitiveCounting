@@ -6,6 +6,8 @@
 package CompetitiveCounting;
 
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
+import CompetitiveCounting.bank.BankCommandHandler;
+import CompetitiveCounting.bank.BankTransactionsHandler;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
@@ -29,8 +31,11 @@ public class CountingBot {
 
     private String commandIndicator = "~";
     private Storage storage;
-    private HashMap<String, Counter> counters;
+    private HashMap<String, CountingGuild> guilds;
     private HashMap<String, CountingStreak> streaks;
+
+    private final BankCommandHandler bankMessages;
+    private final BankTransactionsHandler bankTransitionsHandler;
 
     private static CountingBot instance;
 
@@ -40,17 +45,18 @@ public class CountingBot {
     public CountingBot(GatewayDiscordClient client) {
         storage = new Storage();
         this.client = client;
-        counters = storage.loadCounters();
-        System.out.println(counters);
+        guilds = storage.loadGuilds();
+        System.out.println("Counters loaded!");
         streaks = new HashMap<>();
         instance = this;
+        bankTransitionsHandler = new BankTransactionsHandler(guilds);
+        bankMessages = new BankCommandHandler(bankTransitionsHandler);
     }
 
     public void message(Message message) {
         String content = message.getContent();
-        addCounterOptionally(message.getAuthor().get());
+        addGuildOrCounterIfNotYetRegistered(message);
         checkCommands(message);
-
         count(message);
 
     }
@@ -59,48 +65,56 @@ public class CountingBot {
         String content = message.getContent();
         try {
             if (content.startsWith(commandIndicator)) {
-                addCounterOptionally(message.getAuthor().get());
-                if (content.startsWith(commandIndicator + "help")) {
-                    message.getChannel().block().createMessage("tasukete kudasai!\nhttp://hyperlexus.net/competitivecountinghelp.html").subscribe();
-                } else if (content.startsWith(commandIndicator + "scoreboard") || content.equals(commandIndicator + "top")) {
-                    message.getChannel().block().createMessage(scoreboard()).subscribe();
-                } else if (content.startsWith(commandIndicator + "score")) {
+                addGuildOrCounterIfNotYetRegistered(message);
+                String commandWithoutIndicator = content.substring(commandIndicator.length()).trim(); // fixed 30 iterations of 'commandIndicator + "command"'
+
+                if (commandWithoutIndicator.startsWith("help")) {
+                    write(message, "tasukete kudasai!\nhttp://hyperlexus.net/old/competitivecountinghelp.html");
+                } else if (commandWithoutIndicator.startsWith("scoreboard") || commandWithoutIndicator.equals("top")) {
+                    write(message, scoreboard());
+                } else if (commandWithoutIndicator.startsWith("score")) {
                     this.scoreInfo(message);
-                } else if (content.startsWith(commandIndicator + "num")) {
+                } else if (commandWithoutIndicator.startsWith("num")) {
                     String channelId = message.getChannelId().asString();
                     if (streaks.containsKey(channelId)) {
-                        message.getChannel().block().createMessage("The last number was " + (streaks.get(channelId).getLastNum())).subscribe();
+                        write(message, "The last number was " + (streaks.get(channelId).getLastNum()));
                     } else {
-                        message.getChannel().block().createMessage("No current streak! You can start with 1.").subscribe();
+                        write(message, "No current streak! You can start with 1.");
                     }
-                } else if (content.startsWith(commandIndicator + "addrule")) {
+                } else if (commandWithoutIndicator.startsWith("addrule")) {
                     addRule(message);
-                } else if (content.startsWith(commandIndicator + "rules")) {
+                } else if (commandWithoutIndicator.startsWith("rules")) {
                     rules(message);
-                } else if (content.startsWith(commandIndicator + "unlock")) {
+                } else if (commandWithoutIndicator.startsWith("unlock")) {
                     unlock(message);
-                } else if (content.equals(commandIndicator + "prestige")) {
+                } else if (commandWithoutIndicator.equals("prestige")) {
                     prestige(message);
-                } else if (content.startsWith(commandIndicator + "bonus")) {
+                } else if (commandWithoutIndicator.startsWith("bonus")) {
                     bonus(message);
-                } else if (content.startsWith(commandIndicator + "bases")) {
+                } else if (commandWithoutIndicator.startsWith("bases")) {
                     basesOwnedInfo(message);
-                } else if (content.startsWith(commandIndicator + "base")) {
+                } else if (commandWithoutIndicator.startsWith("base")) {
                     baseInfo(message);
-                } else if (content.startsWith(commandIndicator + "tradeoffer")) {
+                } else if (commandWithoutIndicator.startsWith("tradeoffer")) {
                     tradeOffer(message);
-                } else if (content.startsWith(commandIndicator + "contracts")) {
+                } else if (commandWithoutIndicator.startsWith("contracts")) {
                     contractInfo(message);
-                } else if (content.startsWith(commandIndicator + "removecontract")) {
+                } else if (commandWithoutIndicator.startsWith("removecontract")) {
                     removeContract(message);
-                } else if (content.startsWith(commandIndicator + "person") || content.startsWith(commandIndicator + "counter") || content.startsWith(commandIndicator + "last")) {
+                } else if (commandWithoutIndicator.startsWith("person") || commandWithoutIndicator.startsWith("counter") || commandWithoutIndicator.startsWith("last")) {
                     personInfo(message);
-                } else if (content.startsWith(commandIndicator + "fact") || content.startsWith(commandIndicator + "mult")) {
+                } else if (commandWithoutIndicator.startsWith("fact") || commandWithoutIndicator.startsWith("mult")) {
                     factorInfo(message);
-                } else if (content.startsWith(commandIndicator + "trophies") || content.startsWith(commandIndicator + "trophy")) {
+                } else if (commandWithoutIndicator.startsWith("trophies") || commandWithoutIndicator.startsWith("trophy")) {
                     trophiesInfo(message);
-                } else if (content.startsWith(commandIndicator + "shunlock")) {
+                } else if (commandWithoutIndicator.startsWith("shunlock")) {
                     shunlock(message);
+                } else if (commandWithoutIndicator.startsWith("createbank")) {
+                    createBank(message);
+                } else if (commandWithoutIndicator.startsWith("bank ")) {
+                    if (bankMessages.handleBankCommand(message)) {  // Returns true iff json should be updated
+                        save();
+                    }
                 }
             }
         } catch (Exception e) {
@@ -108,12 +122,28 @@ public class CountingBot {
         }
     }
 
+    private void createBank(Message message) { // TEMP todo remove replace by croc gucci handbag
+        if (message.getGuildId().isEmpty()) {
+            write(message, "You can only create a bank on a server.");
+            return;
+        }
+        String guildId = message.getGuildId().get().asString();
+        if (guilds.containsKey(guildId)) {
+            if (guilds.get(guildId).getBank().isUnlocked()) {
+                write(message, "This server already has a bank.");
+                return;
+            }
+        }
+        guilds.get(guildId).getBank().unlock();
+        write(message, "created bank. note that this is for debugging only so if you ever encounter this maggda and alex are three niggers");
+    }
+
     private void shunlock(Message message) {
         write(message, "Coming soon...");
     }
 
     private void basesOwnedInfo(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         if (author.getUnlockedBases().length == 0) {
             if (author.getPrestiges() == 0) {
                 write(message, "How do you know about bases? You don't even have any prestige points yet!");
@@ -133,7 +163,7 @@ public class CountingBot {
     }
 
     private void trophiesInfo(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         StringBuilder msg = new StringBuilder();
 
         if (author.getOwnedTrophies().length == 0) {
@@ -182,10 +212,9 @@ public class CountingBot {
     }
 
 
-
     private void factorInfo(Message message) {
         String channelId = message.getChannelId().asString();
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         if (streaks.containsKey(channelId)) {
             CountingStreak streak = streaks.get(channelId);
             String msg = "Your collected score in this streak gets a " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x bonus multiplier.";
@@ -197,7 +226,7 @@ public class CountingBot {
 
     private void personInfo(Message message) {
         String channelId = message.getChannelId().asString();
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         if (streaks.containsKey(channelId)) {
             Counter lastCounter = streaks.get(channelId).getLastCounter();
             if (lastCounter == null) {
@@ -216,79 +245,81 @@ public class CountingBot {
     }
 
     private void contractInfo(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         author.contractInfo(message);
     }
 
     private void removeContract(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
-        if(author.getContracts().size() == 0 && author.getIncomingContracts().size() == 0) {
+        String guildId = message.getGuildId().get().asString();
+        Counter author = getCounterFromMessage(message);
+        if (author.getContracts().size() == 0 && author.getIncomingContracts().size() == 0) {
             CountingBot.write(message, "You don't have any contracts.");
             return;
         }
-        if(message.getContent().split(" ").length != 2 && message.getContent().split(" ").length != 3) {
+        if (message.getContent().split(" ").length != 2 && message.getContent().split(" ").length != 3) {
             CountingBot.write(message, "Usage: ~removecontract [@OtherCounter] _[in case of multiple contracts with that person: contract number]_");
             return;
         }
         int contractNumber = -1;
-        if(message.getContent().split(" ").length == 3) {
-            if(!Util.isNumber(message.getContent().split(" ")[2]) || Integer.parseInt(message.getContent().split(" ")[2]) < 0) {
+        if (message.getContent().split(" ").length == 3) {
+            if (!Util.isNumber(message.getContent().split(" ")[2]) || Integer.parseInt(message.getContent().split(" ")[2]) < 0) {
                 CountingBot.write(message, "Please provide an integer number greater or equal to 0 to specify the contract.");
                 return;
             }
             contractNumber = Integer.parseInt(message.getContent().split(" ")[2]);
         }
         String otherCounterId = Util.pingToUserId(message.getContent().split(" ")[1]);
-        if(author.getId().equals(otherCounterId)) {
+        if (author.getId().equals(otherCounterId)) {
             CountingBot.write(message, "You can't remove a contract with yourself.");
             return;
         }
 
         List<Contract> contractsMatchingToGivenId = author.streamIncomingAndOutgoingContracts().filter(
                 contract -> contract.toId.equals(otherCounterId) || (contract.owner != null && contract.owner.getId().equals(otherCounterId))).collect(Collectors.toList());
-        if(contractsMatchingToGivenId.isEmpty()) {
-            CountingBot.write(message, "You don't have a contracts with this person.");
+        if (contractsMatchingToGivenId.isEmpty()) {
+            CountingBot.write(message, "You don't have any contracts with this person.");
             return;
-        } else if(contractsMatchingToGivenId.size() > 1) {
-            if(contractNumber == -1) {
+        } else if (contractsMatchingToGivenId.size() > 1) {
+            if (contractNumber == -1) {
                 StringBuilder content = new StringBuilder("Please specify the contract you want to remove by providing the corresponding number after the user ping. " +
                         "You have the following contracts with this person:");
-                for(int i = 0; i < contractsMatchingToGivenId.size(); i++) {
+                for (int i = 0; i < contractsMatchingToGivenId.size(); i++) {
                     content.append("\n").append(i).append("): ").append(contractsMatchingToGivenId.get(i).toString());
                 }
                 CountingBot.write(message, content.toString());
                 return;
-            } else if(contractNumber >= contractsMatchingToGivenId.size()) {
+            } else if (contractNumber >= contractsMatchingToGivenId.size()) {
                 CountingBot.write(message, "This number does not match a contract.");
                 return;
             } else {
-                initiateRemoveContractButtonInteraction(message, author, this.getCounter(otherCounterId), contractsMatchingToGivenId.get(contractNumber));
+                initiateRemoveContractButtonInteraction(message, author, this.getCounter(guildId, otherCounterId), contractsMatchingToGivenId.get(contractNumber));
             }
         } else {
             Contract contract = contractsMatchingToGivenId.get(0);
-            initiateRemoveContractButtonInteraction(message, author, this.getCounter(otherCounterId), contract);
+            initiateRemoveContractButtonInteraction(message, author, this.getCounter(guildId, otherCounterId), contract);
         }
 
     }
 
     private void initiateRemoveContractButtonInteraction(Message message, Counter author, Counter requestedUser, Contract contractToRemove) {
-        if(contractToRemove.requested_remove_id != null && !contractToRemove.isRemoveRequestTimedOut()) {
+        if (contractToRemove.requested_remove_id != null && !contractToRemove.isRemoveRequestTimedOut()) {
             CountingBot.write(message, "This contract has already been requested to be removed. The request will expire in "
-                    +Math.round((float) (10.0 * (Contract.REMOVE_REQUEST_TIMEOUT + contractToRemove.remove_request_time - System.currentTimeMillis())) /(1000.0 * 60.0 * 60.0))/10.0 + "h.");
+                    + Math.round((float) (10.0 * (Contract.REMOVE_REQUEST_TIMEOUT + contractToRemove.remove_request_time - System.currentTimeMillis())) / (1000.0 * 60.0 * 60.0)) / 10.0 + "h.");
             return;
         }
         String content = Util.userIdToPing(requestedUser.getId()) + " do you accept to remove the following contract with " + author.getId() + "?\n"
                 + contractToRemove.toString();
         contractToRemove.requestRemove();
-        Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREIFX + contractToRemove.requested_remove_id, "Accept");
-        Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREIFX + contractToRemove.requested_remove_id, "Decline");
+        Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Accept");
+        Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Decline");
         MessageCreateSpec spec = MessageCreateSpec.builder().addComponent(ActionRow.of(List.of(declineButton, acceptButton))).build().withContent(content);
         message.getChannel().block().createMessage(spec).subscribe();
     }
 
     private void tradeOffer(Message message) {
         String content = message.getContent().toUpperCase();
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
+        String guildId = message.getGuildId().get().asString();
         if (TradeOfferChecker.isValid(message.getContent(), message)) {
             TradeOffer tradeOffer = new TradeOffer(content, author);
             if (tradeOffer.getRequestedUser() == null) {
@@ -299,7 +330,7 @@ public class CountingBot {
                 CountingBot.write(message, "You can't trade with yourself!");
                 return;
             }
-            Counter requested = this.getCounter(tradeOffer.getRequestedUserId());
+            Counter requested = this.getCounter(guildId, tradeOffer.getRequestedUserId());
             if (!tradeOffer.isTradeOfferValid(message)) {
                 return;
             }
@@ -326,7 +357,7 @@ public class CountingBot {
     }
 
     private void bonus(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         String[] splitted = message.getContent().split(" ");
         if (splitted.length != 3 || !Util.isNumber(splitted[2])) {
             bonusInfo(message);
@@ -340,13 +371,13 @@ public class CountingBot {
                 bonusInfo(message);
                 return;
         }
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().save();
     }
 
     private void bonusInfo(Message message) {
         String answ = "Earn money by getting your daily bonus.\nUsage: '~bonus [type] [count]'\n\nYour streaks so far:";
 
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         if (author.getBonusStreaks().length == 0) {
             for (BonusStreak.BonusCountType currType : BonusStreak.BonusCountType.values()) {
                 author.generateBonusStreak(currType);
@@ -378,7 +409,7 @@ public class CountingBot {
     }
 
     private void prestige(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         if (author.prestige(message)) {
             if (author.getPrestiges() < 2) {
                 CountingBot.write(message, "GG WP, you just prestiged! You get:\n "
@@ -396,7 +427,7 @@ public class CountingBot {
     }
 
     private void unlock(Message message) {
-        Counter author = this.getCounter(this.generateKeyFromUser(message.getAuthor().get()));
+        Counter author = getCounterFromMessage(message);
         String[] splitted = message.getContent().split(" ");
 
         if (author.isUnlocked(Unlockable.UNLOCK_COMMAND)) {
@@ -424,9 +455,8 @@ public class CountingBot {
 
             CountingBot.write(message, "Error: Invalid unlock!");
         } else {
-            if (author.getScore() < Unlockable.UNLOCK_COMMAND.getPrize()) {
+            if (author.getScore() < Unlockable.UNLOCK_COMMAND.getPrice()) {
                 this.unlockInfo(message, author);
-                return;
             } else {
                 author.unlock(Unlockable.UNLOCK_COMMAND, message);
             }
@@ -448,20 +478,20 @@ public class CountingBot {
                 }
                 if (currUnlockable == Unlockable.BASE_N) {
                     answ += "\n" + String.valueOf(currCount) + ".  '" + currUnlockable.getName() + "': " + currUnlockable.getDescription();
-                    answ += " (" + Math.abs(currUnlockable.getPrize()) + " prestige point(s))";
+                    answ += " (" + Math.abs(currUnlockable.getPrice()) + " prestige point(s))";
                     anyUnlockable = true;
                 } else if (!author.isUnlocked(currUnlockable)) {
                     if (currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName()) && ruleCostUpgradeAlreadyDisplayed) {
                         continue;
-                    } else if(currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName())) {
+                    } else if (currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName())) {
                         ruleCostUpgradeAlreadyDisplayed = true;
                     }
                     answ += "\n" + String.valueOf(currCount) + ".  '" + currUnlockable.getName() + "': " + currUnlockable.getDescription();
                     currCount++;
-                    if (currUnlockable.getPrize() > 0) {
-                        answ += " (" + currUnlockable.getPrize() + " money)";
+                    if (currUnlockable.getPrice() > 0) {
+                        answ += " (" + currUnlockable.getPrice() + " money)";
                     } else {
-                        answ += " (" + Math.abs(currUnlockable.getPrize()) + " prestige point(s))";
+                        answ += " (" + Math.abs(currUnlockable.getPrice()) + " prestige point(s))";
                     }
                     anyUnlockable = true;
                 }
@@ -473,7 +503,7 @@ public class CountingBot {
                 CountingBot.write(message, "You already own everything!");
             }
         } else {
-            CountingBot.write(message, "Unlock the unlock command in order to unlock rules. You have " + (author.getScore()) + " out of the needed " + Unlockable.UNLOCK_COMMAND.getPrize() + ".");
+            CountingBot.write(message, "Unlock the unlock command in order to unlock rules. You have " + (author.getScore()) + " out of the needed " + Unlockable.UNLOCK_COMMAND.getPrice() + ".");
         }
     }
 
@@ -481,7 +511,7 @@ public class CountingBot {
         String channelID = message.getChannelId().asString();
         if (streaks.containsKey(channelID)) {
             String content = message.getContent();
-            streaks.get(channelID).addRule(message, generateKeyFromUser(message.getAuthor().get()));
+            streaks.get(channelID).addRule(message, getUserIdFromDiscordUserObject(message.getAuthor().get()));
         } else {
             write(message, "You have to start a streak before you can add rules.");
         }
@@ -497,10 +527,16 @@ public class CountingBot {
     }
 
     private String scoreboard() {
+//        if (message.getGuildId().isEmpty()) {
+//            write(message, "This command can only be used in a server.");
+//            return "";
+//        }
+//        String guildId = message.getGuildId().get().asString();
         ArrayList<Counter> countersSorted = new ArrayList<>();
-        counters.forEach((String key, Counter counter) -> {
+        /*
+        guilds.get(getGuilds()).forEach((String key, Counter counter) -> {
             countersSorted.add(counter);
-        });
+        });*/ // Todo
         countersSorted.sort(new Comparator<Counter>() {
             @Override
             public int compare(Counter arg0, Counter arg1) {    // arg0 > arg1 => 1
@@ -536,17 +572,14 @@ public class CountingBot {
         String channelKey = message.getChannelId().asString();
         String content = message.getContent();
         boolean deleteStreak = false;
-        Counter author = null;
-        if (counters.containsKey(generateKeyFromUser(user))) {
-            author = counters.get(generateKeyFromUser(user));
-        }
+        Counter author = getCounterFromMessage(message);
         if (streaks.containsKey(channelKey)) {
             CountingStreak streak = streaks.get(channelKey);
             checkIllegalCharacters(message, content, streak);
             if ((!BaseSystems.isNumInSystem(content, streak.getBase()))) {
                 return;
             }
-            deleteStreak = !streak.count(message, counters.get(generateKeyFromUser(user)), content, streakDeleteRunnable);
+            deleteStreak = !streak.count(message, author, content, streakDeleteRunnable);
         } else {
             String[] splitted = content.split(" ");
             if (content.equals("1") || (splitted[0].equals("1") && splitted.length == 3 && splitted[1].equals("base") && Util.isNumber(splitted[2]))) {
@@ -561,7 +594,7 @@ public class CountingBot {
                         return;
                     }
                 }
-                deleteStreak = !streaks.get(channelKey).count(message, counters.get(generateKeyFromUser(user)), splitted[0], streakDeleteRunnable);
+                deleteStreak = !streaks.get(channelKey).count(message, author, splitted[0], streakDeleteRunnable);
             }
         }
         if (deleteStreak) {
@@ -574,23 +607,23 @@ public class CountingBot {
         int amountOfNeitherDangerousCharactersNorNumbers = 0;
         int amountOfDangerousCharacters = 0;
         int amountOfNumbers = 0;
-        for(char c: content.toCharArray()) {
-            if(BaseSystems.isNumInSystem(String.valueOf(c), streak.getBase())) {
+        for (char c : content.toCharArray()) {
+            if (BaseSystems.isNumInSystem(String.valueOf(c), streak.getBase())) {
                 amountOfNumbers++;
                 continue;
             }
-            if(c == 'O') {
+            if (c == 'O') {
                 amountOfDangerousCharacters++;
                 continue;
             }
-            int cInt = (int)c;
-            if(cInt < 33 || ( cInt > 126 && cInt < 161) || cInt == 173 || cInt > 191) {
+            int cInt = (int) c;
+            if (cInt < 33 || (cInt > 126 && cInt < 161) || cInt == 173 || cInt > 191) {
                 amountOfDangerousCharacters++;
                 continue;
             }
             amountOfNeitherDangerousCharactersNorNumbers++;
         }
-        if(amountOfNumbers != 0 && amountOfNeitherDangerousCharactersNorNumbers == 0 && amountOfDangerousCharacters > 0) {
+        if (amountOfNumbers != 0 && amountOfNeitherDangerousCharactersNorNumbers == 0 && amountOfDangerousCharacters > 0) {
             message.addReaction(Emojis.WARNING).subscribe();
             streak.getTrophyHandler().considerSpawningIllegalCharacterTrophy(message, streak.getLastNum());
         }
@@ -600,8 +633,8 @@ public class CountingBot {
         streaks.remove(streakId);
     }
 
-    public void safeCounters() {
-        storage.safeCounters(counters);
+    public void save() {
+        storage.save();
     }
 
     public static void write(Message message, String s, Consumer<? super Message> onMessageSent) {
@@ -613,14 +646,8 @@ public class CountingBot {
         });
     }
 
-    public static void sendDMTo(Counter counter) {
-        //client.getUserById(Snowflake.of(counter.getId())).getPrivateChannel().doOnNext((ChannelData channalData)->{
-        //    ((ChannelData)channelData).
-        //});
-    }
-
     private void scoreInfo(Message message) {
-        Counter counter = counters.get(generateKeyFromUser(message.getAuthor().get()));
+        Counter counter = getCounterFromMessage(message);
         String msg;
         if (counter.getPrestiges() == 0) {
             msg = "Your current score is " + counter.getPossibleTotal() + " money (" + counter.getScore() + " in your bank + " + counter.getCurrentScoreAdd() + " possible from current streaks)";
@@ -630,21 +657,28 @@ public class CountingBot {
         CountingBot.write(message, msg);
     }
 
-    public boolean isCounter(String id) {
-        return counters.containsKey(id);
+    public boolean isCounter(String guildId, String counterId) {
+        if (!guilds.containsKey(guildId)) {
+            return false;
+        }
+        return guilds.get(guildId).hasCounter(counterId);
     }
 
-    private int getScore(User user) {
-        int score = counters.get(generateKeyFromUser(user)).getPossibleTotal();
-        return score;
-    }
-
-    private void addCounterOptionally(User user) {
-
-        String key = generateKeyFromUser(user);
-        if (!counters.containsKey(key)) {
-            counters.put(key, new Counter(key, user.getUsername(), 0, 0, 0, new int[]{}, new int[]{}, new BonusStreak[]{}));
-            storage.safeCounters(counters);
+    private void addGuildOrCounterIfNotYetRegistered(Message message) {
+        User user = message.getAuthor().get();
+        String guildId = message.getGuildId().get().asString();
+        String key = getUserIdFromDiscordUserObject(user);
+        boolean shouldSave = false;
+        if (!guilds.containsKey(guildId)) {
+            guilds.put(guildId, new CountingGuild(guildId));
+            shouldSave = true;
+        }
+        if (!guilds.get(guildId).hasCounter(key)) {
+            guilds.get(guildId).addNewCounter(key, user.getUsername());
+            shouldSave = true;
+        }
+        if (shouldSave) {
+            storage.save();
         }
 
     }
@@ -655,16 +689,18 @@ public class CountingBot {
                 .doOnNext(handler).subscribe();
     }
 
-    private String generateKeyFromUser(User user) {
+    private Counter getCounterFromMessage(Message message) {
+        String guildId = message.getGuildId().get().asString();
+        String userId = getUserIdFromDiscordUserObject(message.getAuthor().get());
+        return guilds.get(guildId).getCounter(userId);
+    }
+
+    private String getUserIdFromDiscordUserObject(User user) {
         return user.getId().asString();
     }
 
-    public Counter getCounter(String id) {
-        return counters.get(id);
-    }
-
-    public HashMap<String, Counter> getCounters() {
-        return counters;
+    public Counter getCounter(String guildId, String id) {
+        return guilds.get(guildId).getCounter(id);
     }
 
     public static CountingBot getInstance() {
@@ -676,4 +712,7 @@ public class CountingBot {
         return String.valueOf(currId);
     }
 
+    public HashMap<String, CountingGuild> getGuilds() {
+        return guilds;
+    }
 }

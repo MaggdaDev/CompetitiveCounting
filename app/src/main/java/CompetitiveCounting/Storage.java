@@ -4,22 +4,17 @@
  * and open the template in the editor.
  */
 package CompetitiveCounting;
+import CompetitiveCounting.bank.Bank;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map.Entry;
 import java.lang.String;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  *
@@ -31,9 +26,8 @@ public class Storage {
     private final static String CAPTURES_PATH = "./src/data/captures.json";
     public final static String CONFIG_PATH = "./src/data/config.txt";
 
-    private HashMap<String,Counter> counters;
+    private HashMap<String, CountingGuild> guilds;
     private List<CaptureHandler.Capture> captures;
-
     private static Storage instance;
 
     public static Storage getInstance() {
@@ -43,21 +37,21 @@ public class Storage {
         if(instance.captures == null) {
             instance.loadCaptures();
         }
-        if(instance.counters == null) {
-            instance.loadCounters();
+        if(instance.guilds == null) {
+            instance.loadGuilds();
         }
         return instance;
     }
 
     public static String loadConfig() throws Exception {
         FileInputStream countersIn = new FileInputStream(CONFIG_PATH);
-        return new String(countersIn.readAllBytes(), Charset.forName("UTF-8"));
+        return new String(countersIn.readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public String loadJson(String path) {
         try {
             FileInputStream countersIn = new FileInputStream(path);
-            String content = new String(countersIn.readAllBytes(), Charset.forName("UTF-8"));
+            String content = new String(countersIn.readAllBytes(), StandardCharsets.UTF_8);
             countersIn.close();
             
             return content;
@@ -67,23 +61,27 @@ public class Storage {
         }
     }
     
-    public HashMap<String, Counter> loadCounters() {
-        if(counters != null) {
-            return counters;
+    public HashMap<String, CountingGuild> loadGuilds() {
+        if(guilds != null) {
+            return guilds;
         }
         String asString = loadJson(COUNTERS_PATH);
         Gson gson = new Gson();
-        counters = gson.fromJson(asString, (new TypeToken<HashMap<String,Counter>>(){}).getType());
-        if(counters == null) {
-            counters = new HashMap<String,Counter>();
+        guilds = gson.fromJson(asString, (new TypeToken<HashMap<String,CountingGuild>>(){}).getType());
+        if(guilds == null) {
+            guilds = new HashMap<String,CountingGuild>();
         }
-        counters.forEach((String key, Counter counter)->{
-            counter.init();
+        guilds.forEach((String key, CountingGuild countingGuild)->{
+            countingGuild.getCounters().forEach((String key2, Counter counter)->{
+                counter.init();
+            });
         });
-        counters.forEach((String key, Counter counter)->{
-            counter.initIncomingContracts(counters);
+        guilds.forEach((String key, CountingGuild countingGuild)->{
+            countingGuild.getCounters().forEach((String key2, Counter counter)->{
+                counter.initIncomingContracts(countingGuild);
+            });
         });
-        return counters;
+        return guilds;
     }
 
     public List<CaptureHandler.Capture> loadCaptures() {
@@ -106,25 +104,15 @@ public class Storage {
     public static class Captures {
         public List<CaptureHandler.Capture> captures;
     }
-    
-    public void safeCounters(HashMap<String, Counter> counters) {
-        Gson gson = new Gson();
-        String asString = gson.toJson(counters);
-        /*
-        JsonObject json = new JsonObject();
-        counters.forEach((String key, Counter element)->{
-            json.add(key, gson.toJsonTree(element.getScore()));
-        });
-*/
-        safeJson(asString);
-    }
 
-    public void safeJson(String asString) {
+    public void save() {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(guilds);
         try {
 
             FileOutputStream countersOut = new FileOutputStream(COUNTERS_PATH);
 
-            countersOut.write(asString.getBytes(Charset.forName("UTF-8")));//counters.toString().getBytes(Charset.forName("UTF-8")));
+            countersOut.write(jsonString.getBytes(StandardCharsets.UTF_8));
             countersOut.flush();
             countersOut.close();
         } catch (Exception e) {

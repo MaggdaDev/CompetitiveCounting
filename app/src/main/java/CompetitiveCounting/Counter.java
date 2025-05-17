@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 public class Counter {
 
     public final static int PRESTIGE_WORTH = 1000000;
-//    public final static double SYSTEM_NOT_OWNED_FACT = 1;
     public final static double SYSTEM_OWNED_FACT = 1.5;
     public final static double MULT_PLUS_PER_PRESTIGE = 0.2;
 
@@ -35,18 +34,20 @@ public class Counter {
     private transient HashMap<String, TradeOffer> tradeOffers = new HashMap<String, TradeOffer>();
     private transient ContractHandler contractHandler;
 
-    public Counter(String key, String name, int score, int prestiges, int prestigePoints, int[] unlocked, int[] unlockedSystems, BonusStreak[] bonusStreaks) {
+    private transient String guildId;   // Will be set in initContracts method
+
+    public Counter(String guildId, String key, String name) {
         this.key = key;
-        this.score = score;
+        this.score = 0;
         this.name = name;
-        this.unlocked = unlocked;
+        this.unlocked = new int[]{};
         currScoreAdds = new HashMap<>();
-        this.prestiges = prestiges;
-        this.prestigePoints = prestigePoints;
-        this.unlockedSystems = unlockedSystems;
-        this.bonusStreaks = bonusStreaks;
+        this.prestiges = 0;
+        this.prestigePoints = 0;
+        this.unlockedSystems = new int[]{};
+        this.bonusStreaks = new BonusStreak[]{};
         init();
-        initIncomingContracts(CountingBot.getInstance().getCounters());
+        initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
 
     public void init() {
@@ -71,9 +72,10 @@ public class Counter {
 
     }
 
-    public void initIncomingContracts(HashMap<String, Counter> counters) {
+    public void initIncomingContracts(CountingGuild activeGuild) {
+        guildId = activeGuild.getGuildId();
         if (incomingContracts.isEmpty()) {
-            counters.forEach((String currId, Counter counter) -> {
+            activeGuild.getCounters().forEach((String currId, Counter counter) -> {
                 for (Contract currContract : counter.getContracts()) {
                     if (currContract.toId.equals(this.getId())) {
                         currContract.owner = counter;
@@ -81,6 +83,7 @@ public class Counter {
                     }
                 }
             });
+
         }
     }
 
@@ -101,19 +104,19 @@ public class Counter {
                 CountingBot.write(message, "You have already unlocked this.");
                 return;
             }
-            if (unlockable.getPrize() > this.score) {
-                CountingBot.write(message, "You only have " + this.score + " money, but you need " + unlockable.getPrize() + "!");
+            if (unlockable.getPrice() > this.score) {
+                CountingBot.write(message, "You only have " + this.score + " money, but you need " + unlockable.getPrice() + "!");
                 return;
             }
             this.addUnlocked(message, unlockable);
-            this.score -= unlockable.getPrize();
-            CountingBot.write(message, "You unlocked '" + unlockable.getName() + "' and paid " + unlockable.getPrize() + " money. You have " + this.getScore() + " money left.");
-            CountingBot.getInstance().safeCounters();
+            this.score -= unlockable.getPrice();
+            CountingBot.write(message, "You unlocked '" + unlockable.getName() + "' and paid " + unlockable.getPrice() + " money. You have " + this.getScore() + " money left.");
+            CountingBot.getInstance().save();
         }
     }
 
     public void unlockRuleCostUpgrade(Message message) {
-        for(Unlockable currentRuleCostUpgradeToEvaluate: Unlockable.getRuleCostUpgrades()) {
+        for (Unlockable currentRuleCostUpgradeToEvaluate : Unlockable.getRuleCostUpgrades()) {
             if (!this.isUnlocked(currentRuleCostUpgradeToEvaluate)) {
                 unlock(currentRuleCostUpgradeToEvaluate, message);
                 return;
@@ -159,7 +162,7 @@ public class Counter {
             CountingBot.write(message, "You have already unlocked this base.");
             return;
         }
-        if (prestigePoints < Unlockable.getBasePrize(base)) {
+        if (prestigePoints < Unlockable.getBasePrice(base)) {
             CountingBot.write(message, "You don't have enough prestige points to do that.");
             return;
         }
@@ -175,10 +178,10 @@ public class Counter {
         newUnlockedSys[unlockedSystems.length] = system;
 
         this.unlockedSystems = newUnlockedSys;
-        this.prestigePoints -= Unlockable.getBasePrize(base);
+        this.prestigePoints -= Unlockable.getBasePrice(base);
 
-        CountingBot.write(message, "You unlocked the 'base-" + base + "-system' and paid " + Unlockable.getBasePrize(base) + " prestige points. Counting in this System will no longer give you reduced score, and you can start streaks with this system now.");
-        CountingBot.getInstance().safeCounters();
+        CountingBot.write(message, "You unlocked the 'base-" + base + "-system' and paid " + Unlockable.getBasePrice(base) + " prestige points. Counting in this System will no longer give you reduced score, and you can start streaks with this system now.");
+        CountingBot.getInstance().save();
 
     }
 
@@ -198,7 +201,7 @@ public class Counter {
     public void addTrophy(int trophy) {
         ownedTrophies.add(trophy);
         ownedTrophies.sort(Comparator.naturalOrder());
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().save();
     }
 
     public int getTrophyShards() {
@@ -207,7 +210,7 @@ public class Counter {
 
     public void addTrophyShard() {
         trophyShards++;
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().save();
     }
 
     public int getTrophyAmount() {
@@ -232,7 +235,7 @@ public class Counter {
         int worth = 0;
         worth += score;
         for (int i = 0; i < unlocked.length; i++) {
-            worth += Unlockable.values()[this.unlocked[i]].getPrize();
+            worth += Unlockable.values()[this.unlocked[i]].getPrice();
         }
         return worth;
     }
@@ -258,7 +261,7 @@ public class Counter {
             } else {
                 return "This offer doesn't match any of yours";
             }
-        } else if (customId.startsWith(Contract.ACCEPT_REMOVE_CONTRACT_PREIFX)) {
+        } else if (customId.startsWith(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX)) {
             String contractRemoveId = customId.split(":")[1];
             // iterate through both incoming contracts and contracts at once
             ArrayList<Contract> contractsToIterate = new ArrayList<>(contracts);
@@ -267,12 +270,12 @@ public class Counter {
                 if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
                     contractHandler.removeContract(currContract);
                     return "Contract removed successfully!";
-                } else if(currContract.isExpiredRemoveRequestId(contractRemoveId)) {
+                } else if (currContract.isExpiredRemoveRequestId(contractRemoveId)) {
                     return contractRemoveRequestExpiredPleaseCreateNewOneMessage;
                 }
             }
             return "This contract doesn't match any of yours";
-        } else if(customId.startsWith(Contract.DECLINE_REMOVE_CONTRACT_PREIFX)) {
+        } else if (customId.startsWith(Contract.DECLINE_REMOVE_CONTRACT_PREFIX)) {
             String contractRemoveId = customId.split(":")[1];
             ArrayList<Contract> contractsToIterate = new ArrayList<>(contracts);
             contractsToIterate.addAll(incomingContracts);
@@ -280,12 +283,12 @@ public class Counter {
                 if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
                     currContract.requested_remove_id = null;
                     return "Contract removal declined!";
-                } else if(currContract.isExpiredRemoveRequestId(contractRemoveId)) {
+                } else if (currContract.isExpiredRemoveRequestId(contractRemoveId)) {
                     return contractRemoveRequestExpiredPleaseCreateNewOneMessage;
                 }
             }
             return "This contract doesn't match any of yours";
-        }else if (tradeOffers.containsKey(customId)) {
+        } else if (tradeOffers.containsKey(customId)) {
             TradeOffer offer = tradeOffers.get(customId);
             String answ = offer.isTradeOfferValid();
             if (answ.toUpperCase().equals("VALID")) {
@@ -303,7 +306,7 @@ public class Counter {
     public void transferTo(Counter to, int amount, Message message) {
         to.addBonusScore(amount, message);
         subtractScore(amount);
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().save();
 
     }//trading end
 
@@ -313,7 +316,7 @@ public class Counter {
             prestigePoints++;
             score = 0;
             unlocked = new int[]{};
-            CountingBot.getInstance().safeCounters();
+            CountingBot.getInstance().save();
             return true;
         } else {
             CountingBot.write(message, "Reset all your progress with ~prestige and acquire a global boost of 25%, as well as 1 prestige point. \n Your net worth (wallet + unlocks) has to be " + PRESTIGE_WORTH + " or more before you can do this. You are still missing " + (PRESTIGE_WORTH - getAccWorth()) + " money.");
@@ -551,6 +554,9 @@ public class Counter {
         }
     }
 
+    public String getGuildId() {
+        return guildId;
+    }
 
 
 }

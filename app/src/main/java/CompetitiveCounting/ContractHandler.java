@@ -6,7 +6,7 @@
 package CompetitiveCounting;
 
 import discord4j.core.object.entity.Message;
-import java.util.Collections;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -48,23 +48,24 @@ public class ContractHandler {
 
     public void checkExpiredContracts(Message message) {
         Iterator<Contract> it = contracts.iterator();
+        String guildId = owner.getGuildId();
         while (it.hasNext()) {
             Contract currContr = it.next();
 
             if (!currContr.isValid()) {
                 it.remove();
-                Counter toCounter = CountingBot.getInstance().getCounter(currContr.toId);
+                Counter toCounter = CountingBot.getInstance().getCounter(guildId, currContr.toId);
                 toCounter.getIncomingContracts().remove(currContr);
                 CountingBot.write(message, "Contract from " + currContr.owner.getPing() + " to " + toCounter.getPing() + " expired:\n" + currContr.toString());
-                CountingBot.getInstance().safeCounters();
+                CountingBot.getInstance().save();
             }
         }
     }
 
     public void removeContract(Contract contract) {
         contract.owner.getContracts().remove(contract);
-        CountingBot.getInstance().getCounter(contract.toId).getIncomingContracts().remove(contract);
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().getCounter(owner.getGuildId(), contract.toId).getIncomingContracts().remove(contract);
+        CountingBot.getInstance().save();
     }
 
     public int getCurrentTotalPerc() {
@@ -97,7 +98,7 @@ public class ContractHandler {
         for (Contract curr : contracts) {
             int pay = curr.getPaid(brutto);
             netto -= pay;
-            CountingBot.getInstance().getCounter(curr.toId).addBonusScoreFromContract(pay, message);
+            CountingBot.getInstance().getCounter(owner.getGuildId(), curr.toId).addBonusScoreFromContract(pay, message);
         }
         if (!isInRecursive) {
             currentlyAlreadyIterating = false;

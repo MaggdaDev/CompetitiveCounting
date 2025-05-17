@@ -11,8 +11,8 @@ import java.util.ArrayList;
  * @author DavidPrivat
  */
 public class Contract {
-    public final static String ACCEPT_REMOVE_CONTRACT_PREIFX = "accept_remove_contract:";
-    public final static String DECLINE_REMOVE_CONTRACT_PREIFX = "decline_remove_contract:";
+    public final static String ACCEPT_REMOVE_CONTRACT_PREFIX = "accept_remove_contract:";
+    public final static String DECLINE_REMOVE_CONTRACT_PREFIX = "decline_remove_contract:";
     private static int currRemoveId = 0;
     public int paidBack;
     public int percentage;  //1 - 100
@@ -81,7 +81,7 @@ public class Contract {
 
     @Override
     public String toString() {
-        String countersInfo = owner.getName() + " -> " + CountingBot.getInstance().getCounter(toId).getName();
+        String countersInfo = owner.getName() + " -> " + CountingBot.getInstance().getCounter(owner.getGuildId(), toId).getName();
         if (limit == -1) {
             return countersInfo + ": " + percentage + "% of income (" + paidBack + " paid so far)";
         } else {

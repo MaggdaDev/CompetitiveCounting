@@ -24,7 +24,8 @@ public class ButtonClickHandler extends BaseSubscriber<ButtonInteractionEvent>{
         try {
             String customId = event.getCustomId();
             String userId = event.getInteraction().getUser().getId().asString();
-            Counter counter = countingBot.getCounter(userId);
+            String guildId = event.getInteraction().getGuildId().get().asString();
+            Counter counter = countingBot.getCounter(guildId, userId);
             if (counter != null) {
                 event.reply(counter.buttonClick(customId, event.getMessage().get())).subscribe();
             }

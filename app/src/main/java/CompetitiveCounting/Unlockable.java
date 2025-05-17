@@ -29,25 +29,25 @@ public enum Unlockable {
     BASE_3(-1, "base3", "Counting in ternary"),
     BASE_16(-1, "base16", "Counting in hexadecimal"),
     BASE_N(-2, "base n", "Counting in base-n");
-    private final int prize;
+    private final int price;
     private String name, description;
-    Unlockable(int prize, String name, String description) {
-        this.prize = prize;
+    Unlockable(int price, String name, String description) {
+        this.price = price;
         this.name = name;
         this.description = description;
     }
     
-    public static int getBasePrize(String base) {
+    public static int getBasePrice(String base) {
         switch(base) {
             case "1": case "2": case "3": case "16":
-                return Math.abs(Unlockable.BASE_1.getPrize());
+                return Math.abs(Unlockable.BASE_1.getPrice());
             default:
-                return Math.abs(Unlockable.BASE_N.getPrize());
+                return Math.abs(Unlockable.BASE_N.getPrice());
         }
     }
     
-    public int getPrize() {
-        return prize;
+    public int getPrice() {
+        return price;
     }
     
     public String getName() {

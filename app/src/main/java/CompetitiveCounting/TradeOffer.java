@@ -20,8 +20,8 @@ public class TradeOffer {
     private Tradable[] youGetTrades, iGetTrades;
     private Counter initCounter, requCounter;
 
-    public TradeOffer(String content, Counter initC) { //in upper case
-        initCounter = initC;
+    public TradeOffer(String content, Counter initCounter) { //in upper case
+        this.initCounter = initCounter;
         String[] splitted;
         boolean containsYouGet = true;
         if (content.contains(YOU_GET)) {
@@ -49,11 +49,11 @@ public class TradeOffer {
         splitted = init.split(" ");
         userPing = splitted[1].replaceAll(" ", "");
         userId = Util.pingToUserId(userPing);
-        requCounter = CountingBot.getInstance().getCounter(userId);
+        requCounter = CountingBot.getInstance().getCounter(initCounter.getGuildId(), userId);
 
         try {
-            youGetTrades = Tradable.generateTradables(youGet, initCounter, requCounter);
-            iGetTrades = Tradable.generateTradables(iGet, requCounter, initCounter);
+            youGetTrades = Tradable.generateTradables(youGet, this.initCounter, requCounter);
+            iGetTrades = Tradable.generateTradables(iGet, requCounter, this.initCounter);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -98,7 +98,7 @@ public class TradeOffer {
             }
         }
 
-        CountingBot.getInstance().safeCounters();
+        CountingBot.getInstance().save();
     }
 
     private void giveTradableFromTo(Counter from, Counter to, Tradable tradable, Message message) {
