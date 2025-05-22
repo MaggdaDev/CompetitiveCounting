@@ -8,6 +8,7 @@ import CompetitiveCounting.bank.exceptions.NotEnoughMoneyException;
 import discord4j.core.object.entity.Message;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -57,6 +58,10 @@ public class BankCommandHandler {
             return false;
         }
         String commandType = splitMessage[1].toLowerCase();
+        if (List.of("donate", "withdraw", "deposit", "loan").contains(commandType) && splitMessage.length < 3) { // check if argument for money is present
+            bankWrite(message, "You actually need to tell me how much money we're talking about!");
+            return false;
+        }
         Bank bank = guilds.get(guildId).getBank();
         if (!bank.alreadyRegistered(authorId)) {
             bank.register(authorId);
@@ -94,7 +99,15 @@ public class BankCommandHandler {
                     sendDepositMessage(message, depositAmount, newBalance2);
                     break;
                 case "loan":
-
+                    if (splitMessage.length < 4) {
+                        bankWrite(message, "You have to specify how much money you want to take out and the rate of paying that money back!\nExample: `~bank loan 1000000 50");
+                        break;
+                    }
+                    int loanAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
+                    int loanRate = parseStringToNaturalNumberAtIndex(splitMessage, 3, message);
+                    bankWrite(message, String.valueOf(calculateLoanInterestRate(loanAmount, loanRate)));
+                    bankWrite(message, String.valueOf(calculateLoanInterest(loanAmount, loanRate)));
+                    break;
                 default:
                     sendCommandNotUnderstoodMessage(message);
                     break;
@@ -117,6 +130,14 @@ public class BankCommandHandler {
             }
         }
         return shouldSaveJson;
+    }
+
+    private int calculateLoanInterestRate(int money, int rate) {
+        return (int) (Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * 100);
+    }
+
+    private int calculateLoanInterest(int money, int rate) {
+        return (money * (1 + calculateLoanInterestRate(money, rate)));
     }
 
 

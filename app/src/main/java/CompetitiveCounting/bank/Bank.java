@@ -3,6 +3,7 @@ package CompetitiveCounting.bank;
 import CompetitiveCounting.bank.exceptions.BankTransactionException;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * TODO: gucci handbag zum öffnen
@@ -16,11 +17,19 @@ public class Bank {
     private int totalScore;
     private HashMap<String, BankAccount> accounts;
 
+    private static final List<String> UPGRADE_KEYS = List.of("loan_formula", "max_loan", "max_balance", "placeholder_2");
+    private HashMap<String, Integer> upgrades;
+
     public Bank(String guildId) {
         this.guildId = guildId;
         this.totalScore = 0;
         this.accounts = new HashMap<>();
+        this.upgrades = new HashMap<>();
+        for (String key: UPGRADE_KEYS) {
+            this.upgrades.put(key, 0);
+        }
     }
+
     public void donate(int amount) {
         totalScore += amount;
     }
@@ -50,6 +59,11 @@ public class Bank {
         accounts.get(counterId).withdraw(withdrawAmount);
         totalScore -= withdrawAmount;
     }
+
+    public void getUpgrades() {
+        System.out.println(upgrades);
+    }
+
 
     public void unlock() {
         isUnlocked = true;

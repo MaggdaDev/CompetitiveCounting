@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +26,17 @@ public class Storage {
     private final static String COUNTERS_PATH = "./src/data/counters.json";
     private final static String CAPTURES_PATH = "./src/data/captures.json";
     public final static String CONFIG_PATH = "./src/data/config.txt";
+
+    static {
+        checkFileExists(COUNTERS_PATH);
+        checkFileExists(CAPTURES_PATH);
+        checkFileExists(CONFIG_PATH);
+    }
+
+    private static void checkFileExists(String path) {
+        File file = new File(path);
+        if (!file.exists()) throw new RuntimeException("Required file not found: " + path);
+    }
 
     private HashMap<String, CountingGuild> guilds;
     private List<CaptureHandler.Capture> captures;
@@ -84,7 +96,13 @@ public class Storage {
         return guilds;
     }
 
+    /**
+     *    if captures don't exist:<br>
+     *    write into src/data/captures.json:<br>
+     *    {"captures": [ {"question":"test_captcha_answer_is_1","answer":1} ]}
+     **/
     public List<CaptureHandler.Capture> loadCaptures() {
+
         if(captures != null) {
             return captures;
         }
