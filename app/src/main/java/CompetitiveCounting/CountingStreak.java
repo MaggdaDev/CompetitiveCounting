@@ -5,7 +5,7 @@
  */
 package CompetitiveCounting;
 
-import CompetitiveCounting.Rules.*;
+import CompetitiveCounting.rules.*;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
@@ -226,8 +226,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currDivPrice * author.getAddruleDiscountFactor() > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDivPrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currDivPrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt + " money to add this new rule.");
             return false;
         }
 
@@ -239,8 +240,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currDigPrice * author.getAddruleDiscountFactor() > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDigPrice * author.getAddruleDiscountFactor()) + " money to add this new rule.");
+        int priceInt = (int) (currDigPrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt + " money to add this new rule.");
             return false;
         }
 
@@ -252,8 +254,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currRootPrice * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currRootPrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currRootPrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
             return false;
         }
 
@@ -265,8 +268,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currTimePrice * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currTimePrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
             return false;
         }
 
@@ -279,8 +283,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currTimePrice * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currTimePrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
             return false;
         }
         return true;
@@ -493,7 +498,7 @@ public class CountingStreak {
                 currTimePrice *= timePriceFact;
                 break;
             case "notime":
-                if (author.getScore() < currTimePrice) {
+                if (!author.canAfford(currTimePrice)) {
                     CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + currTimePrice + " money to remove the current time rule.");
                     break;
                 }

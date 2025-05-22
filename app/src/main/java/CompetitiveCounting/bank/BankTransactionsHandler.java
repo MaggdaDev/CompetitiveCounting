@@ -25,7 +25,7 @@ public class BankTransactionsHandler {
         if(bank == null || counter == null) {
             throw new BankTransactionException("Bank or Counter not found");
         }
-        if(counter.getScore() < amount) {
+        if(!counter.canAfford(amount)) {
             throw new NotEnoughMoneyException(amount, counter.getScore(), NotEnoughMoneyException.MoneyOwner.COUNTER);
         }
         counter.subtractScore(amount);
@@ -38,7 +38,7 @@ public class BankTransactionsHandler {
         if (counter == null || bank == null) {
             throw new BankTransactionException("Bank or Counter not found");
         }
-        if (counter.getScore() < depositAmount) {
+        if (!counter.canAfford(depositAmount)) {
             throw new NotEnoughMoneyException(depositAmount, counter.getScore(), NotEnoughMoneyException.MoneyOwner.COUNTER);
         }
         if (depositAmount < 1000) {

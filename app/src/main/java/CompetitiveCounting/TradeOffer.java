@@ -144,10 +144,10 @@ public class TradeOffer {
 
     public String isTradeOfferValid() {
         //check money
-        if (getTotalMoneyRequirement(iGetTrades) > requCounter.getScore()) {
+        if (!requCounter.canAfford(getTotalMoneyRequirement(iGetTrades))) {
             return userPing + " doesn't have enough money in their bank!";
         }
-        if (getTotalMoneyRequirement(youGetTrades) > initCounter.getScore()) {
+        if (!initCounter.canAfford(getTotalMoneyRequirement(youGetTrades))) {
             return "You don't have enough money in your bank!";
         }
 

@@ -8,6 +8,9 @@ package CompetitiveCounting;
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
+import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.items.InventoryCommandHandler;
+import CompetitiveCounting.items.ShopCommandHandler;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
@@ -34,9 +37,11 @@ public class CountingBot {
     private HashMap<String, CountingGuild> guilds;
     private HashMap<String, CountingStreak> streaks;
 
-    private final BankCommandHandler bankMessages;
+    private final BankCommandHandler bankCommandHandler;
     private final BankTransactionsHandler bankTransitionsHandler;
 
+    private final ShopCommandHandler shopCommandHandler;
+    private final InventoryCommandHandler inventoryCommandHandler;
     private static CountingBot instance;
 
     private static int currId = 0;
@@ -49,12 +54,14 @@ public class CountingBot {
         System.out.println("Counters loaded!");
         streaks = new HashMap<>();
         instance = this;
+
         bankTransitionsHandler = new BankTransactionsHandler(guilds);
-        bankMessages = new BankCommandHandler(bankTransitionsHandler);
+        bankCommandHandler = new BankCommandHandler(bankTransitionsHandler);
+        shopCommandHandler = new ShopCommandHandler(guilds);
+        inventoryCommandHandler = new InventoryCommandHandler(guilds);
     }
 
     public void message(Message message) {
-        String content = message.getContent();
         addGuildOrCounterIfNotYetRegistered(message);
         checkCommands(message);
         count(message);
@@ -85,7 +92,7 @@ public class CountingBot {
                     addRule(message);
                 } else if (commandWithoutIndicator.startsWith("rules")) {
                     rules(message);
-                } else if (commandWithoutIndicator.startsWith("unlock")) {
+                } else if (commandWithoutIndicator.startsWith("unlock ") || commandWithoutIndicator.equals("unlock")) {
                     unlock(message);
                 } else if (commandWithoutIndicator.equals("prestige")) {
                     prestige(message);
@@ -111,16 +118,21 @@ public class CountingBot {
                     shunlock(message);
                 } else if (commandWithoutIndicator.startsWith("createbank")) {
                     createBank(message);
-                } else if (commandWithoutIndicator.startsWith("bank ")) {
-                    if (bankMessages.handleBankCommand(message)) {  // Returns true iff json should be updated
+                } else if (commandWithoutIndicator.startsWith("bank")) {
+                    if (bankCommandHandler.handleBankCommand(message)) {  // Returns true iff json should be updated
                         save();
                     }
+                } else if (commandWithoutIndicator.startsWith("shop") || commandWithoutIndicator.equals("unlock_shop")) {
+                    shopCommandHandler.handleShopCommand(message);
+                } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
+                    inventoryCommandHandler.handleInventoryCommand(message);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 
     private void createBank(Message message) { // TEMP todo remove replace by croc gucci handbag
         if (message.getGuildId().isEmpty()) {
@@ -235,7 +247,6 @@ public class CountingBot {
             }
             if (lastCounter.getId().equals(author.getId())) {
                 CountingBot.write(message, "Attention! You were the last person counting! Don't count now!");
-                return;
             } else {
                 CountingBot.write(message, lastCounter.getName() + " counted the last number. You can count safely now.");
             }
@@ -455,10 +466,10 @@ public class CountingBot {
 
             CountingBot.write(message, "Error: Invalid unlock!");
         } else {
-            if (author.getScore() < Unlockable.UNLOCK_COMMAND.getPrice()) {
-                this.unlockInfo(message, author);
-            } else {
+            if (author.canAfford(Unlockable.UNLOCK_COMMAND.getPrice())) {
                 author.unlock(Unlockable.UNLOCK_COMMAND, message);
+            } else {
+                this.unlockInfo(message, author);
             }
         }
     }

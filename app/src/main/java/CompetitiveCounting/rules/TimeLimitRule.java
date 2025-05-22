@@ -3,14 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting.Rules;
+package CompetitiveCounting.rules;
 
 import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingStreak;
 import CompetitiveCounting.Emojis;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 
 /**
  *

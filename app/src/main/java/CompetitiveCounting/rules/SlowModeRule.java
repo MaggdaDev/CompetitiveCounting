@@ -3,13 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting.Rules;
+package CompetitiveCounting.rules;
 
 import CompetitiveCounting.Emojis;
-import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
-import java.time.Duration;
+
 import java.time.Instant;
 
 /**

@@ -5,6 +5,11 @@
  */
 package CompetitiveCounting;
 
+import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.contracts.ContractHandler;
+import CompetitiveCounting.items.Inventory;
+import CompetitiveCounting.items.Purchasable;
+import CompetitiveCounting.items.ShopCommandHandler;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
@@ -36,6 +41,8 @@ public class Counter {
 
     private transient String guildId;   // Will be set in initContracts method
 
+    private Inventory inventory;
+
     public Counter(String guildId, String key, String name) {
         this.key = key;
         this.score = 0;
@@ -46,6 +53,7 @@ public class Counter {
         this.prestigePoints = 0;
         this.unlockedSystems = new int[]{};
         this.bonusStreaks = new BonusStreak[]{};
+        inventory = new Inventory();
         init();
         initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
@@ -68,6 +76,9 @@ public class Counter {
 
         if (ownedTrophies == null) {
             ownedTrophies = new ArrayList<>();
+        }
+        if (inventory == null) {
+            inventory = new Inventory();
         }
 
     }
@@ -234,8 +245,11 @@ public class Counter {
     public int getAccWorth() {
         int worth = 0;
         worth += score;
-        for (int i = 0; i < unlocked.length; i++) {
-            worth += Unlockable.values()[this.unlocked[i]].getPrice();
+        for (int j : unlocked) {
+            worth += Unlockable.values()[j].getPrice();
+        }
+        if (inventory.isShopUnlocked()) {
+            worth += ShopCommandHandler.UNLOCK_COMMAND_USAGE_PRICE;
         }
         return worth;
     }
@@ -482,6 +496,10 @@ public class Counter {
         return score;
     }
 
+    public boolean canAfford(int price) {
+        return price <= score;
+    }
+
     public int getPossibleTotalInStreak(CountingStreak streak) {
         return score + currScoreAdds.get(streak.getKey());
     }
@@ -556,6 +574,14 @@ public class Counter {
 
     public String getGuildId() {
         return guildId;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public boolean isShopUnlocked() {
+        return getInventory().isShopUnlocked();
     }
 
 

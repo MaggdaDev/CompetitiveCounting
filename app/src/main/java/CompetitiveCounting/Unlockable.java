@@ -24,13 +24,16 @@ public enum Unlockable {
     RULE_COST_UPGRADE_4(700000, "rule_cost_upgrade", "Adding a rule to a streak costs 40% less"),
     RULE_COST_UPGRADE_5(1000000, "rule_cost_upgrade", "Adding a rule to a streak costs 50% less"),
 
+    UNLOCK_SHOP(10000, "unlock_shop", "Unlocks the ~unlock_shop command"),
+
     BASE_1(-1, "base1", "Counting in unary: 1"),
     BASE_2(-1, "base2", "Counting in binary"),
     BASE_3(-1, "base3", "Counting in ternary"),
     BASE_16(-1, "base16", "Counting in hexadecimal"),
     BASE_N(-2, "base n", "Counting in base-n");
     private final int price;
-    private String name, description;
+    private final String name;
+    private final String description;
     Unlockable(int price, String name, String description) {
         this.price = price;
         this.name = name;
