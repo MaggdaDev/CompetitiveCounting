@@ -75,7 +75,7 @@ public class TrophyHandler {
         message.removeReactions(uEmoji)
                 .then(message.edit(MessageEditSpec.create().withContent(Possible.of(Optional.of(newContent)))))
                 .flatMap((Message msg) -> {
-                    CountingBot.write(msg, "https://media1.tenor.com/m/ZsBt_qqcXtcAAAAd/moose-avegerman.gif");
+                    CountingBot.write(msg, "https://c.tenor.com/ZsBt_qqcXtcAAAAd/tenor.gif");
                     spawnTrophy(msg, -2019);
                     return Mono.empty();
                 }).subscribe();
