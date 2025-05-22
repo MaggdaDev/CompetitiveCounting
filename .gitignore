@@ -6,6 +6,8 @@ build/
 
 # idea folder
 .idea/
+.idea/misc.xml
 
 # database stuff
-src/
+src/data/
+/app/src/main/resources/
