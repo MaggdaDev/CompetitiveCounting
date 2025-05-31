@@ -47,6 +47,8 @@ public class CountingBot {
     private static int currId = 0;
     private static GatewayDiscordClient client;
 
+    private final static boolean isDevMode = false;
+
     public CountingBot(GatewayDiscordClient client) {
         storage = new Storage();
         this.client = client;
@@ -117,14 +119,26 @@ public class CountingBot {
                 } else if (commandWithoutIndicator.startsWith("shunlock")) {
                     shunlock(message);
                 } else if (commandWithoutIndicator.startsWith("createbank")) {
+                    if(!isDevMode) { // todo
+                        return;
+                    }
                     createBank(message);
                 } else if (commandWithoutIndicator.startsWith("bank")) {
+                    if(!isDevMode) {
+                        return;
+                    }
                     if (bankCommandHandler.handleBankCommand(message)) {  // Returns true iff json should be updated
                         save();
                     }
                 } else if (commandWithoutIndicator.startsWith("shop") || commandWithoutIndicator.equals("unlock_shop")) {
+                    if(!isDevMode) {
+                        return;
+                    }
                     shopCommandHandler.handleShopCommand(message);
                 } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
+                    if(!isDevMode) {
+                        return;
+                    }
                     inventoryCommandHandler.handleInventoryCommand(message);
                 }
             }
@@ -356,6 +370,17 @@ public class CountingBot {
 
         }
 
+    }
+
+    public void handBagBought(Message message) {
+        bankCommandHandler.handBagBought(message);
+
+        String guildId = message.getGuildId().get().asString();
+        if (guilds.containsKey(guildId) && guilds.get(guildId).getBank().isUnlocked()) {
+            write(message, "DEBUG: This server already has a bank.");
+            return;
+        }
+        guilds.get(guildId).getBank().unlock();
     }
 
     private void baseInfo(Message message) {
@@ -725,5 +750,13 @@ public class CountingBot {
 
     public HashMap<String, CountingGuild> getGuilds() {
         return guilds;
+    }
+
+    public BankCommandHandler getBankCommandHandler() {
+        return bankCommandHandler;
+    }
+
+    public ShopCommandHandler getShopCommandHandler() {
+        return shopCommandHandler;
     }
 }

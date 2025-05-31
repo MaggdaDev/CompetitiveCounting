@@ -3,7 +3,8 @@ package CompetitiveCounting.items;
 import java.util.HashMap;
 
 public enum Purchasable {
-    HAND_BAG(2000000, "Glamorous crocodile-leather Lacoste purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings.");
+    HAND_BAG(2000000, "Glamorous crocodile-leather Lacoste purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings."),
+    FAKE_HAND_BAG(2000000, "Cheap plastic-leather Lakosde purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings.");
 
     private final static HashMap<String, Purchasable> purchasablesByLowerCaseName;
     static {

@@ -101,14 +101,30 @@ public class ShopCommandHandler {
             return;
         }
         counter.subtractScore(toBuy.getPrice());
-        counter.getInventory().buy(toBuy);
-        CountingBot.write(message, "You have bought a *" + toBuy.getName() + "* and paid " + toBuy.getPrice() + " money.");
-        CountingBot.getInstance().save();
+        if (toBuy == Purchasable.HAND_BAG) {
+            CountingBot.getInstance().handBagBought(message);
+        } else {
+            counter.getInventory().buy(toBuy);
+            writeItemBoughtMessage(message, toBuy);
+            CountingBot.getInstance().save();
+        }
+    }
+
+    private void writeItemBoughtMessage(Message message, Purchasable item) {
+        CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + " money.");
+    }
+
+    public void acquireHandBag(Message message, String guildId, String counterId) {
+        CountingGuild guild = guilds.get(guildId);
+        Counter counter = guild.getCounter(counterId);
+        counter.getInventory().buy(Purchasable.FAKE_HAND_BAG);
+        writeItemBoughtMessage(message, Purchasable.FAKE_HAND_BAG);
     }
 
     private void shopNotUnlocked(Message message) {
         CountingBot.write(message, "You haven't unlocked the shop yet! You need to use the unlock_shop command first.");
     }
+
 
 
 }

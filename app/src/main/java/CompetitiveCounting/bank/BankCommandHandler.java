@@ -1,10 +1,12 @@
 package CompetitiveCounting.bank;
 
+import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingGuild;
 import CompetitiveCounting.bank.exceptions.BankNumberArgumentException;
 import CompetitiveCounting.bank.exceptions.BankTransactionException;
 import CompetitiveCounting.bank.exceptions.NotEnoughMoneyException;
+import CompetitiveCounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
 
 import java.util.HashMap;
@@ -132,6 +134,30 @@ public class BankCommandHandler {
         return shouldSaveJson;
     }
 
+    public void handBagBought(Message message) {
+        String guildId = message.getGuildId().get().asString();
+        String authorId = message.getAuthor().get().getId().asString();
+        CountingGuild countingGuild = guilds.get(guildId);
+        Bank bank = countingGuild.getBank();
+        if (bank.isUnlocked()) {
+            bankWrite(message, "You bought another gucci purse. Are you some sort of collector or what's the motive behind your actions?");  // TODO
+            return;
+        }
+        new Dialogue().addNpcLine(toCrocText("Oh look, finally, a customer!"), 2000)
+                .addNpcLine(toCrocText("Me? I'm the Crocodile, and I'm the salesman selling those handbags! I am very grateful for your purchase."), 4000)
+                .addNpcLine(toCrocText("By the way, I am obligated to inform you of the possibility to react with the :goblin: emoji if you have any complaints... But now I'm off to my next customer, see ya!"), 0)
+                .addForAfterDialogue(() -> {
+                    CountingBot.getInstance().getShopCommandHandler().acquireHandBag(message, guildId, authorId);
+                })
+                .play(message);
+
+/*
+        fakereveal: "Oops, someone must have switched out the crocodile leather for fake leather. Unfortunately, I can't give you any refunds."
+        bankcreate: "I will however, out of the goodness of my heart, create a branch of my very own CrocBank here. I will consider your generous, ahem, donation, as an investment!"
+        opportunity: "Consider this a great financial opportunity for the future!"*/
+
+    }
+
     private int calculateLoanInterestRate(int money, int rate) {
         return (int) (Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * 100);
     }
@@ -187,11 +213,17 @@ public class BankCommandHandler {
         bankWrite(message, "You have taken " + withdrawAmount + "from the bank. You better give it back! You now have " + newBalance + " left here.");
     }
 
+    private String toCrocText(String text) {
+        return "\uD83D\uDC0A: " + text;
+    }
+
     private void bankWrite(Message message, String text) {
-        write(message, "\uD83D\uDC0A: " + text);
+        write(message, toCrocText(text));
     }
 
     private void write(Message message, String text) {
         CountingBot.write(message, text);
     }
+
+
 }
