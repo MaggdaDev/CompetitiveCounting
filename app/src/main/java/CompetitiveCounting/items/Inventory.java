@@ -42,4 +42,9 @@ public class Inventory {
     public int getAmountOfItem(Purchasable purchasable) {
         return itemsBoughtAmount.getOrDefault(purchasable.toString(), 0);
     }
+
+    public void removeItem(Purchasable item) {
+        String itemId = item.toString();
+        itemsBoughtAmount.put(itemId, getAmountOfItem(item) - 1);
+    }
 }

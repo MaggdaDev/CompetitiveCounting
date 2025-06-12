@@ -37,31 +37,31 @@ public class TrophyHandler {
     }
 
     private void spawnTrophy(Message message, int number) {
-        message.addReaction(Emojis.TROPHY).subscribe();
+        message.addReaction(CountingEmojis.TROPHY).subscribe();
         reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
             if (messageReactedTo.getId().equals(message.getId())) {
                 String reactingUserId = reactingUser.getId().asString();
-                if (!CountingBot.getInstance().isCounter(message.getGuildId().get().asString(), reactingUserId)) {
-                    CountingBot.write(message, "You cannot claim trophies without having counted at least once, " + reactingUser.getUsername() + "!");
+                if (!CountingBot.getInstance().isCounter(messageReactedTo.getGuildId().get().asString(), reactingUserId)) {
+                    CountingBot.write(messageReactedTo, "You cannot claim trophies without having counted at least once, " + reactingUser.getUsername() + "!");
                     return false;
                 }
-                String guildId = message.getGuildId().get().asString();
+                String guildId = messageReactedTo.getGuildId().get().asString();
                 Counter reactingCounter = CountingBot.getInstance().getCounter(guildId, reactingUserId);
                 if (reactingCounter.hasTrophy(number)) {
                     if (number > 0) {
                         reactingCounter.addTrophyShard();
                         if (reactingCounter.getTrophyShards() <= 1) {
-                            CountingBot.write(message, "You have already found this trophy and hence get nothing, " + reactingCounter.getName() +
+                            CountingBot.write(messageReactedTo, "You have already found this trophy and hence get nothing, " + reactingCounter.getName() +
                                     "!\n\nJust joking. Congratulations for finding your first trophy shard! Trophy shards are extremely rare and can be spent in the ~shunlock shop.");
                         } else {
-                            CountingBot.write(message, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + reactingCounter.getName() + ". You now have " + reactingCounter.getTrophyShards() + " trophy shards!");
+                            CountingBot.write(messageReactedTo, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + reactingCounter.getName() + ". You now have " + reactingCounter.getTrophyShards() + " trophy shards!");
                         }
                     } else {
-                        CountingBot.write(message, "You have already found this special trophy and hence get nothing. But at least you stopped other counters from being able to claim this trophy. You truly are a competitive counter, " + reactingCounter.getName() + "!");
+                        CountingBot.write(messageReactedTo, "You have already found this special trophy and hence get nothing. But at least you stopped other counters from being able to claim this trophy. You truly are a competitive counter, " + reactingCounter.getName() + "!");
                     }
                 } else {
                     reactingCounter.addTrophy(number);
-                    CountingBot.write(message, "Congratulations " + reactingCounter.getName() + "! You have earned the " + getTrophyDescription(number) + "! You now have " + reactingCounter.getTrophyAmount() + " trophies!");
+                    CountingBot.write(messageReactedTo, "Congratulations " + reactingCounter.getName() + "! You have earned the " + getTrophyDescription(number) + "! You now have " + reactingCounter.getTrophyAmount() + " trophies!");
                 }
                 return true;
             } else {
@@ -103,7 +103,7 @@ public class TrophyHandler {
 
 
     private double trophyChanceFromNumber(double number) {
-        return 1.0 / (200.0 + 600.0 * Math.exp(-0.045 * number) + 225.0 * Math.exp(-0.0015 * number));
+        return 0.5; // 1.0 / (200.0 + 600.0 * Math.exp(-0.045 * number) + 225.0 * Math.exp(-0.0015 * number)); todo
     }
 
     private boolean randBool(double prop) {

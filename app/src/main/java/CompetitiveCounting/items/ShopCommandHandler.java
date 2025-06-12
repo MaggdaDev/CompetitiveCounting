@@ -1,9 +1,6 @@
 package CompetitiveCounting.items;
 
-import CompetitiveCounting.Counter;
-import CompetitiveCounting.CountingBot;
-import CompetitiveCounting.CountingGuild;
-import CompetitiveCounting.Unlockable;
+import CompetitiveCounting.*;
 import discord4j.core.object.entity.Message;
 
 import java.util.HashMap;
@@ -81,17 +78,10 @@ public class ShopCommandHandler {
         CountingBot.write(message, sb.toString());
     }
 
-    public static boolean isValidPurchasable(String itemToBuy) {
-        for (Purchasable item : Purchasable.values()) {
-            if (item.getName().equalsIgnoreCase(itemToBuy)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 
     public void buy(Message message, String itemToBuy, Counter counter) {
-        if (!isValidPurchasable(itemToBuy)) {
+        if (!Purchasable.isValidPurchasable(itemToBuy)) {
             CountingBot.write(message, "This item doesn't exist! Please try again.");
             return;
         }

@@ -10,6 +10,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
     id 'antlr'
+    id 'org.jetbrains.kotlin.jvm'
 
 }
 
@@ -28,6 +29,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
 
     antlr "org.antlr:antlr4:4.10.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 application {
@@ -49,4 +51,14 @@ task fatJar(type: Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
+}
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 }

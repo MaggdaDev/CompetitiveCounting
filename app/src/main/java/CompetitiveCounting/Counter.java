@@ -7,9 +7,11 @@ package CompetitiveCounting;
 
 import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.contracts.ContractHandler;
+import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.items.Inventory;
 import CompetitiveCounting.items.Purchasable;
 import CompetitiveCounting.items.ShopCommandHandler;
+import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
@@ -40,8 +42,9 @@ public class Counter {
     private transient ContractHandler contractHandler;
 
     private transient String guildId;   // Will be set in initContracts method
-
     private Inventory inventory;
+
+    private transient Dialogue activeUnlockBankDialog = null;
 
     public Counter(String guildId, String key, String name) {
         this.key = key;
@@ -430,6 +433,21 @@ public class Counter {
         return 1.0;
     }
 
+    public void use(Purchasable item, Message message) {
+        inventory.removeItem(item);
+        switch (item) {
+            case FAKE_HAND_BAG: case HAND_BAG:
+                if (activeUnlockBankDialog != null) {
+                    activeUnlockBankDialog.stop();
+                    activeUnlockBankDialog = null;
+                }
+                CountingBot.getInstance().requestHandBagRefundViaItem(message);
+                break;
+            default:
+                throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
+        }
+    }
+
     public Integer[] getOwnedTrophies() {
         return ownedTrophies.toArray(new Integer[0]);
     }
@@ -541,6 +559,13 @@ public class Counter {
         return false;
     }
 
+    public Dialogue getActiveUnlockBankDialog() {
+        return activeUnlockBankDialog;
+    }
+
+    public void setActiveUnlockBankDialog(Dialogue activeUnlockBankDialog) {
+        this.activeUnlockBankDialog = activeUnlockBankDialog;
+    }
 
     public int[] getUnlockedBases() {
         return unlockedSystems;
@@ -583,6 +608,7 @@ public class Counter {
     public boolean isShopUnlocked() {
         return getInventory().isShopUnlocked();
     }
+
 
 
 }

@@ -23,6 +23,33 @@ public class InventoryCommandHandler {
             inventory(message, counter);
             return;
         }
+        if (!content.contains(" ")) {
+            return; // Todo write shit
+        }
+        String[] splittedArgs = content.split(" ");
+        String command = splittedArgs[1];
+        switch (command) {
+            case "use":
+                if (splittedArgs.length < 3) {
+                    CountingBot.write(message, "Usage: ~inv use <item>");
+                    return;
+                }
+                String itemName = content.substring(1 + splittedArgs[0].length() + splittedArgs[1].length()).trim();
+                if (!Purchasable.isValidPurchasable(itemName)) {
+                    CountingBot.write(message, "Invalid item name: " + itemName);
+                    return;
+                }
+                Purchasable item = Purchasable.getPurchasableByLowerCaseName(itemName.toLowerCase());
+                if(counter.getInventory().getAmountOfItem(item) <= 0) {
+                    CountingBot.write(message, "You don't own this item.");
+                    return;
+                }
+                counter.use(item, message);
+                break;
+            default:
+                CountingBot.write(message, "Unknown inventory command: " + command);
+                break;
+        }
     }
 
     private void inventory(Message message, Counter counter) {

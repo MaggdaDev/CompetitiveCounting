@@ -101,9 +101,9 @@ public class CountingStreak {
                 timeLimitRule.applyTimerToMessage(message, lastCounter);
             } else {
                 if (user.hasTrophy(number)) {
-                    message.addReaction(Emojis.GOLDEN_KEKMARK).subscribe();
+                    message.addReaction(CountingEmojis.GOLDEN_KEKMARK).subscribe();
                 } else {
-                    message.addReaction(Emojis.KEKMARK).subscribe();
+                    message.addReaction(CountingEmojis.KEKMARK).subscribe();
                 }
             }
             if (timeLimitNewlyAdded) {
@@ -603,6 +603,10 @@ public class CountingStreak {
     public void timeLimitLost(String ownerId, Message message, Counter loser) {
         Message lostMessage = message.getChannel().block().createMessage("Whoops! Time ran out!").block();
         fail(lostMessage, lastCount, loser);
+    }
+
+    public EmojiReactHandler getEmojiReactHandler() {
+        return emojiReactHandler;
     }
 
     public int getBase() {

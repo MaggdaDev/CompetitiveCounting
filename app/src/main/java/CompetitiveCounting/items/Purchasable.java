@@ -25,6 +25,15 @@ public enum Purchasable {
         this.description = description;
     }
 
+    public static boolean isValidPurchasable(String itemToBuy) {
+        for (Purchasable item : Purchasable.values()) {
+            if (item.getName().equalsIgnoreCase(itemToBuy)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public int getPrice() { return price; }
 
     public String getName() { return name; }

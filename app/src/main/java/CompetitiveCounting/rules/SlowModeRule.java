@@ -5,7 +5,7 @@
  */
 package CompetitiveCounting.rules;
 
-import CompetitiveCounting.Emojis;
+import CompetitiveCounting.CountingEmojis;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 
@@ -70,14 +70,14 @@ public class SlowModeRule implements Rule {
                     message.removeSelfReaction(two).subscribe();
                     message.removeSelfReaction(one).subscribe();
                     message.removeSelfReaction(clock).subscribe();
-                    message.addReaction(Emojis.KEKMARK).subscribe();
+                    message.addReaction(CountingEmojis.KEKMARK).subscribe();
                     accepts = true;
                     shouldStop = false;
                     return;
                 }
                 message.removeSelfReaction(one).subscribe();
                 message.removeSelfReaction(clock).subscribe();
-                message.addReaction(Emojis.KEKMARK).subscribe();
+                message.addReaction(CountingEmojis.KEKMARK).subscribe();
                 accepts = true;
 
             }

@@ -2,7 +2,7 @@ package CompetitiveCounting;
 
 import discord4j.core.object.reaction.ReactionEmoji;
 
-public interface Emojis {
+public interface CountingEmojis {
     ReactionEmoji KEKMARK = ReactionEmoji.of(Long.parseLong("805121814296133653"), "kekmark", false),
             ONE = ReactionEmoji.unicode("\u0031\u20E3"),
             TWO = ReactionEmoji.unicode("\u0032\u20E3"),
@@ -10,7 +10,8 @@ public interface Emojis {
             BOLT = ReactionEmoji.unicode("\u26A1"),
             TROPHY = ReactionEmoji.unicode("\uD83C\uDFC6"),
             GOLDEN_KEKMARK = ReactionEmoji.of(Long.parseLong("1309598712896557196"), "goldenkekmark", false),
-            WARNING = ReactionEmoji.unicode("\u26A0");
+            WARNING = ReactionEmoji.unicode("\u26A0"),
+            GOBLIN = ReactionEmoji.unicode("\uD83D\uDC7A");
 
     ReactionEmoji[] ALL_NUMBER_EMOJIS = {
             ReactionEmoji.unicode("\u0030\u20E3"),

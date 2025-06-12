@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CaptureHandler {
-    private final static long MIN_TIME_BETWEEN_CAPTURES = 420000;
-    private final double CAPTURE_CHANCE = 0.05;
+    private final static long MIN_TIME_BETWEEN_CAPTURES = 0; // 420000
+    private final double CAPTURE_CHANCE = 1; // 0.05
     private final EmojiReactHandler emojiReactHandler;
 
     private final List<Capture> captures;
@@ -37,7 +37,7 @@ public class CaptureHandler {
 
     private void doCapture(Message message, int number, String userId, Runnable onCaptureFailed, Runnable onCaptureSucceeded, TrophyHandler trophyHandler) {
         Capture capture;
-        boolean secret = Math.random() < 1.0 / (double)captures.size();
+        boolean secret = true; //Math.random() < 1.0 / (double)captures.size(); todo
         if (secret) {
             capture = Capture.SECRET_CAPTURE;
         } else {
@@ -47,11 +47,15 @@ public class CaptureHandler {
         CountingBot.write(message, msg, (sentCaptureMessage) -> {
             if(secret) {
                 emojiReactHandler.addOnAnyReact((reactedMessage, user, reactedEmoji) -> {
-                    if(Arrays.stream(Emojis.ALL_NUMBER_EMOJIS).filter(e -> e.equals(reactedEmoji)).count() > 0) {
+                    if(Arrays.stream(CountingEmojis.ALL_NUMBER_EMOJIS).filter(e -> e.equals(reactedEmoji)).count() > 0) {
+                        CountingBot.write(reactedMessage, "Alright, for now you don't seem to be a malevolent scripter, <@!" + userId + ">. You can continue counting now!");
+                        onCaptureSucceeded.run();
                         return true;
                     }
-                    if("\uD83C\uDDFA".equals(reactedEmoji.getRaw())) {
+                    if("\uD83C\uDDFA".equals(reactedEmoji.getRaw())) { // u emoji
                         trophyHandler.spawnMooseTrophy(sentCaptureMessage, capture.question, reactedEmoji);
+                        CountingBot.write(reactedMessage, "Alright, for now moose don't soose to be a maloosevolent scrooster, <@!" + userId + ">. You can continue moosing now!");
+                        onCaptureSucceeded.run();
                         return true;
                     }
                     return false;
@@ -59,7 +63,7 @@ public class CaptureHandler {
             }
             Mono<Void>[] reactions = new Mono[10];
             for(int i = 0; i < 10; i ++) {
-                reactions[i] = sentCaptureMessage.addReaction(Emojis.ALL_NUMBER_EMOJIS[i]);
+                reactions[i] = sentCaptureMessage.addReaction(CountingEmojis.ALL_NUMBER_EMOJIS[i]);
             }
             Mono.when(reactions).doOnSuccess((v) -> {
                 emojiReactHandler.addOnNumberReact((reactedMessage, user, reactedNumber) -> {
@@ -67,12 +71,11 @@ public class CaptureHandler {
                         if(reactedNumber == capture.getAnswer()) {
                             CountingBot.write(reactedMessage, "Alright, for now you don't seem to be a malevolent scripter, <@!" + userId + ">. You can continue counting now!");
                             onCaptureSucceeded.run();
-                            return true;
                         } else {
                             CountingBot.write(reactedMessage, "You failed the captcha, <@!" + userId + ">! Nefarious scripter!");
                             onCaptureFailed.run();
-                            return true;
                         }
+                        return true;
                     }
                     return false;
                 });

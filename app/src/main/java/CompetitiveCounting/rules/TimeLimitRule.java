@@ -8,7 +8,7 @@ package CompetitiveCounting.rules;
 import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingStreak;
-import CompetitiveCounting.Emojis;
+import CompetitiveCounting.CountingEmojis;
 import discord4j.core.object.entity.Message;
 
 /**
@@ -64,30 +64,30 @@ public class TimeLimitRule implements Rule {
         @Override
         public void run() {
             int timer = time + 1;
-            message.addReaction(Emojis.KEKMARK).subscribe();
-            message.addReaction(Emojis.BOLT).subscribe();
+            message.addReaction(CountingEmojis.KEKMARK).subscribe();
+            message.addReaction(CountingEmojis.BOLT).subscribe();
             while (timer >= 0) {
                 if (shouldStop) {
-                    message.removeSelfReaction(Emojis.ONE).subscribe();
-                    message.removeSelfReaction(Emojis.TWO).subscribe();
-                    message.removeSelfReaction(Emojis.THREE).subscribe();
-                    message.removeSelfReaction(Emojis.BOLT).subscribe();
-                    message.addReaction(Emojis.KEKMARK).subscribe();
+                    message.removeSelfReaction(CountingEmojis.ONE).subscribe();
+                    message.removeSelfReaction(CountingEmojis.TWO).subscribe();
+                    message.removeSelfReaction(CountingEmojis.THREE).subscribe();
+                    message.removeSelfReaction(CountingEmojis.BOLT).subscribe();
+                    message.addReaction(CountingEmojis.KEKMARK).subscribe();
                     return;
                 } else if (shouldCancel) {
                     timer = 0;
                 }
                 switch (timer) {
                     case 1:
-                        message.removeSelfReaction(Emojis.TWO).subscribe();
-                        message.addReaction(Emojis.ONE).subscribe();
+                        message.removeSelfReaction(CountingEmojis.TWO).subscribe();
+                        message.addReaction(CountingEmojis.ONE).subscribe();
                         break;
                     case 2:
-                        message.removeSelfReaction(Emojis.THREE).subscribe();
-                        message.addReaction(Emojis.TWO).subscribe();
+                        message.removeSelfReaction(CountingEmojis.THREE).subscribe();
+                        message.addReaction(CountingEmojis.TWO).subscribe();
                         break;
                     case 3:
-                        message.addReaction(Emojis.THREE).subscribe();
+                        message.addReaction(CountingEmojis.THREE).subscribe();
                         break;
                 }
                 try {
@@ -98,22 +98,22 @@ public class TimeLimitRule implements Rule {
                 timer -= 1;
             }
             if (shouldStop) {
-                message.removeSelfReaction(Emojis.THREE).subscribe();
-                message.removeSelfReaction(Emojis.ONE).subscribe();
-                message.removeSelfReaction(Emojis.TWO).subscribe();
-                message.removeSelfReaction(Emojis.BOLT).subscribe();
+                message.removeSelfReaction(CountingEmojis.THREE).subscribe();
+                message.removeSelfReaction(CountingEmojis.ONE).subscribe();
+                message.removeSelfReaction(CountingEmojis.TWO).subscribe();
+                message.removeSelfReaction(CountingEmojis.BOLT).subscribe();
                 return;
             } else if (shouldCancel) {
-                message.removeSelfReaction(Emojis.THREE).subscribe();
-                message.removeSelfReaction(Emojis.ONE).subscribe();
-                message.removeSelfReaction(Emojis.TWO).subscribe();
-                message.removeSelfReaction(Emojis.BOLT).subscribe();
+                message.removeSelfReaction(CountingEmojis.THREE).subscribe();
+                message.removeSelfReaction(CountingEmojis.ONE).subscribe();
+                message.removeSelfReaction(CountingEmojis.TWO).subscribe();
+                message.removeSelfReaction(CountingEmojis.BOLT).subscribe();
                 shouldCancel = false;
                 return;
             }
             hasLost = true;
-            message.removeSelfReaction(Emojis.ONE).subscribe();
-            message.removeSelfReaction(Emojis.BOLT).subscribe();
+            message.removeSelfReaction(CountingEmojis.ONE).subscribe();
+            message.removeSelfReaction(CountingEmojis.BOLT).subscribe();
             streak.timeLimitLost(ownerId, message, loser);
             CountingBot.getInstance().removeStreak(streak.getKey());
 

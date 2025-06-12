@@ -33,6 +33,13 @@ public class Bank {
     public void donate(int amount) {
         totalScore += amount;
     }
+
+    public void removeMoney(int amount) {
+        // should ideally only be used from within the loan function. removes money because it gives it to the user.
+        // i'm not using withdraw since that would subtract from the user's BankAccount
+        totalScore -= amount;
+    }
+
     public void register(String counterId) {
         if (!alreadyRegistered(counterId)) {
             BankAccount account = new BankAccount(counterId);

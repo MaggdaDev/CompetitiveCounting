@@ -3,9 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting;
+package CompetitiveCounting.tradeoffer;
 
-import CompetitiveCounting.Tradable.MoneyTrade;
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.tradeoffer.Tradable.MoneyTrade;
+import CompetitiveCounting.Util;
 import discord4j.core.object.entity.Message;
 
 /**
@@ -20,43 +23,11 @@ public class TradeOffer {
     private Tradable[] youGetTrades, iGetTrades;
     private Counter initCounter, requCounter;
 
-    public TradeOffer(String content, Counter initCounter) { //in upper case
-        this.initCounter = initCounter;
-        String[] splitted;
-        boolean containsYouGet = true;
-        if (content.contains(YOU_GET)) {
-            splitted = content.split(YOU_GET);
-        } else {
-            splitted = content.split(I_GET);
-            containsYouGet = false;
-        }
-        String init = splitted[0];
-        String offers = splitted[1];
-
-        String youGet, iGet;
-        if (containsYouGet) {
-            splitted = offers.split(I_GET);
-            youGet = splitted[0];
-            if (splitted.length > 1) {
-                iGet = splitted[1];
-            } else {
-                iGet = "";
-            }
-        } else {
-            youGet = "";
-            iGet = offers;
-        }
-        splitted = init.split(" ");
-        userPing = splitted[1].replaceAll(" ", "");
-        userId = Util.pingToUserId(userPing);
-        requCounter = CountingBot.getInstance().getCounter(initCounter.getGuildId(), userId);
-
-        try {
-            youGetTrades = Tradable.generateTradables(youGet, this.initCounter, requCounter);
-            iGetTrades = Tradable.generateTradables(iGet, requCounter, this.initCounter);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public TradeOffer(Counter initBruv, Counter rehKuhCounter, Tradable[] iGetBitches, Tradable[] judeTrades) { //in upper case
+        this.initCounter = initBruv;
+        this.requCounter = rehKuhCounter;
+        this.iGetTrades = iGetBitches;
+        this.youGetTrades = judeTrades;
     }
 
     public Counter getRequestedUser() {

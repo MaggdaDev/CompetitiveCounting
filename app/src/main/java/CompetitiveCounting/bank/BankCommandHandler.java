@@ -1,11 +1,11 @@
 package CompetitiveCounting.bank;
 
-import CompetitiveCounting.Counter;
-import CompetitiveCounting.CountingBot;
-import CompetitiveCounting.CountingGuild;
+import CompetitiveCounting.*;
+import CompetitiveCounting.bank.exceptions.BankLoanException;
 import CompetitiveCounting.bank.exceptions.BankNumberArgumentException;
 import CompetitiveCounting.bank.exceptions.BankTransactionException;
 import CompetitiveCounting.bank.exceptions.NotEnoughMoneyException;
+import CompetitiveCounting.bank.BankLoanHandler;
 import CompetitiveCounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
 
@@ -108,7 +108,11 @@ public class BankCommandHandler {
                     int loanAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     int loanRate = parseStringToNaturalNumberAtIndex(splitMessage, 3, message);
                     bankWrite(message, String.valueOf(calculateLoanInterestRate(loanAmount, loanRate)));
-                    bankWrite(message, String.valueOf(calculateLoanInterest(loanAmount, loanRate)));
+                    bankWrite(message, String.valueOf(calculateLoanRepayAmount(loanAmount, loanRate)));
+                    BankLoanHandler.giveLoan(guildId, authorId, loanAmount, loanRate, message);
+                    break;
+                case "help":
+                    bankWrite(message, "Help yourself! (Or, as a wise curator of intellect once said, 'Organize your shelf')"); // todo
                     break;
                 default:
                     sendCommandNotUnderstoodMessage(message);
@@ -130,6 +134,8 @@ public class BankCommandHandler {
                 default:
                     bankWrite(message, "You need " + e.moneyNeeded + " money for that, but you only have " + e.moneyAvailable + ". I would recommend loaning " + (e.moneyNeeded - e.moneyAvailable + (int) (Math.random() * 1000.0) + " money from me!"));
             }
+        } catch (BankLoanException e) {
+            bankWrite(message, e.getMessage());
         }
         return shouldSaveJson;
     }
@@ -139,31 +145,49 @@ public class BankCommandHandler {
         String authorId = message.getAuthor().get().getId().asString();
         CountingGuild countingGuild = guilds.get(guildId);
         Bank bank = countingGuild.getBank();
-        if (bank.isUnlocked()) {
-            bankWrite(message, "You bought another gucci purse. Are you some sort of collector or what's the motive behind your actions?");  // TODO
-            return;
+        //if (bank.isUnlocked()) { todo
+        //    bankWrite(message, "You bought another gucci purse. Are you some sort of collector or what's the motive behind your actions?");  // TODO
+        //    return;
+        //}
+        Counter counter = countingGuild.getCounter(authorId);
+        if (counter.getActiveUnlockBankDialog() != null) {
+            counter.getActiveUnlockBankDialog().stop();
+            counter.setActiveUnlockBankDialog(null);
         }
-        new Dialogue().addNpcLine(toCrocText("Oh look, finally, a customer!"), 2000)
+        Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId, bank);
+        dialogue.play(message);
+        counter.setActiveUnlockBankDialog(dialogue);
+    }
+
+    public void handBagRefundRequestedViaItemUse(Message message) { // todo: What happens if bank item is used after the bank is already unlocked?
+        String guildId = message.getGuildId().get().asString();
+        String authorId = message.getAuthor().get().getId().asString();
+        CountingGuild countingGuild = guilds.get(guildId);
+        Bank bank = countingGuild.getBank();
+        Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId, bank);
+        dialogue.playAtIndex(message, 5);
+    }
+
+    private Dialogue createHandBagBoughtDialogue(Message message, String guildId, String authorId, Bank bank) {
+        return new Dialogue().addNpcLine(toCrocText("Oh look, finally, a customer!"), 2000)
                 .addNpcLine(toCrocText("Me? I'm the Crocodile, and I'm the salesman selling those handbags! I am very grateful for your purchase."), 4000)
-                .addNpcLine(toCrocText("By the way, I am obligated to inform you of the possibility to react with the :goblin: emoji if you have any complaints... But now I'm off to my next customer, see ya!"), 0)
-                .addForAfterDialogue(() -> {
-                    CountingBot.getInstance().getShopCommandHandler().acquireHandBag(message, guildId, authorId);
-                })
-                .play(message);
-
-/*
-        fakereveal: "Oops, someone must have switched out the crocodile leather for fake leather. Unfortunately, I can't give you any refunds."
-        bankcreate: "I will however, out of the goodness of my heart, create a branch of my very own CrocBank here. I will consider your generous, ahem, donation, as an investment!"
-        opportunity: "Consider this a great financial opportunity for the future!"*/
-
+                .addNpcLine(toCrocText("By the way, I am obligated to inform you of the possibility to react with the :goblin: emoji to this message if you have any complaints... But now I'm off to my next customer, see ya!"), 0)
+                .addRunnable((m) -> CountingBot.getInstance().getShopCommandHandler().acquireHandBag(message, guildId, authorId))
+                .addWaitForEmojiReactionOnNthNpcLine(2, message.getId().asString(), CountingEmojis.GOBLIN)
+                .addNpcLine(toCrocText("Fake? What do you mean fake? Everything about this leather is as real as it gets! Do you not trust me? I don't think a refund is appropriate."), 6000)
+                .addNpcLine(toCrocText("However, it seems like this is a thriving spot to do business. Therefore, I will create a branch of my very own *CrocBank* here."), 2000)
+                .addNpcLine(toCrocText("I will consider your generous, ahem, *donation* an investment! Consider this a great financial opportunity for the future!"), 0)
+                .addRunnable(m -> bank.unlock())
+                .addRunnable(m -> CountingBot.getInstance().save())
+                .addNpcLine("You have unlocked the bank on *" + message.getGuild().block().getName() + "*! Every member can now use the ~bank commands. For more details, run ~bank help.", 0);
     }
 
     private int calculateLoanInterestRate(int money, int rate) {
         return (int) (Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * 100);
     }
 
-    private int calculateLoanInterest(int money, int rate) {
-        return (money * (1 + calculateLoanInterestRate(money, rate)));
+    private int calculateLoanRepayAmount(int money, int rate) { // change back to int
+        return (int) (calculateLoanInterestRate(money, rate) * 0.01 * money);
     }
 
 
