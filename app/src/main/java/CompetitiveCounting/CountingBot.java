@@ -564,6 +564,9 @@ public class CountingBot {
         Bank bank = guilds.get(guildId).getBank();
         String bankString = "The CrocBank Inc. \uD83D\uDC0A: " + bank.getTotalScore() + " money";
         boolean bankDisplayed = false;
+        if (!bank.isUnlocked()) {
+            bankDisplayed = true;   // Dont show bank if not unlocked
+        }
         int position = 1;
         for (Counter counter : countersSorted) {
             if (counter.getPrestiges() == 0 && counter.getPossibleTotal() == 0) {

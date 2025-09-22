@@ -39,7 +39,7 @@ public class InventoryCommandHandler {
                     CountingBot.write(message, "Invalid item name: " + itemName);
                     return;
                 }
-                Purchasable item = Purchasable.getPurchasableByLowerCaseName(itemName.toLowerCase());
+                Purchasable item = Purchasable.getPurchasableByString(itemName.toLowerCase());
                 if(counter.getInventory().getAmountOfItem(item) <= 0) {
                     CountingBot.write(message, "You don't own this item.");
                     return;

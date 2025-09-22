@@ -44,6 +44,8 @@ public class CountingStreak {
 
     private boolean destroyedByWrongCapture = false;
 
+    private int sumOfAllCountsSoFar = 0;
+
     public CountingStreak(String key, int base) {
         this.key = key;
         counter = 1;
@@ -81,6 +83,7 @@ public class CountingStreak {
         if (isNumCorrect(number, message) && (!user.equals(lastCounter))) { // Count is accepted
             lastCount = number;
             incrementCounter();
+            sumOfAllCountsSoFar += number;
             user.notifyCount(number, this);
 
             if(captureHandler.raisedCapture(message, number, user.getId(), lastCaptureTimes, () -> {    // onCaptureFailed
@@ -114,7 +117,6 @@ public class CountingStreak {
             return true;
         } else {
             fail(message, number, user);
-
             return false;
         }
     }
@@ -146,7 +148,7 @@ public class CountingStreak {
                 causeForLose = "Timelimit-rule broken";
             }
             if (winnerRule.getOwnerId().equals(user.getId())) {
-                loss = user.failFromOwn(message, this);
+                loss = user.failFromOwn(message, this, sumOfAllCountsSoFar);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
                 } else {

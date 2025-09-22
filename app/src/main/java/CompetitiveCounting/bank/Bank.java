@@ -11,11 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * TODO: gucci handbag zum öffnen
- * TODO: ~shop command
- */
-
 public class Bank implements ContractOwner {
     public static final String CONTRACT_ENTITY_NAME = "The CrocBank Inc.";
     public static final String CONTRACT_OWNER_ID = "-1";
@@ -34,7 +29,7 @@ public class Bank implements ContractOwner {
 
     public Bank(String guildId) {
         this.guildId = guildId;
-        this.totalScore = 0;
+        this.totalScore = 1050505;
         this.accounts = new HashMap<>();
         this.upgrades = new HashMap<>();
         for (String key: UPGRADE_KEYS) {

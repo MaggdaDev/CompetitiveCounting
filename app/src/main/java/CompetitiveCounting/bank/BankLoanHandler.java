@@ -42,7 +42,7 @@ public class BankLoanHandler {
         initCounter.addBonusScore(loanAmount - crocLoanFee, message);
         initCounter.getContractHandler().addContract(bank, loanRate, loanAmount + extraPayback);
 
-        new Dialogue().addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! You now owe me " + (loanAmount + extraPayback) + " money, which you will pay back by giving me " + 
+        new Dialogue().addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! You now owe me " + (loanAmount + extraPayback) + " money, which you will pay back by giving me " +
                         loanRate + "% of your income. ", 2000)
                 .addNpcLine("By the way... you'd better pay me back my money soon, or else...", 3000)
                 .addNpcLine("... I will tell my cousins... they already know your IP address...", 0)

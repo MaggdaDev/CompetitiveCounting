@@ -487,11 +487,13 @@ public class Counter implements ContractOwner {
         return couldHaveBeenPossible - getScore();
     }
 
-    public int failFromOwn(Message message, CountingStreak streak) {
+    public int failFromOwn(Message message, CountingStreak streak, int sumOfCounts) {
         int couldHaveBeenPossible = getPossibleTotalInStreak(streak);
         int currScoreAdd = this.currScoreAdds.get(streak.getKey());
-        currScoreAdd /= 4.0d;
-        score = (int) ((2.0d * (double) score / 3.0d));
+        currScoreAdd /= 2.0d;
+        int scoreLose = (int) ((double) score / 4.0d);
+        scoreLose = Math.min(scoreLose, sumOfCounts);
+        score -= scoreLose;
         addBonusScore(currScoreAdd, message);
         this.currScoreAdds.replace(streak.getKey(), 0);
         return couldHaveBeenPossible - getScore();

@@ -68,8 +68,9 @@ public class ShopCommandHandler {
     private void shop(Message message) {
         StringBuilder sb = new StringBuilder();
         sb.append("Welcome to the shop! The items you can find here are: \n\n");
-        for (Purchasable item : Purchasable.values()) {
-            sb.append(item.getName())
+        int itemCounter = 1;
+        for (Purchasable item : Purchasable.BUYABLES) {
+            sb.append(itemCounter + ": " + item.getName())
                     .append(" - ")
                     .append(item.getPrice())
                     .append(" money")
@@ -85,7 +86,7 @@ public class ShopCommandHandler {
             CountingBot.write(message, "This item doesn't exist! Please try again.");
             return;
         }
-        Purchasable toBuy = Purchasable.getPurchasableByLowerCaseName(itemToBuy);
+        Purchasable toBuy = Purchasable.getPurchasableByString(itemToBuy);
         if (!counter.canAfford(toBuy.getPrice())) {
             CountingBot.write(message, "This item is too expensive for you! You only have " + counter.getScore() + " out of the needed " + toBuy.getPrice() + " money.");
             return;

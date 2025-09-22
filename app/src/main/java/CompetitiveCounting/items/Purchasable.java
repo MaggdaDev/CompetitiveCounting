@@ -3,9 +3,13 @@ package CompetitiveCounting.items;
 import java.util.HashMap;
 
 public enum Purchasable {
-    HAND_BAG(2000000, "Glamorous crocodile-leather Lacoste purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings."),
-    FAKE_HAND_BAG(2000000, "Cheap plastic-leather Lakosde purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings.");
+    HAND_BAG(1050505, "Glamorous crocodile-leather Lacoste purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings."),
+    FAKE_HAND_BAG(1050505, "Cheap plastic-leather Lakosde purse", "A crocodile-branded handbag made of the finest leather in Turkey. Truly an accessory made for kings.");
 
+
+    public final static Purchasable[] BUYABLES = {
+            HAND_BAG
+    };
     private final static HashMap<String, Purchasable> purchasablesByLowerCaseName;
     static {
         purchasablesByLowerCaseName = new HashMap<>();
@@ -13,7 +17,13 @@ public enum Purchasable {
             purchasablesByLowerCaseName.put(purchasable.getName().toLowerCase(), purchasable);
         }
     }
-    public static Purchasable getPurchasableByLowerCaseName(String name) {
+    public static Purchasable getPurchasableByString(String name) {
+        try {
+            int number = Integer.parseInt(name);
+            return Purchasable.BUYABLES[number - 1];
+        } catch (NumberFormatException e) {
+            // continue
+        }
         return purchasablesByLowerCaseName.get(name);
     }
     private final int price;
@@ -26,6 +36,12 @@ public enum Purchasable {
     }
 
     public static boolean isValidPurchasable(String itemToBuy) {
+        try {
+            int number = Integer.parseInt(itemToBuy);
+            return  1 <= number && number <= Purchasable.BUYABLES.length;
+        } catch(NumberFormatException e) {
+            // continue
+        }
         for (Purchasable item : Purchasable.values()) {
             if (item.getName().equalsIgnoreCase(itemToBuy)) {
                 return true;

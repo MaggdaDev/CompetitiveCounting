@@ -114,7 +114,8 @@ public class BankCommandHandler {
                     shouldSaveJson = sendFlexMessage(message, bank);
                     break;
                 case "help":
-                    bankWrite(message, "Help yourself! (Or, as a wise curator of intellect once said, 'Organize your shelf')"); // todo
+//                    bankWrite(message, "Help yourself! (Or, as a wise curator of intellect once said, 'Organize your shelf')"); // todo
+                    sendHelpMessage(message);
                     break;
                 default:
                     sendCommandNotUnderstoodMessage(message);
@@ -166,8 +167,12 @@ public class BankCommandHandler {
         String authorId = message.getAuthor().get().getId().asString();
         CountingGuild countingGuild = guilds.get(guildId);
         Bank bank = countingGuild.getBank();
-        Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId, bank);
-        dialogue.playAtIndex(message, 5);
+        if (bank.isUnlocked()) {
+            bankWrite(message, "You cannot refund this item. But you can visit the CrocBank by writing ~bank!");
+        } else {
+            Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId, bank);
+            dialogue.playAtIndex(message, 5);
+        }
     }
 
     private Dialogue createHandBagBoughtDialogue(Message message, String guildId, String authorId, Bank bank) {
@@ -183,8 +188,6 @@ public class BankCommandHandler {
                 .addRunnable(m -> CountingBot.getInstance().save())
                 .addNpcLine("You have unlocked the bank on *" + message.getGuild().block().getName() + "*! Every member can now use the ~bank commands. For more details, run ~bank help.", 0);
     }
-
-
 
 
     private int parseStringToNaturalNumberAtIndex(String[] splitMessage, int index, Message message) throws BankNumberArgumentException {
@@ -275,6 +278,27 @@ public class BankCommandHandler {
         }
 
         return false;
+    }
+
+    private void sendHelpMessage(Message message) {
+        String helpMessage = "## Terms of Service\n" +
+                "\uD83D\uDC0A: We at the CrocBank Inc. are happy that you are considering this lucrative deal! Therefore I will gladly explain our Terms of Service™ to you.\n" +
+                "\n" +
+                "### ~bank donate\n" +
+                "\uD83D\uDC0A: The most important command, donate your money to the bank for a greater cause!\n" +
+                "### ~bank deposit\n" +
+                "\uD83D\uDC0A: Deposit some of your (negligible) riches into your own personal bank account, keep it safe and profit from an astounding 0% interest rate! But at least nobody's gonna steal it...\n" +
+                "### ~bank withdraw\n" +
+                "\uD83D\uDC0A: You broke? You need your money back? Better think twice about it, it's safe and protected at the CrocBank after all!\n" +
+                "### ~bank balance\n" +
+                "\uD83D\uDC0A: Accurately displays your balance at the CrocBank with absolutely no margin of error. Trust us, we have your best interests at heart.\n" +
+                "### ~bank loan\n" +
+                "\uD83D\uDC0A: You can take out a loan from us too! With very small and fair interest rates, you can choose how much of your income you can dedicate to paying us back. [Syntax: `~bank loan <amount> <rate in %>`]\n" +
+                "### ~bank flex\n" +
+                "\uD83D\uDC0A: Lets us at the CrocBank show you just how deep our pockets are. Try it out!\n" +
+                "### ~bank help\n" +
+                "\uD83D\uDC0A: Should be obvious...";
+        write(message, helpMessage);
     }
 
     private static String toCrocText(String text) {
