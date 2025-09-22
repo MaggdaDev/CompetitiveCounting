@@ -7,6 +7,7 @@ package CompetitiveCounting;
 
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferParser;
+import CompetitiveCounting.bank.Bank;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
@@ -24,6 +25,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.Disposable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -338,6 +340,11 @@ public class CountingBot {
             if (!tradeOffer.isTradeOfferValid(message)) {
                 return;
             }
+            if (requested == null) {
+                CountingBot.write(message, "Something went wrong, please try again.");
+                System.err.println("Error: Requested counter in trade offer is null although it should exist.");
+                return;
+            }
             String tradeId = getNextTradeId();
             Button acceptButton = Button.success(tradeId, "Accept");
             Button declineButton = Button.danger("-" + tradeId, "Decline");
@@ -356,7 +363,6 @@ public class CountingBot {
         String guildId = message.getGuildId().get().asString();
         if (guilds.containsKey(guildId) && guilds.get(guildId).getBank().isUnlocked()) {
             write(message, "CHIPPIE CHIPPIE CHAPPA CHAPPA DUBIDUBI DABABA MAGICOMA DOOBIE DOOBIE BAM BAM BAM BAM this server already has a bank"); // todo
-            return;
         }
     }
 
@@ -555,15 +561,28 @@ public class CountingBot {
             }
         });
         String ret = "Scoreboard: ";
+        Bank bank = guilds.get(guildId).getBank();
+        String bankString = "The CrocBank Inc. \uD83D\uDC0A: " + bank.getTotalScore() + " money";
+        boolean bankDisplayed = false;
+        int position = 1;
         for (Counter counter : countersSorted) {
             if (counter.getPrestiges() == 0 && counter.getPossibleTotal() == 0) {
-                break;
+                continue;
+            }
+            if (!bankDisplayed && (bank.getTotalScore() > counter.getPossibleTotal() && counter.getPrestiges() == 0)) {
+                ret += "\n" + position + ") " +  bankString;
+                bankDisplayed = true;
+                position +=1;
             }
             if (counter.getPrestiges() != 0) {
-                ret += "\n" + counter.getName() + ": " + counter.getPossibleTotal() + " money (Amount of Prestiges: " + counter.getPrestiges() + ")";
+                ret += "\n" + position + ") " + counter.getName() + ": " + counter.getPossibleTotal() + " money (Amount of Prestiges: " + counter.getPrestiges() + ")";
             } else {
-                ret += "\n" + counter.getName() + ": " + counter.getPossibleTotal() + " money";
+                ret += "\n" + position + ") "  + counter.getName() + ": " + counter.getPossibleTotal() + " money";
             }
+            position += 1;
+        }
+        if (!bankDisplayed) {
+            ret += "\n" + position + ") " + bankString;
         }
         return ret;
     }

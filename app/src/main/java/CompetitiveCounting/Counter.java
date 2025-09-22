@@ -5,8 +5,10 @@
  */
 package CompetitiveCounting;
 
+import CompetitiveCounting.bank.Bank;
 import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.contracts.ContractHandler;
+import CompetitiveCounting.contracts.ContractOwner;
 import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.items.Inventory;
 import CompetitiveCounting.items.Purchasable;
@@ -20,7 +22,7 @@ import java.util.stream.Stream;
 /**
  * @author DavidPrivat
  */
-public class Counter {
+public class Counter implements ContractOwner {
 
     public final static int PRESTIGE_WORTH = 1000000;
     public final static double SYSTEM_OWNED_FACT = 1.5;
@@ -35,11 +37,12 @@ public class Counter {
     private int[] unlockedSystems;
     private BonusStreak[] bonusStreaks;
     private List<Contract> contracts;
+    private transient List<Contract> incomingContracts;
     private ArrayList<Integer> ownedTrophies;
     private int trophyShards;
-    private transient List<Contract> incomingContracts;
     private transient HashMap<String, TradeOffer> tradeOffers = new HashMap<String, TradeOffer>();
     private transient ContractHandler contractHandler;
+
 
     private transient String guildId;   // Will be set in initContracts method
     private Inventory inventory;
@@ -57,11 +60,12 @@ public class Counter {
         this.unlockedSystems = new int[]{};
         this.bonusStreaks = new BonusStreak[]{};
         inventory = new Inventory();
-        init();
-        initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
+        init(guildId);
+        contractHandler.initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
 
-    public void init() {
+    public void init(String guildId) {
+        this.guildId = guildId;
         if (contracts == null) {    // MUST BE BEFORE CONTRACT HANDLER
             contracts = new ArrayList<>();
         }
@@ -86,20 +90,7 @@ public class Counter {
 
     }
 
-    public void initIncomingContracts(CountingGuild activeGuild) {
-        guildId = activeGuild.getGuildId();
-        if (incomingContracts.isEmpty()) {
-            activeGuild.getCounters().forEach((String currId, Counter counter) -> {
-                for (Contract currContract : counter.getContracts()) {
-                    if (currContract.toId.equals(this.getId())) {
-                        currContract.owner = counter;
-                        incomingContracts.add(currContract);
-                    }
-                }
-            });
 
-        }
-    }
 
     public void unlock(Unlockable unlockable, Message message) {
         if (unlockable.ordinal() >= Unlockable.BASE_1.ordinal()) {
@@ -164,6 +155,15 @@ public class Counter {
             }
         }
 
+    }
+    public int getOwedToBank() {
+        int total = 0;
+        for (Contract curr : contracts) {
+            if (curr.toId.equals(Bank.CONTRACT_OWNER_ID)) {
+                total += curr.limit;
+            }
+        }
+        return total;
     }
 
     public void unlockBase(Message message, String base) {
@@ -502,7 +502,7 @@ public class Counter {
     }
 
     public void addBonusScoreFromContract(int score, Message message) {
-        int taxed = (int) (score / 2);
+        int taxed = (score / 2);
         if (taxed != 0) {
             addBonusScore(taxed, message);
         }
@@ -608,6 +608,11 @@ public class Counter {
     public boolean isShopUnlocked() {
         return getInventory().isShopUnlocked();
     }
+
+    public void setGuildId(String guildId) {
+        this.guildId = guildId;
+    }
+
 
 
 

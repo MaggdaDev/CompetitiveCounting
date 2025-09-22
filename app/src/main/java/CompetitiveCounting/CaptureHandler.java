@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CaptureHandler {
-    private final static long MIN_TIME_BETWEEN_CAPTURES = 0; // 420000
-    private final double CAPTURE_CHANCE = 1; // 0.05
+    private final static long MIN_TIME_BETWEEN_CAPTURES = 420000;
+    private final double CAPTURE_CHANCE = 0.05;
     private final EmojiReactHandler emojiReactHandler;
 
     private final List<Capture> captures;
@@ -37,7 +37,7 @@ public class CaptureHandler {
 
     private void doCapture(Message message, int number, String userId, Runnable onCaptureFailed, Runnable onCaptureSucceeded, TrophyHandler trophyHandler) {
         Capture capture;
-        boolean secret = true; //Math.random() < 1.0 / (double)captures.size(); todo
+        boolean secret = Math.random() < 1.0 / (double)captures.size();
         if (secret) {
             capture = Capture.SECRET_CAPTURE;
         } else {
@@ -47,7 +47,7 @@ public class CaptureHandler {
         CountingBot.write(message, msg, (sentCaptureMessage) -> {
             if(secret) {
                 emojiReactHandler.addOnAnyReact((reactedMessage, user, reactedEmoji) -> {
-                    if(Arrays.stream(CountingEmojis.ALL_NUMBER_EMOJIS).filter(e -> e.equals(reactedEmoji)).count() > 0) {
+                    if(Arrays.asList(CountingEmojis.ALL_NUMBER_EMOJIS).contains(reactedEmoji)) {
                         CountingBot.write(reactedMessage, "Alright, for now you don't seem to be a malevolent scripter, <@!" + userId + ">. You can continue counting now!");
                         onCaptureSucceeded.run();
                         return true;

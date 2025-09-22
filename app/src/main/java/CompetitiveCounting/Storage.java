@@ -85,13 +85,15 @@ public class Storage {
         }
         guilds.forEach((String key, CountingGuild countingGuild)->{
             countingGuild.getCounters().forEach((String key2, Counter counter)->{
-                counter.init();
+                counter.init(countingGuild.getGuildId());
             });
+            countingGuild.init();
         });
         guilds.forEach((String key, CountingGuild countingGuild)->{
             countingGuild.getCounters().forEach((String key2, Counter counter)->{
-                counter.initIncomingContracts(countingGuild);
+                counter.getContractHandler().initIncomingContracts(countingGuild);
             });
+            countingGuild.getBank().getContractHandler().initIncomingContracts(countingGuild);
         });
         return guilds;
     }

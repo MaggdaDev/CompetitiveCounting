@@ -7,7 +7,6 @@ import CompetitiveCounting.Util;
 public class TradeHandler {
     public final static String YOU_GET = "YOU_GET:";
     public final static String I_GET = "I_GET:";
-    private static String userId, userPing;
     private static Tradable[] youGetTrades, iGetTrades;
     private static Counter initCounter, requCounter;
 
@@ -37,9 +36,10 @@ public class TradeHandler {
             youGet = "";
             iGet = offers;
         }
+        init = init.replaceAll("\\s+", " ");
         splitted = init.split(" ");
-        userPing = splitted[1].replaceAll(" ", "");
-        userId = Util.pingToUserId(userPing);
+        String userPing = splitted[1].replaceAll(" ", "");
+        String userId = Util.pingToUserId(userPing);
         requCounter = CountingBot.getInstance().getCounter(initCounter.getGuildId(), userId);
 
         try {
@@ -48,6 +48,6 @@ public class TradeHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new TradeOffer(initCounter, requCounter, iGetTrades, youGetTrades);
+        return new TradeOffer(initCounter, requCounter, iGetTrades, youGetTrades, userId, userPing);
     }
 }

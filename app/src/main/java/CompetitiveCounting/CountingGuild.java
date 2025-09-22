@@ -5,14 +5,23 @@ import CompetitiveCounting.bank.Bank;
 import java.util.HashMap;
 
 public class CountingGuild {
-    private final HashMap<String, Counter> counters;
-    private final Bank bank;
+    private HashMap<String, Counter> counters;
+    private Bank bank;
     private final String guildId;
 
     public CountingGuild(String guildId) {
         this.guildId = guildId;
-        this.counters = new HashMap<>();
-        this.bank = new Bank(guildId);
+        init();
+    }
+    public void init() {
+        if (this.bank == null) {
+            this.bank = new Bank(guildId);
+        } else {
+            bank.init();
+        }
+        if (this.counters == null) {
+            this.counters = new HashMap<>();
+        }
     }
 
     public Counter getCounter(String counterId) {
@@ -41,4 +50,6 @@ public class CountingGuild {
     public String getGuildId() {
         return guildId;
     }
+
+
 }

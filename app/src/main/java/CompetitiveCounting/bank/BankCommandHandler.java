@@ -107,9 +107,11 @@ public class BankCommandHandler {
                     }
                     int loanAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     int loanRate = parseStringToNaturalNumberAtIndex(splitMessage, 3, message);
-                    bankWrite(message, String.valueOf(calculateLoanInterestRate(loanAmount, loanRate)));
-                    bankWrite(message, String.valueOf(calculateLoanRepayAmount(loanAmount, loanRate)));
                     BankLoanHandler.giveLoan(guildId, authorId, loanAmount, loanRate, message);
+                    shouldSaveJson = true; // Contract has been added successfully if this line is reached
+                    break;
+                case "flex":
+                    shouldSaveJson = sendFlexMessage(message, bank);
                     break;
                 case "help":
                     bankWrite(message, "Help yourself! (Or, as a wise curator of intellect once said, 'Organize your shelf')"); // todo
@@ -182,13 +184,7 @@ public class BankCommandHandler {
                 .addNpcLine("You have unlocked the bank on *" + message.getGuild().block().getName() + "*! Every member can now use the ~bank commands. For more details, run ~bank help.", 0);
     }
 
-    private int calculateLoanInterestRate(int money, int rate) {
-        return (int) (Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * 100);
-    }
 
-    private int calculateLoanRepayAmount(int money, int rate) { // change back to int
-        return (int) (calculateLoanInterestRate(money, rate) * 0.01 * money);
-    }
 
 
     private int parseStringToNaturalNumberAtIndex(String[] splitMessage, int index, Message message) throws BankNumberArgumentException {
@@ -237,15 +233,59 @@ public class BankCommandHandler {
         bankWrite(message, "You have taken " + withdrawAmount + "from the bank. You better give it back! You now have " + newBalance + " left here.");
     }
 
-    private String toCrocText(String text) {
+    /**
+     * @return whether the json should be saved after the call
+     * @throws BankTransactionException
+     */
+    // NIGGER
+    private boolean sendFlexMessage(Message message, Bank bank) throws BankTransactionException {
+        String guildId = message.getGuildId().get().asString();
+        String authorId = message.getAuthor().get().getId().asString();
+        CountingGuild countingGuild = guilds.get(guildId);
+        Counter counter = countingGuild.getCounter(authorId);
+        int bankScore = bank.getTotalScore();
+        int userBalance = counter.getScore();
+        if (userBalance == 0) {
+            bankWrite(message, "Do you even know what money is or why don't you have any?");
+        } else {
+            double ratio = Math.round(10.0 * (double) bankScore / (double) userBalance) / 10.0;
+            if (bankScore == userBalance) {
+                bankWrite(message, "What a coincidence! We both have exactly the same amount of money: " + bankScore + ".");
+            } else if (ratio == 1.0) {
+                bankWrite(message, "Wow, your wealth is comparable to mine!");
+            } else if (ratio > 1.0) {
+                bankWrite(message, "You are but a mere mortal to my vast riches. I have " + ratio + "x more money than you.");
+            } else {
+                ratio = Math.round(10.0 * (double) userBalance / (double) bankScore) / 10.0;
+                int donationAmount = 1000;
+                if (ratio > 100 && userBalance >= donationAmount) {
+                    new Dialogue().addNpcLine(toCrocText("You have so much more money than me that you surely wouldn't notice if I just..."), 2000)
+                            .addNpcLine("A contribution has been donated to the bank.", 0)
+                            .play(message);
+                    try {
+                        transactionsHandler.donate(guildId, authorId, donationAmount);
+                        return true;
+                    } catch (NotEnoughMoneyException e) {
+                        System.err.println("Something went wrong! Could not donate " + donationAmount + " money to the bank even though user has at least " + donationAmount + " money.");
+                    }
+                } else {
+                    bankWrite(message, "This can't be! You have " + ratio + "x more money than me.");
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static String toCrocText(String text) {
         return "\uD83D\uDC0A: " + text;
     }
 
-    private void bankWrite(Message message, String text) {
+    public static void bankWrite(Message message, String text) {
         write(message, toCrocText(text));
     }
 
-    private void write(Message message, String text) {
+    private static void write(Message message, String text) {
         CountingBot.write(message, text);
     }
 

@@ -1,7 +1,13 @@
 package CompetitiveCounting.bank;
 
 import CompetitiveCounting.bank.exceptions.BankTransactionException;
+import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.contracts.ContractHandler;
+import CompetitiveCounting.contracts.ContractOwner;
+import CompetitiveCounting.items.Inventory;
+import discord4j.core.object.entity.Message;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,7 +16,9 @@ import java.util.List;
  * TODO: ~shop command
  */
 
-public class Bank {
+public class Bank implements ContractOwner {
+    public static final String CONTRACT_ENTITY_NAME = "The CrocBank Inc.";
+    public static final String CONTRACT_OWNER_ID = "-1";
     private boolean isUnlocked = false;
     public final static int DEPOSIT_COST = 1000;
     private String guildId;
@@ -19,6 +27,10 @@ public class Bank {
 
     private static final List<String> UPGRADE_KEYS = List.of("loan_formula", "max_loan", "max_balance", "placeholder_2");
     private HashMap<String, Integer> upgrades;
+    private List<Contract> contracts;
+    private transient List<Contract> incomingContracts;
+
+    private transient ContractHandler contractHandler;
 
     public Bank(String guildId) {
         this.guildId = guildId;
@@ -27,6 +39,20 @@ public class Bank {
         this.upgrades = new HashMap<>();
         for (String key: UPGRADE_KEYS) {
             this.upgrades.put(key, 0);
+        }
+        init();
+    }
+
+    public void init() {
+        if (contracts == null) {    // MUST BE BEFORE CONTRACT HANDLER
+            contracts = new ArrayList<>();
+        }
+        if (contractHandler == null) {  // MUST BE AFTER CONTRACTS
+            contractHandler = new ContractHandler(this);
+        }
+
+        if (incomingContracts == null) {
+            incomingContracts = new ArrayList<>();
         }
     }
 
@@ -47,11 +73,46 @@ public class Bank {
         }
     }
 
+    @Override
+    public String getGuildId() {
+        return guildId;
+    }
+
+    @Override
+    public String getName() {
+        return Bank.CONTRACT_ENTITY_NAME;
+    }
+
+    @Override
+    public String getId() {
+        return CONTRACT_OWNER_ID;
+    }
+
+    @Override
+    public void addBonusScoreFromContract(int pay, Message message) {
+        totalScore += pay;
+    }
+
+    @Override
+    public List<Contract> getContracts(){
+        return contracts;
+    }
+
+    @Override
+    public List<Contract> getIncomingContracts() {
+        return incomingContracts;
+    }
+
+    @Override
+    public String getPing() {
+        return "CrocBank"; // scheis nich ob man das raucht
+    }
+
     public boolean alreadyRegistered(String counterId) {
         return accounts.containsKey(counterId);
     }
 
-    public void deposit(String counterId, int amount) throws BankTransactionException {
+    public void deposit(String counterId, int amount) {
         totalScore += amount;
         accounts.get(counterId).deposit(amount - DEPOSIT_COST);
     }
@@ -77,5 +138,9 @@ public class Bank {
     }
     public boolean isUnlocked() {
         return isUnlocked;
+    }
+
+    public ContractHandler getContractHandler() {
+        return contractHandler;
     }
 }

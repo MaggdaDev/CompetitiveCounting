@@ -23,11 +23,14 @@ public class TradeOffer {
     private Tradable[] youGetTrades, iGetTrades;
     private Counter initCounter, requCounter;
 
-    public TradeOffer(Counter initBruv, Counter rehKuhCounter, Tradable[] iGetBitches, Tradable[] judeTrades) { //in upper case
+    public TradeOffer(Counter initBruv, Counter rehKuhCounter, Tradable[] iGetBitches, Tradable[] judeTrades, String userId, String userPing) { //in upper case
         this.initCounter = initBruv;
         this.requCounter = rehKuhCounter;
         this.iGetTrades = iGetBitches;
         this.youGetTrades = judeTrades;
+        this.userId = userId;
+        this.userPing = userPing;
+
     }
 
     public Counter getRequestedUser() {

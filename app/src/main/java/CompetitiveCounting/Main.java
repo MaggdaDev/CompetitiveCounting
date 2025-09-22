@@ -34,7 +34,6 @@ public class Main {
     private static CountingBot bot;
 
     public static void main(String[] args) {
-        System.out.println(TimeHandler.nowInEpochDay());
         GatewayDiscordClient client;
         try {
             
@@ -55,7 +54,7 @@ public class Main {
                             "Logged in as %s#%s", self.getUsername(), self.getDiscriminator()
                     ));
                 });
-        
+
         bot = new CountingBot(client);
         MessageHandler messageHandler = new MessageHandler(bot);
         client.getEventDispatcher().on(MessageCreateEvent.class).subscribe(messageHandler);
