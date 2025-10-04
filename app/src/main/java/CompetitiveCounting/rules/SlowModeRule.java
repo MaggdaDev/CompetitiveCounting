@@ -27,7 +27,7 @@ public class SlowModeRule implements Rule {
         this.ownerId = ownerId;
     }
 
-    public void applyTimerToMessage(Message message) {
+    public void applyTimerToMessage(Message message) { // todo remove timer logic (maybe)
         Thread thread = new Thread() {
 
             @Override
