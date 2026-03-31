@@ -21,7 +21,6 @@ public class Bank implements ContractOwner {
     private HashMap<String, BankAccount> accounts;
 
     private static final List<String> UPGRADE_KEYS = List.of("loan_formula", "max_loan", "max_balance", "placeholder_2");
-    private HashMap<String, Integer> upgrades;
     private List<Contract> contracts;
     private transient List<Contract> incomingContracts;
 
@@ -31,10 +30,6 @@ public class Bank implements ContractOwner {
         this.guildId = guildId;
         this.totalScore = 1050505;
         this.accounts = new HashMap<>();
-        this.upgrades = new HashMap<>();
-        for (String key: UPGRADE_KEYS) {
-            this.upgrades.put(key, 0);
-        }
         init();
     }
 
@@ -45,9 +40,11 @@ public class Bank implements ContractOwner {
         if (contractHandler == null) {  // MUST BE AFTER CONTRACTS
             contractHandler = new ContractHandler(this);
         }
-
         if (incomingContracts == null) {
             incomingContracts = new ArrayList<>();
+        }
+        for (BankAccount account : accounts.values()) {
+            account.init();
         }
     }
 
@@ -123,8 +120,8 @@ public class Bank implements ContractOwner {
         totalScore -= withdrawAmount;
     }
 
-    public void getUpgrades() {
-        System.out.println(upgrades);
+    public BankAccount getAccount(String counterId) {
+        return accounts.get(counterId);
     }
 
 

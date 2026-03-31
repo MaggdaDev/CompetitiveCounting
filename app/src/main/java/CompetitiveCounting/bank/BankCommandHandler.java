@@ -117,6 +117,12 @@ public class BankCommandHandler {
 //                    bankWrite(message, "Help yourself! (Or, as a wise curator of intellect once said, 'Organize your shelf')"); // todo
                     sendHelpMessage(message);
                     break;
+                    case "upgrades":
+                        bankWrite(message, bank.getAccount(authorId).getUpgradesInfoString());
+                        break;
+                case "upgrade":
+                    upgrade(message, splitMessage, bank, authorId);
+                    break;
                 default:
                     sendCommandNotUnderstoodMessage(message);
                     break;
@@ -143,6 +149,16 @@ public class BankCommandHandler {
         return shouldSaveJson;
     }
 
+    public void upgrade(Message message, String[] splitMessage, Bank bank, String authorId) {
+        if(splitMessage.length < 3) {
+            String s = "There are multiple upgrades that you can buy! \n"; // todo
+            s += bank.getAccount(authorId).getUpgradesBuyableString();
+            bankWrite(message, s); // todo
+            return;
+        }
+        bankWrite(message, "B");
+
+    }
     public void handBagBought(Message message) {
         String guildId = message.getGuildId().get().asString();
         String authorId = message.getAuthor().get().getId().asString();

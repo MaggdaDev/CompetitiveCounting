@@ -1,12 +1,25 @@
 package CompetitiveCounting.bank;
 
+import CompetitiveCounting.bank.bankupgrades.BankUpgrades;
+
+import java.util.ArrayList;
+
 public class BankAccount {
     private String ownerId;
     private int balance;
 
+    private BankUpgrades bankUpgrades;
+
     BankAccount(String ownerId) {
         this.ownerId = ownerId;
         this.balance = 0;
+        init();
+    }
+
+    public void init() {
+        if (bankUpgrades == null) {
+            bankUpgrades = new BankUpgrades();
+        }
     }
 
     public String getOwnerId() {
@@ -31,5 +44,17 @@ public class BankAccount {
         } else {
             throw new IllegalArgumentException("du spast");
         }
+    }
+
+    public String getUpgradesInfoString() {
+        return bankUpgrades.toString();
+    }
+
+    public String getUpgradesBuyableString() {
+        return bankUpgrades.getBuyablesString();
+    }
+
+    public BankUpgrades getUpgrades() {
+        return bankUpgrades;
     }
 }
