@@ -7,6 +7,7 @@ build/
 # idea folder
 .idea/
 .idea/misc.xml
+.idea/modules.xml
 
 # database stuff
 src/data/

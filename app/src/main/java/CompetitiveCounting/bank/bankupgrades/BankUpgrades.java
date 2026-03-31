@@ -4,29 +4,61 @@ public class BankUpgrades {
     private final DepositLimitUpgrade depositLimitUpgrade = new DepositLimitUpgrade();
     private final LoanRateUpgrade loanRateUpgrade = new LoanRateUpgrade();
     private final LoanLimitUpgrade loanLimitUpgrade = new LoanLimitUpgrade();
+    private final DebtLimitUpgrade debtLimitUpgrade = new DebtLimitUpgrade();
 
-    private final BankUpgrade[] allUpgrades = {depositLimitUpgrade, loanRateUpgrade, loanLimitUpgrade};
+    private BankUpgrade[] getAllUpgrades() {
+        return new BankUpgrade[]{depositLimitUpgrade, loanRateUpgrade, loanLimitUpgrade, debtLimitUpgrade};
+    }
+
     @Override
     public String toString() {
-        return "Your upgrades: \n" +
-                " - depositLimitUpgrade: " + (depositLimitUpgrade.getCurrentLvl()+1)+
-                "\n - loanRateUpgrade: " + (loanRateUpgrade.getCurrentLvl()+1) +
-                "\n - loanLimitUpgrade: " + (loanLimitUpgrade.getCurrentLvl()+1);
+        return "**Your upgrades** \n" +
+                depositLimitUpgrade.getStatusString() + "\n" +
+                loanRateUpgrade.getStatusString() + "\n" +
+                loanLimitUpgrade.getStatusString() + "\n" +
+                debtLimitUpgrade.getStatusString();
     }
 
     public String getBuyablesString() {
         String s = "";
         int counter = 1;
-        for (BankUpgrade upgrade : allUpgrades) {
+        for (BankUpgrade upgrade : getAllUpgrades()) {
             if (!upgrade.isMaxedOut()) {
                 s += counter + ". '" + upgrade.getUnlockName() + "': Buy the " + upgrade.getNextName() + " for " + upgrade.howMuchIsTheNextLvl() + " money (currently: " + upgrade.getCurrentLvlOutOfMaxLvlString() + ") \n";
             }
         }
         return s;
+    }
 
+    public int getAmountBuyableUpgrades() {
+        int counter = 0;
+        for (BankUpgrade upgrade : getAllUpgrades()) {
+            if (!upgrade.isMaxedOut()) {
+                counter++;
+            }
+        }
+        return counter;
     }
 
     public LoanRateUpgrade getLoanRateUpgrade() {
         return loanRateUpgrade;
+    }
+
+    public LoanLimitUpgrade getLoanLimitUpgrade() {
+        return loanLimitUpgrade;
+    }
+
+    /**
+     *
+     * @param unlockName
+     * @return the upgrade with the given unlock name (or null if none was found)
+     */
+    public BankUpgrade parseUpgrade(String unlockName) {
+        for (BankUpgrade upgrade : getAllUpgrades()) {
+            if (upgrade.getUnlockName().equals(unlockName)) {
+                return upgrade;
+            }
+        }
+        return null;
     }
 }

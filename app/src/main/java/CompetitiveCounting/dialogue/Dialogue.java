@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Dialogue {
     private int currentState = 0;
@@ -15,9 +16,10 @@ public class Dialogue {
     private final List<Runnable> thenRuns = new ArrayList<>();
     private final ArrayList<Integer> npcMessagesIndices = new ArrayList<>();
     private Thread thread;
+    private Function<String, String> npcLineConverter;
 
     public Dialogue addNpcLine(String text, int readTimeMillis) {
-        elements.add(new NpcLine(text, readTimeMillis));
+        elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str));
         npcMessagesIndices.add(elements.size() - 1);
         return this;
     }
@@ -72,5 +74,8 @@ public class Dialogue {
         }
     }
 
-
+    public Dialogue setNpcLineConverter(Function<String, String> npcLineConverter) {
+        this.npcLineConverter = npcLineConverter;
+        return this;
+    }
 }

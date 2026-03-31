@@ -2,6 +2,8 @@ package CompetitiveCounting.bank;
 
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.Counter;
+import CompetitiveCounting.bank.bankupgrades.LoanLimitUpgrade;
+import CompetitiveCounting.bank.bankupgrades.LoanRateUpgrade;
 import CompetitiveCounting.bank.exceptions.BankLoanException;
 import CompetitiveCounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
@@ -14,9 +16,11 @@ public class BankLoanHandler {
     public static void giveLoan(String guildId, String userId, int loanAmount, int loanRate, Message message) throws BankLoanException {
         Counter initCounter = bot.getCounter(guildId, userId);
         Bank bank = bot.getGuilds().get(guildId).getBank();
-        int upgradeLevel = bank.getAccount(userId).getUpgrades().getLoanRateUpgrade().getCurrentLvl();
+        LoanRateUpgrade loanRateUpgrade = bank.getAccount(userId).getUpgrades().getLoanRateUpgrade();
+        LoanLimitUpgrade loanLimitUpgrade = bank.getAccount(userId).getUpgrades().getLoanLimitUpgrade();
 
-        int extraPayback = calculateLoanRepayAmount(loanAmount, loanRate, upgradeLevel);
+        int extraPayback = calculateLoanRepayAmount(loanAmount, loanRate, loanRateUpgrade);
+        int extraPaybackWithoutUpgrade = calculateLoanRepayAmount(loanAmount, loanRate, LoanRateUpgrade.EMPTY);
 
         int userContractPerc = initCounter.getContractHandler().getCurrentTotalPerc();
         if (userContractPerc + loanRate > 100) {
@@ -27,18 +31,23 @@ public class BankLoanHandler {
             throw new BankLoanException("I'd really like to strike a deal with you, but unfortunately I don't have enough money for this.");
         }
 
-        int maxLoanLimit = 100000; // todo: make dependent on upgrades
-        int maxTotalOwedToBank = 100000; // todo: maybe sprite maybe loan
+        int maxLoanLimit = loanLimitUpgrade.getCurrentValue();
+        System.out.println(maxLoanLimit);
+        int maxTotalOwedToBank = 110000; // todo: maybe sprite maybe loan aka debt limit
         int crocLoanFee = 999;
-        // Todo: Upgrades, maxlim marklov
         if (loanAmount < 1000) {
             throw new BankLoanException("This small amount of money is not even worth the paperwork to give a loan to you!");
         }
         if (loanAmount > maxLoanLimit) {
-            throw new BankLoanException("I will not entrust you with such a great sum of money, for I have no faith in your ability to pay it back.");
+            throw new BankLoanException("I will not entrust you with more than " + maxLoanLimit + " money, for I have no faith in your ability to pay it back.");
         }
-        if (initCounter.getOwedToBank() + loanAmount + extraPayback > maxTotalOwedToBank) {
-            throw new BankLoanException("Do you take me for a fool? Pay back your debt before asking for more money! ");
+        System.out.println(initCounter.getOwedToBank() + loanAmount + extraPayback);
+        int resultingTotalOwed = initCounter.getOwedToBank() + loanAmount + extraPayback;
+        if (resultingTotalOwed > maxTotalOwedToBank) {
+            throw new BankLoanException(
+                    "Do you take me for a fool? This loan would increase your debt to " + resultingTotalOwed
+                    + " money. Pay back your debt before asking for more money! The maximum money you may owe me is " +
+                            maxTotalOwedToBank + " money.");
         }
 
         bank.removeMoney(loanAmount - crocLoanFee);
@@ -47,19 +56,21 @@ public class BankLoanHandler {
 
         // System.out.println(interestRateUpgrade(loanAmount, loanRate, )); todo
 
-        new Dialogue().addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! You now owe me " + (loanAmount + extraPayback) + " money, which you will pay back by giving me " +
+        new Dialogue().addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! You now owe me " +
+                        (loanRateUpgrade.getCurrentLvl() == 0 ? "" : "~~" + (loanAmount + extraPaybackWithoutUpgrade) + "~~ ") +
+                        (loanAmount + extraPayback) + " money, which you will pay back by giving me " +
                         loanRate + "% of your income. ", 2000)
                 .addNpcLine("By the way... you'd better pay me back my money soon, or else...", 3000)
                 .addNpcLine("... I will tell my cousins... they already know your IP address...", 0)
+                .setNpcLineConverter(BankCommandHandler::toCrocText)
                 .play(message);
     }
 
-    private static int calculateLoanInterestRate(int money, int rate, int upgradeLevel) {
-        final int[] upgradeRate = {100, 85, 75, 70, 60}; // Das crazy.
-        return (int) ((Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * 100)) * upgradeRate[upgradeLevel];
+    private static int calculateLoanInterestRate(int money, int rate, LoanRateUpgrade loanRateUpgrade) {
+        return (int) ((Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * loanRateUpgrade.getCurrentValue()));
     }
 
-    private static int calculateLoanRepayAmount(int money, int rate, int upgradeLevel) { // change back to int
-        return (int) (calculateLoanInterestRate(money, rate, upgradeLevel) * 0.01 * money);
+    private static int calculateLoanRepayAmount(int money, int rate, LoanRateUpgrade loanRateUpgrade) { // change back to int
+        return (int) (calculateLoanInterestRate(money, rate, loanRateUpgrade) * 0.01 * money);
     }
 }

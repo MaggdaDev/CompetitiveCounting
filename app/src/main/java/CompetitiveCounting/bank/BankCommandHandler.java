@@ -1,11 +1,8 @@
 package CompetitiveCounting.bank;
 
 import CompetitiveCounting.*;
-import CompetitiveCounting.bank.exceptions.BankLoanException;
-import CompetitiveCounting.bank.exceptions.BankNumberArgumentException;
-import CompetitiveCounting.bank.exceptions.BankTransactionException;
-import CompetitiveCounting.bank.exceptions.NotEnoughMoneyException;
-import CompetitiveCounting.bank.BankLoanHandler;
+import CompetitiveCounting.bank.bankupgrades.BankUpgrade;
+import CompetitiveCounting.bank.exceptions.*;
 import CompetitiveCounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
 
@@ -79,7 +76,7 @@ public class BankCommandHandler {
                     break;
                 case "balance":
                     int balance = bank.getBalance(authorId);
-                    int roundedBalance = 100 * ((int) balance / 100);
+                    int roundedBalance = 100 * (balance / 100);
                     if (roundedBalance == 0) {
                         bankWrite(message, "I don't remember your balance... probably too small.");
                     } else {
@@ -114,12 +111,11 @@ public class BankCommandHandler {
                     shouldSaveJson = sendFlexMessage(message, bank);
                     break;
                 case "help":
-//                    bankWrite(message, "Help yourself! (Or, as a wise curator of intellect once said, 'Organize your shelf')"); // todo
                     sendHelpMessage(message);
                     break;
-                    case "upgrades":
-                        bankWrite(message, bank.getAccount(authorId).getUpgradesInfoString());
-                        break;
+                case "upgrades":
+                    bankWrite(message, bank.getAccount(authorId).getUpgradesInfoString());
+                    break;
                 case "upgrade":
                     upgrade(message, splitMessage, bank, authorId);
                     break;
@@ -143,20 +139,48 @@ public class BankCommandHandler {
                 default:
                     bankWrite(message, "You need " + e.moneyNeeded + " money for that, but you only have " + e.moneyAvailable + ". I would recommend loaning " + (e.moneyNeeded - e.moneyAvailable + (int) (Math.random() * 1000.0) + " money from me!"));
             }
-        } catch (BankLoanException e) {
+        } catch (BankLoanException | BankUpgradeException e) {
             bankWrite(message, e.getMessage());
         }
         return shouldSaveJson;
     }
 
-    public void upgrade(Message message, String[] splitMessage, Bank bank, String authorId) {
+    public void upgrade(Message message, String[] splitMessage, Bank bank, String authorId) throws BankUpgradeException {
         if(splitMessage.length < 3) {
-            String s = "There are multiple upgrades that you can buy! \n"; // todo
+            int amountBuyableUpgrades = bank.getAccount(authorId).getUpgrades().getAmountBuyableUpgrades();
+            String s;
+            if(amountBuyableUpgrades == 0) {
+                bankWrite(message, "You have bought all available upgrades! If you donate, there might be more soon...");
+                return;
+            } else if (amountBuyableUpgrades == 1) {
+                s = "You can buy the following upgrade (so close to maxed out!): \n";
+            } else {
+                s = "There are multiple upgrades that you can buy! \n";
+            }
             s += bank.getAccount(authorId).getUpgradesBuyableString();
-            bankWrite(message, s); // todo
+            bankWrite(message, s);
             return;
         }
-        bankWrite(message, "B");
+        if(splitMessage.length > 3) {
+            throw new BankUpgradeException("I cannot help you if you refrain from using the correct syntax. " +
+                    "Please use '~bank upgrade <upgrade name>'! \nIf you forgot the names of our Croc Bank Inc.'s magnificent upgrades, " +
+                    "you can use '~bank upgrade' without any arguments.");
+        }
+        BankAccount bankAccount = bank.getAccount(authorId);
+        String unlockName = splitMessage[2];
+        BankUpgrade upgrade = bankAccount.getUpgrades().parseUpgrade(unlockName);
+        if (upgrade == null) {
+            throw new BankUpgradeException("This upgrade is not registered with the CrocBank Inc.. Please make sure to " +
+                    "only bother me when you have learned how to spell! How difficult can it be to just copy-paste from " +
+                    "the list of upgrades? You can find it using '~bank upgrade' without any arguments.");
+        }
+        if (upgrade.isMaxedOut()) {
+            throw new BankUpgradeException("This upgrade is already maxed out, your greed is spoken about in the bible.");
+        }
+        String oldLevel = upgrade.getCurrentName();
+        String newLevel = upgrade.getNextName();
+        upgrade.incrementLvl();
+        bankWrite(message, "Congratulations! You have upgraded your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'.");
 
     }
     public void handBagBought(Message message) {
@@ -317,7 +341,7 @@ public class BankCommandHandler {
         write(message, helpMessage);
     }
 
-    private static String toCrocText(String text) {
+    public static String toCrocText(String text) {
         return "\uD83D\uDC0A: " + text;
     }
 

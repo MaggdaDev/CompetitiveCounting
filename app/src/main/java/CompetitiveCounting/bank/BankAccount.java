@@ -39,7 +39,7 @@ public class BankAccount {
     }
 
     public void deposit(int money) {
-        if (money > 0) {
+        if (money >= 0) {
             balance += money;
         } else {
             throw new IllegalArgumentException("du spast");

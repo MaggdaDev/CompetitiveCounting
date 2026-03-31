@@ -1,21 +1,26 @@
 package CompetitiveCounting.bank.bankupgrades;
 
-public class BankUpgrade {
-
-    protected transient int[] prices;
-    protected final String[] names;
-    protected final String description;
-
-    protected final String unlockName;
-
+public abstract class BankUpgrade { // todo functionlaity vong der ganzen upgrades her
+    // todo info rückmeldung feedback dings wenn vong upgrade her durchgestrichen du wiest schon brudi
+    // todo preis int array call dingens auf 0 anpassen weil wir ham das jetz gechanged vong der 1 auf die 0 her
+    // todo bessere communication bei loan (geht nich weil loan limit, geht nich weil debt limit ects)
+    // todo https://www.pornhub.com/video/search?search=mia
+    // todo secrets einbauen die dann vong die trophies her geben rum
+    protected final String upgradeId;
     protected int currentLvl = 0;
 
-    protected BankUpgrade(String unlockName, String[] names, int[] prices, String description) {
-        this.unlockName = unlockName;
-        this.names = names;
-        this.prices = prices;
-        this.description = description;
-    };
+    abstract String[] getNames();
+    abstract int[] getPrices();
+    abstract String getDescription();
+    abstract String getUnlockName();
+
+    protected BankUpgrade(String upgradeId) {
+        this.upgradeId = upgradeId;
+    }
+
+    public String getStatusString() {
+        return getCurrentName() + " - level " + getCurrentLvl() + " of " + getMaxLvl();
+    }
 
     public void incrementLvl() {
         currentLvl++;
@@ -25,7 +30,7 @@ public class BankUpgrade {
         if (isMaxedOut()) {
             return -1;
         }
-        return prices[currentLvl+1];
+        return getPrices()[currentLvl+1];
     }
 
     public int getCurrentLvl() {
@@ -33,25 +38,25 @@ public class BankUpgrade {
     }
 
     public boolean isMaxedOut() {
-        return currentLvl >= prices.length-1;
+        return currentLvl >= getPrices().length-1;
     }
 
     public int getMaxLvl() {
-        return prices.length - 1;
+        return getPrices().length - 1;
     }
 
     public String getCurrentLvlOutOfMaxLvlString() {
         return (currentLvl+1) + "/" + (getMaxLvl()+1);
     }
 
-    public String getUnlockName() {
-        return unlockName;
-    }
-
     public String getNextName() {
         if (isMaxedOut()) {
             return "MAXED OUT";
         }
-        return names[currentLvl+1];
+        return getNames()[currentLvl+1];
+    }
+
+    public String getCurrentName() {
+        return getNames()[currentLvl];
     }
 }

@@ -3,20 +3,24 @@ package CompetitiveCounting.dialogue;
 import CompetitiveCounting.CountingBot;
 import discord4j.core.object.entity.Message;
 
+import java.util.function.Function;
+
 public class NpcLine extends DialogueElement{
     private final String text;
     private final int sleepDuration;
 
     private Message sentMessage;
+    private final Function<String, String> npcLineConverter;
 
-    public NpcLine(String text, int readTimeMillis) {
+    public NpcLine(String text, int readTimeMillis, Function<String, String> npcLineConverter) {
         this.text = text;
         this.sleepDuration = readTimeMillis;
+        this.npcLineConverter = npcLineConverter;
     }
 
     @Override
     public void run(Message message) {
-        sentMessage = CountingBot.writeBlocking(message, text);
+        sentMessage = CountingBot.writeBlocking(message, npcLineConverter == null ? text : npcLineConverter.apply(text));
         try {
             Thread.sleep(sleepDuration);
         } catch (InterruptedException e) {
