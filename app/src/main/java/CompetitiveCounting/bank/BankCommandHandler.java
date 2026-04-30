@@ -99,7 +99,7 @@ public class BankCommandHandler {
                     break;
                 case "loan":
                     if (splitMessage.length < 4) {
-                        bankWrite(message, "You have to specify how much money you want to take out and the rate of paying that money back!\nExample: `~bank loan 1000000 50");
+                        bankWrite(message, "You have to specify how much money you want to take out and the rate in % of paying that money back!\nExample: `~bank loan 1000000 50");
                         break;
                     }
                     int loanAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
@@ -188,10 +188,10 @@ public class BankCommandHandler {
         String authorId = message.getAuthor().get().getId().asString();
         CountingGuild countingGuild = guilds.get(guildId);
         Bank bank = countingGuild.getBank();
-        //if (bank.isUnlocked()) { todo
-        //    bankWrite(message, "You bought another gucci purse. Are you some sort of collector or what's the motive behind your actions?");  // TODO
-        //    return;
-        //}
+        if (bank.isUnlocked()) {  // todo
+            bankWrite(message, "You bought another gucci purse. Are you some sort of collector or what's the motive behind your actions?");
+            return;
+        }
         Counter counter = countingGuild.getCounter(authorId);
         if (counter.getActiveUnlockBankDialog() != null) {
             counter.getActiveUnlockBankDialog().stop();

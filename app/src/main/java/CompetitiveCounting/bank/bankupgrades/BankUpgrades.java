@@ -48,6 +48,10 @@ public class BankUpgrades {
         return loanLimitUpgrade;
     }
 
+    public DebtLimitUpgrade getDebtLimitUpgrade () {
+        return debtLimitUpgrade;
+    }
+
     /**
      *
      * @param unlockName

@@ -2,6 +2,7 @@ package CompetitiveCounting.bank;
 
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.Counter;
+import CompetitiveCounting.bank.bankupgrades.DebtLimitUpgrade;
 import CompetitiveCounting.bank.bankupgrades.LoanLimitUpgrade;
 import CompetitiveCounting.bank.bankupgrades.LoanRateUpgrade;
 import CompetitiveCounting.bank.exceptions.BankLoanException;
@@ -18,6 +19,7 @@ public class BankLoanHandler {
         Bank bank = bot.getGuilds().get(guildId).getBank();
         LoanRateUpgrade loanRateUpgrade = bank.getAccount(userId).getUpgrades().getLoanRateUpgrade();
         LoanLimitUpgrade loanLimitUpgrade = bank.getAccount(userId).getUpgrades().getLoanLimitUpgrade();
+        DebtLimitUpgrade debtLimitUpgrade = bank.getAccount(userId).getUpgrades().getDebtLimitUpgrade();
 
         int extraPayback = calculateLoanRepayAmount(loanAmount, loanRate, loanRateUpgrade);
         int extraPaybackWithoutUpgrade = calculateLoanRepayAmount(loanAmount, loanRate, LoanRateUpgrade.EMPTY);
@@ -32,8 +34,7 @@ public class BankLoanHandler {
         }
 
         int maxLoanLimit = loanLimitUpgrade.getCurrentValue();
-        System.out.println(maxLoanLimit);
-        int maxTotalOwedToBank = 110000; // todo: maybe sprite maybe loan aka debt limit
+        int maxTotalOwedToBank = debtLimitUpgrade.getCurrentValue();
         int crocLoanFee = 999;
         if (loanAmount < 1000) {
             throw new BankLoanException("This small amount of money is not even worth the paperwork to give a loan to you!");
@@ -41,7 +42,7 @@ public class BankLoanHandler {
         if (loanAmount > maxLoanLimit) {
             throw new BankLoanException("I will not entrust you with more than " + maxLoanLimit + " money, for I have no faith in your ability to pay it back.");
         }
-        System.out.println(initCounter.getOwedToBank() + loanAmount + extraPayback);
+
         int resultingTotalOwed = initCounter.getOwedToBank() + loanAmount + extraPayback;
         if (resultingTotalOwed > maxTotalOwedToBank) {
             throw new BankLoanException(

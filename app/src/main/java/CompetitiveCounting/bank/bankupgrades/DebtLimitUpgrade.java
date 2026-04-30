@@ -7,6 +7,7 @@ public class DebtLimitUpgrade extends BankUpgrade{
     private final static int[] DEBT_LIMIT_VALUES = {150000, 350000, 750000, 1500000};
     private final static String[] NAMES = {"Awful Debt Limit", "Nice Debt Limit Upgrade", "Amazing Debt Limit Upgrade", "Phenomenal Debt Limit Upgrade"};
     private final static String DESCRIPTION = "Allows you to have more total debt! I hope you bought this first...";
+    private final static String UNIT = " money";
     protected DebtLimitUpgrade() {
         super(UPGRADE_ID);
     }
@@ -33,6 +34,16 @@ public class DebtLimitUpgrade extends BankUpgrade{
     @Override
     String getUnlockName() {
         return UNLOCK_NAME;
+    }
+
+    @Override
+    public int getCurrentValue() {
+        return DEBT_LIMIT_VALUES[currentLvl];
+    }
+
+    @Override
+    public String getUnit() {
+        return UNIT;
     }
 
 }

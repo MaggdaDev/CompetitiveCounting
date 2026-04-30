@@ -1,10 +1,11 @@
 package CompetitiveCounting.bank.bankupgrades;
 
-public abstract class BankUpgrade { // todo functionlaity vong der ganzen upgrades her
+public abstract class BankUpgrade {
+    // todo accept decline buttons loan
+    // todo functionlaity vong der ganzen upgrades her (wenigger diesmal)
     // todo info rückmeldung feedback dings wenn vong upgrade her durchgestrichen du wiest schon brudi
     // todo preis int array call dingens auf 0 anpassen weil wir ham das jetz gechanged vong der 1 auf die 0 her
     // todo bessere communication bei loan (geht nich weil loan limit, geht nich weil debt limit ects)
-    // todo https://www.pornhub.com/video/search?search=mia
     // todo secrets einbauen die dann vong die trophies her geben rum
     protected final String upgradeId;
     protected int currentLvl = 0;
@@ -13,13 +14,15 @@ public abstract class BankUpgrade { // todo functionlaity vong der ganzen upgrad
     abstract int[] getPrices();
     abstract String getDescription();
     abstract String getUnlockName();
+    public abstract int getCurrentValue();
+    public abstract String getUnit();  // note this has a space like " money" so that "%" can not have a space
 
     protected BankUpgrade(String upgradeId) {
         this.upgradeId = upgradeId;
     }
 
     public String getStatusString() {
-        return getCurrentName() + " - level " + getCurrentLvl() + " of " + getMaxLvl();
+        return getCurrentName() + " (level " + getCurrentLvl() + " of " + getMaxLvl() + "): " + getCurrentValue() + getUnit() + "\n-# " + getDescription() + "\n";
     }
 
     public void incrementLvl() {
@@ -46,7 +49,7 @@ public abstract class BankUpgrade { // todo functionlaity vong der ganzen upgrad
     }
 
     public String getCurrentLvlOutOfMaxLvlString() {
-        return (currentLvl+1) + "/" + (getMaxLvl()+1);
+        return (currentLvl) + "/" + (getMaxLvl());
     }
 
     public String getNextName() {

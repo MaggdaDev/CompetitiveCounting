@@ -8,6 +8,7 @@ public class LoanLimitUpgrade extends BankUpgrade{
     private final static int[] LOAN_LIMIT_VALUES = {100000, 250000, 500000, 1000000};
     private final static String[] NAMES = {"Miserable Loan Limit", "Big Loan Limit Upgrade", "Huge Loan Limit Upgrade", "Massive Loan Limit Upgrade"};
     private final static String DESCRIPTION = "Allows me to give out bigger loans! Perfect for those with big dreams...";
+    private final static String UNIT = " money";
     protected LoanLimitUpgrade() {
         super(UPGRADE_ID);
     }
@@ -36,7 +37,13 @@ public class LoanLimitUpgrade extends BankUpgrade{
         return DESCRIPTION;
     }
 
+    @Override
     public int getCurrentValue() {
         return LOAN_LIMIT_VALUES[currentLvl];
+    }
+
+    @Override
+    public String getUnit() {
+        return UNIT;
     }
 }

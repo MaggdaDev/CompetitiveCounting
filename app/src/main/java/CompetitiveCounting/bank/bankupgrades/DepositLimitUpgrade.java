@@ -8,6 +8,7 @@ public class DepositLimitUpgrade extends BankUpgrade{
     private final static int[] DEPOSIT_LIMIT_VALUES = {50000, 100000, 500000, 1000000};
     private final static String[] NAMES = {"Miniscule Deposit Limit", "Huge Deposit Limit Upgrade", "Massive Deposit Limit Upgrade", "Humongous Deposit Limit Upgrade"};
     private final static String DESCRIPTION = "Allows me to hoard more money! You should definitely buy this one.";
+    private final static String UNIT = " money";
     protected DepositLimitUpgrade() {
         super(UPGRADE_ID);
     }
@@ -30,5 +31,15 @@ public class DepositLimitUpgrade extends BankUpgrade{
     @Override
     String getDescription() {
         return DESCRIPTION;
+    }
+
+    @Override
+    public int getCurrentValue() {
+        return DEPOSIT_LIMIT_VALUES[currentLvl];
+    }
+
+    @Override
+    public String getUnit() {
+        return UNIT;
     }
 }
