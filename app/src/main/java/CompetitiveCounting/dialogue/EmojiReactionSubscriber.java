@@ -3,9 +3,11 @@ package CompetitiveCounting.dialogue;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingEmojis;
 import CompetitiveCounting.EmojiReactHandler;
+import com.google.common.base.Objects;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
@@ -15,31 +17,34 @@ public class EmojiReactionSubscriber extends DialogueElement {
     private final ReactionEmoji emoji;
 
     private final CountDownLatch latch = new CountDownLatch(1);
-    private final String messageId;
 
-    private final Supplier<String> messageIdGetter;
     private EmojiReactHandler emojiReactHandler;
+    private boolean shouldCancelRemainingDialogueOnReact = false;
 
+    private Consumer<Message> onReactCallback = null;
+    private final Optional<String> counterIdRestriction;
 
-    public EmojiReactionSubscriber(String idOfMessageToWaitOnAsString, ReactionEmoji emoji) {
+    public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
+                                   Consumer<Message> onReactCallback, Optional<String> counterIdRestriction) {
         this.emoji = emoji;
-        messageId = idOfMessageToWaitOnAsString;
-        messageIdGetter = null;
-    }
-
-    public EmojiReactionSubscriber(Supplier<String> idOfMessageToWaitOnGetter, ReactionEmoji emoji) {
-        this.emoji = emoji;
-        messageId = null;
-        this.messageIdGetter = idOfMessageToWaitOnGetter;
+        this.shouldCancelRemainingDialogueOnReact = shouldCancelRemainingDialogueOnReact;
+        this.onReactCallback = onReactCallback;
+        this.counterIdRestriction = counterIdRestriction;
     }
 
     @Override
     public void run(Message message) {
         String channelId = message.getChannelId().asString();
         emojiReactHandler = new EmojiReactHandler(channelId, true);
-        CountingBot.getInstance().subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(emojiReactHandler, messageIdGetter == null ? messageId : messageIdGetter.get());
+        String messageId = message.getId().asString();
+        CountingBot.getInstance().subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(emojiReactHandler, messageId);
         emojiReactHandler.addOnEmojiReact(
                 (msg, user) -> {
+                    if (counterIdRestriction.isPresent()) {
+                        if (!Objects.equal(counterIdRestriction.get(), user.getId().asString())) {
+                            return false;
+                        }
+                    }
                     latch.countDown(); // Signal that the reaction was received
                     return true; // Return true to indicate the reaction was handled and the handler can be removed
                 },
@@ -47,10 +52,16 @@ public class EmojiReactionSubscriber extends DialogueElement {
         );
         try {
             latch.await();
+            onReactCallback.accept(message);
         } catch (InterruptedException e) {
             System.out.println("Emoji react waiter thread interrupted with message: " + e.getMessage());
             Thread.currentThread().interrupt(); // Restore the interrupted status
         }
+    }
+
+    @Override
+    public boolean shouldCancelRemaningElements() {
+        return shouldCancelRemainingDialogueOnReact;
     }
 
     @Override

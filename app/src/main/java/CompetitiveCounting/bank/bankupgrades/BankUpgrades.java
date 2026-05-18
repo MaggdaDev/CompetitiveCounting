@@ -24,8 +24,14 @@ public class BankUpgrades {
         int counter = 1;
         for (BankUpgrade upgrade : getAllUpgrades()) {
             if (!upgrade.isMaxedOut()) {
-                s += counter + ". '" + upgrade.getUnlockName() + "': Buy the " + upgrade.getNextName() + " for " + upgrade.howMuchIsTheNextLvl() + " money (currently: " + upgrade.getCurrentLvlOutOfMaxLvlString() + ") \n";
+                String currentValueWithUnit = upgrade.getCurrentValue() + upgrade.getUnit();
+                String nextValueWithUnit = upgrade.getNextValue() + upgrade.getUnit();
+                s += counter + ". '" + upgrade.getUnlockName() + "': Buy the " + upgrade.getNextName() + " for " + upgrade.howMuchIsTheNextLvl() +
+                        " money (currently " + upgrade.getCurrentLvlOutOfMaxLvlString() + ").\n" +
+                        "-# " + upgrade.getAdvertisement().replace("{0}", currentValueWithUnit).replace("{1}", nextValueWithUnit)
+                        + "\n\n";
             }
+            counter += 1;
         }
         return s;
     }

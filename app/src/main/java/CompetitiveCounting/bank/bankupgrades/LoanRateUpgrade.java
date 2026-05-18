@@ -6,9 +6,10 @@ public class LoanRateUpgrade extends BankUpgrade{
     private final static String UPGRADE_ID = "LOAN_RATE";
     private final static String UNLOCK_NAME = "loan_rate";
     private final static int[] PRICES = {0, 100000, 250000, 500000, 2000000};
-    private final static double[] LOAN_RATE_VALUES = {100.0, 85.0, 75.0, 70.0, 60.0};
+    private final static double[] LOAN_RATE_VALUES = {100.0, 90.0, 80.0, 70.0, 60.0};
     private final static String[] NAMES = {"Outrageously High Loan Rate", "Better Loan Rate Upgrade", "Great Loan Rate Upgrade", "Fantastic Loan Rate Upgrade", "Mythic Loan Rate Upgrade"};
     private final static String DESCRIPTION = "Allows you to get better deals on your loans! Which means that you should take out more of them.";
+    private final static String ADVERTISEMENT = "This upgrade multiplies interest rate on your loans with a modifier, which is lowered from {0} down to {1}.";
     private final static String UNIT = "%";
     protected LoanRateUpgrade() {
         super(UPGRADE_ID);
@@ -42,6 +43,17 @@ public class LoanRateUpgrade extends BankUpgrade{
     public int getCurrentValue() {
         return (int) LOAN_RATE_VALUES[currentLvl];
     }
+
+    @Override
+    public int getNextValue() {
+        if (isMaxedOut()) {
+            return -1;
+        }
+        return (int) LOAN_RATE_VALUES[currentLvl+1];
+    }
+
+    @Override
+    public String getAdvertisement() { return ADVERTISEMENT; }
 
     @Override
     public String getUnit() {

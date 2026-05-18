@@ -7,6 +7,7 @@ public class DebtLimitUpgrade extends BankUpgrade{
     private final static int[] DEBT_LIMIT_VALUES = {150000, 350000, 750000, 1500000};
     private final static String[] NAMES = {"Awful Debt Limit", "Nice Debt Limit Upgrade", "Amazing Debt Limit Upgrade", "Phenomenal Debt Limit Upgrade"};
     private final static String DESCRIPTION = "Allows you to have more total debt! I hope you bought this first...";
+    private final static String ADVERTISEMENT = "This upgrades your total debt limit across all of the bank's loans, increasing it from {0} to {1}.";
     private final static String UNIT = " money";
     protected DebtLimitUpgrade() {
         super(UPGRADE_ID);
@@ -40,6 +41,17 @@ public class DebtLimitUpgrade extends BankUpgrade{
     public int getCurrentValue() {
         return DEBT_LIMIT_VALUES[currentLvl];
     }
+
+    @Override
+    public int getNextValue() {
+        if (isMaxedOut()) {
+            return -1;
+        }
+        return DEBT_LIMIT_VALUES[currentLvl+1];
+    }
+
+    @Override
+    public String getAdvertisement() { return ADVERTISEMENT; }
 
     @Override
     public String getUnit() {

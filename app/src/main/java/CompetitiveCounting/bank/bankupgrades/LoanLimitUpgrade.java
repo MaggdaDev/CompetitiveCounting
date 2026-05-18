@@ -1,13 +1,13 @@
 package CompetitiveCounting.bank.bankupgrades;
 
-public class LoanLimitUpgrade extends BankUpgrade{
-
+public class LoanLimitUpgrade extends BankUpgrade {
     private final static String UPGRADE_ID = "LOAN_LIMIT";
     private final static String UNLOCK_NAME = "loan_limit";
     private final static int[] PRICES = {0, 50000, 200000, 1000000};
     private final static int[] LOAN_LIMIT_VALUES = {100000, 250000, 500000, 1000000};
     private final static String[] NAMES = {"Miserable Loan Limit", "Big Loan Limit Upgrade", "Huge Loan Limit Upgrade", "Massive Loan Limit Upgrade"};
     private final static String DESCRIPTION = "Allows me to give out bigger loans! Perfect for those with big dreams...";
+    private final static String ADVERTISEMENT = "This increases the maximum amount of money for a single loan from {0} to {1}.";
     private final static String UNIT = " money";
     protected LoanLimitUpgrade() {
         super(UPGRADE_ID);
@@ -41,6 +41,17 @@ public class LoanLimitUpgrade extends BankUpgrade{
     public int getCurrentValue() {
         return LOAN_LIMIT_VALUES[currentLvl];
     }
+
+    @Override
+    public int getNextValue() {
+        if (isMaxedOut()) {
+            return -1;
+        }
+        return LOAN_LIMIT_VALUES[currentLvl+1];
+    }
+
+    @Override
+    public String getAdvertisement() { return ADVERTISEMENT; }
 
     @Override
     public String getUnit() {

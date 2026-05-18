@@ -13,6 +13,7 @@ import reactor.core.Disposable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author DavidPrivat
@@ -134,13 +135,17 @@ public class CountingStreak {
 
     private void fail(Message message, int number, Counter user) {
         message.addReaction(ReactionEmoji.unicode("\u274C")).subscribe();
+
+        int pendingFailScore = user.getPendingStreakScore(this);
+        int cuckPayout = 0;
+
         Rule winnerRule = getWinnerRule(number);
         if ((!(winnerRule instanceof TimeLimitRule)) && timeLimitRule != null) {
             timeLimitRule.cancel();
         }
-        String winnerName = "";
+        String winnerName;
         if (winnerRule != null) {
-            int loss = 0;
+            int loss;
             String causeForLose = "Wrong number";
             if (winnerRule instanceof SlowModeRule) {
                 causeForLose = "Slowmode-rule broken";
@@ -148,6 +153,9 @@ public class CountingStreak {
                 causeForLose = "Timelimit-rule broken";
             }
             if (winnerRule.getOwnerId().equals(user.getId())) {
+                // user fucks up from own rule
+                cuckPayout = (int) (pendingFailScore / 2.0d);
+                System.out.println(cuckPayout);
                 loss = user.failFromOwn(message, this, sumOfAllCountsSoFar);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
@@ -155,6 +163,8 @@ public class CountingStreak {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ") due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
                 }
             } else {
+                cuckPayout = (int) (pendingFailScore / 3.0d);
+                System.out.println(cuckPayout);
                 loss = user.fail(message, this);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " and lost " + loss + " money.");
@@ -169,6 +179,7 @@ public class CountingStreak {
             }
 
         } else {
+            cuckPayout = (int) (pendingFailScore / 3.0d);
             int loss = user.fail(message, this);
             if (currentBase == 10) {
                 if (!user.equals(lastCounter)) {
@@ -185,11 +196,34 @@ public class CountingStreak {
             }
         }
 
-        counters.forEach((String key, Counter counter) -> {
-            if (!key.equals(user.getId())) {
+        String payoutMessage = "**Streak payouts:**\n";
+        boolean someoneWon = false;
+
+        if (cuckPayout > 0) {
+            payoutMessage += user.getPing() + " receives " + cuckPayout + " money.\n";
+            someoneWon = true;
+        }
+
+        for (Map.Entry<String, Counter> entry : counters.entrySet()) {
+            Counter counter = entry.getValue();
+            if (!entry.getKey().equals(user.getId())) {
+                int wonAmount = counter.getPendingStreakScore(this);
+
+                if (wonAmount > 0) {
+                    payoutMessage += (counter.getPing()) + " receives " + wonAmount + " money.\n";
+                    someoneWon = true;
+                }
+
                 counter.succeed(this, message);
             }
-        });
+        }
+
+        if (someoneWon) {
+            CountingBot.write(message, payoutMessage);
+        }
+
+        // todo streak payouts unified with "he messed up" messages
+
         CountingBot.getInstance().save();
     }
 

@@ -118,6 +118,7 @@ public class BankCommandHandler {
                     break;
                 case "upgrade":
                     upgrade(message, splitMessage, bank, authorId);
+                    shouldSaveJson = true;
                     break;
                 default:
                     sendCommandNotUnderstoodMessage(message);
@@ -181,8 +182,9 @@ public class BankCommandHandler {
         String newLevel = upgrade.getNextName();
         upgrade.incrementLvl();
         bankWrite(message, "Congratulations! You have upgraded your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'.");
-
+        // todo add some sort of message about the benefits of the new upgrade level
     }
+
     public void handBagBought(Message message) {
         String guildId = message.getGuildId().get().asString();
         String authorId = message.getAuthor().get().getId().asString();
@@ -220,7 +222,7 @@ public class BankCommandHandler {
                 .addNpcLine(toCrocText("Me? I'm the Crocodile, and I'm the salesman selling those handbags! I am very grateful for your purchase."), 4000)
                 .addNpcLine(toCrocText("By the way, I am obligated to inform you of the possibility to react with the :goblin: emoji to this message if you have any complaints... But now I'm off to my next customer, see ya!"), 0)
                 .addRunnable((m) -> CountingBot.getInstance().getShopCommandHandler().acquireHandBag(message, guildId, authorId))
-                .addWaitForEmojiReactionOnNthNpcLine(2, message.getId().asString(), CountingEmojis.GOBLIN)
+                .addWaitForEmojiReaction(CountingEmojis.GOBLIN, false)
                 .addNpcLine(toCrocText("Fake? What do you mean fake? Everything about this leather is as real as it gets! Do you not trust me? I don't think a refund is appropriate."), 6000)
                 .addNpcLine(toCrocText("However, it seems like this is a thriving spot to do business. Therefore, I will create a branch of my very own *CrocBank* here."), 2000)
                 .addNpcLine(toCrocText("I will consider your generous, ahem, *donation* an investment! Consider this a great financial opportunity for the future!"), 0)

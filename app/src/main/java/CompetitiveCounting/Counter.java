@@ -469,6 +469,13 @@ public class Counter implements ContractOwner {
         this.currScoreAdds.replace(streak.getKey(), 0);
     }
 
+    public int getPendingStreakScore(CountingStreak streak) {
+        if (this.currScoreAdds.containsKey(streak.getKey())) {
+            return this.currScoreAdds.get(streak.getKey());
+        }
+        return 0;
+    }
+
     public String getId() {
         return key;
     }

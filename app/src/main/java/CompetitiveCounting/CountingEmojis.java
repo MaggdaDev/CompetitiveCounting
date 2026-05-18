@@ -11,7 +11,8 @@ public interface CountingEmojis {
             TROPHY = ReactionEmoji.unicode("\uD83C\uDFC6"),
             GOLDEN_KEKMARK = ReactionEmoji.of(Long.parseLong("1309598712896557196"), "goldenkekmark", false),
             WARNING = ReactionEmoji.unicode("\u26A0"),
-            GOBLIN = ReactionEmoji.unicode("\uD83D\uDC7A");
+            GOBLIN = ReactionEmoji.unicode("\uD83D\uDC7A"),
+            HANDSHAKE = ReactionEmoji.unicode("\uD83E\uDD1D");
 
     ReactionEmoji[] ALL_NUMBER_EMOJIS = {
             ReactionEmoji.unicode("\u0030\u20E3"),

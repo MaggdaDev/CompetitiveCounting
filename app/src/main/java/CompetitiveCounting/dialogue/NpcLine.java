@@ -3,6 +3,7 @@ package CompetitiveCounting.dialogue;
 import CompetitiveCounting.CountingBot;
 import discord4j.core.object.entity.Message;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public class NpcLine extends DialogueElement{
@@ -28,8 +29,9 @@ public class NpcLine extends DialogueElement{
         }
     }
 
-    public Message getSentMessage() {
-        return sentMessage;
+    @Override
+    public Optional<Message> getNewMessage() {
+        return Optional.of(sentMessage);
     }
 
     public String getSentMessageId() {

@@ -68,6 +68,9 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
     }
 
     private void disposeIfSingleUse(boolean b) {
+        if (!b) {
+            return;
+        }
         if (singleUseHandlerDisposable != null) {
             singleUseHandlerDisposable.dispose();
             System.out.println("EmojiReactHandler for channel " + channelIdAsString + " disposed after single use.");

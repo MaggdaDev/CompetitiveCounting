@@ -2,6 +2,7 @@ package CompetitiveCounting.bank;
 
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingEmojis;
 import CompetitiveCounting.bank.bankupgrades.DebtLimitUpgrade;
 import CompetitiveCounting.bank.bankupgrades.LoanLimitUpgrade;
 import CompetitiveCounting.bank.bankupgrades.LoanRateUpgrade;
@@ -9,23 +10,23 @@ import CompetitiveCounting.bank.exceptions.BankLoanException;
 import CompetitiveCounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
 
-import java.util.List;
+import java.util.Optional;
 
 public class BankLoanHandler {
     private final static CountingBot bot = CountingBot.getInstance();
 
-    public static void giveLoan(String guildId, String userId, int loanAmount, int loanRate, Message message) throws BankLoanException {
+    public static void giveLoan(String guildId, String userId, int loanAmount, int percentOfIncomeRepay, Message message) throws BankLoanException {
         Counter initCounter = bot.getCounter(guildId, userId);
         Bank bank = bot.getGuilds().get(guildId).getBank();
         LoanRateUpgrade loanRateUpgrade = bank.getAccount(userId).getUpgrades().getLoanRateUpgrade();
         LoanLimitUpgrade loanLimitUpgrade = bank.getAccount(userId).getUpgrades().getLoanLimitUpgrade();
         DebtLimitUpgrade debtLimitUpgrade = bank.getAccount(userId).getUpgrades().getDebtLimitUpgrade();
 
-        int extraPayback = calculateLoanRepayAmount(loanAmount, loanRate, loanRateUpgrade);
-        int extraPaybackWithoutUpgrade = calculateLoanRepayAmount(loanAmount, loanRate, LoanRateUpgrade.EMPTY);
+        int extraPayback = calculateLoanRepayAmount(loanAmount, percentOfIncomeRepay, loanRateUpgrade);
+        int extraPaybackWithoutUpgrade = calculateLoanRepayAmount(loanAmount, percentOfIncomeRepay, LoanRateUpgrade.EMPTY);
 
         int userContractPerc = initCounter.getContractHandler().getCurrentTotalPerc();
-        if (userContractPerc + loanRate > 100) {
+        if (userContractPerc + percentOfIncomeRepay > 100) {
             throw new BankLoanException("I like your energy, but you're being a bit overzealous! You can't give me more than 100% of what you earn!");
         }
 
@@ -36,6 +37,7 @@ public class BankLoanHandler {
         int maxLoanLimit = loanLimitUpgrade.getCurrentValue();
         int maxTotalOwedToBank = debtLimitUpgrade.getCurrentValue();
         int crocLoanFee = 999;
+
         if (loanAmount < 1000) {
             throw new BankLoanException("This small amount of money is not even worth the paperwork to give a loan to you!");
         }
@@ -51,16 +53,26 @@ public class BankLoanHandler {
                             maxTotalOwedToBank + " money.");
         }
 
-        bank.removeMoney(loanAmount - crocLoanFee);
-        initCounter.addBonusScore(loanAmount - crocLoanFee, message);
-        initCounter.getContractHandler().addContract(bank, loanRate, loanAmount + extraPayback);
 
-        // System.out.println(interestRateUpgrade(loanAmount, loanRate, )); todo
-
-        new Dialogue().addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! You now owe me " +
-                        (loanRateUpgrade.getCurrentLvl() == 0 ? "" : "~~" + (loanAmount + extraPaybackWithoutUpgrade) + "~~ ") +
-                        (loanAmount + extraPayback) + " money, which you will pay back by giving me " +
-                        loanRate + "% of your income. ", 2000)
+        new Dialogue().addNpcLine("Ok, I'll hand " + loanAmount + " money over to you, and you will pay me back " +
+                        "~~" + (loanAmount + extraPaybackWithoutUpgrade) + "~~ " +
+                (loanAmount + extraPayback) + " money by giving me " + percentOfIncomeRepay + "% of your income. Do we have a deal?", 0)
+                .addEmojiReaction(CountingEmojis.HANDSHAKE)
+                .addEmojiReaction(CountingEmojis.GOBLIN)
+                .initializeParallelDialogElements()
+                .addWaitForEmojiReaction(CountingEmojis.GOBLIN, true, m-> {
+                    BankCommandHandler.bankWrite(message, "Why are you wasting my time?! Get out of here if you don't want a loan!");
+                }, Optional.of(userId))
+                .addWaitForEmojiReaction(CountingEmojis.HANDSHAKE, false, m->{}, Optional.of(userId))
+                .finishParallelDialogElementsAndAdd()
+                .addRunnable(m -> {
+                    // Do Contract
+                    bank.removeMoney(loanAmount - crocLoanFee);
+                    initCounter.addBonusScore(loanAmount - crocLoanFee, message);
+                    initCounter.getContractHandler().addContract(bank, percentOfIncomeRepay, loanAmount + extraPayback);
+                })
+                .addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! With all of your loans, you now owe me a total of " +
+                        resultingTotalOwed + " money. Btw, you can always check your debts with ~contracts.", 2000)
                 .addNpcLine("By the way... you'd better pay me back my money soon, or else...", 3000)
                 .addNpcLine("... I will tell my cousins... they already know your IP address...", 0)
                 .setNpcLineConverter(BankCommandHandler::toCrocText)

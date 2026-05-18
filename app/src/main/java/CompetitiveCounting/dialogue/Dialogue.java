@@ -1,12 +1,11 @@
 package CompetitiveCounting.dialogue;
 
-import CompetitiveCounting.EmojiReactHandler;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -29,12 +28,28 @@ public class Dialogue {
         return this;
     }
 
-    public Dialogue addWaitForEmojiReactionOnNthNpcLine(int n, String string, ReactionEmoji emoji) {
-        if (n >= npcMessagesIndices.size()) {
-            throw new IllegalArgumentException("n is larger than the number of NPC lines added so far!");
-        }
-        int index = npcMessagesIndices.get(n);
-        elements.add(new EmojiReactionSubscriber(() -> ((NpcLine) elements.get(index)).getSentMessageId(), emoji));
+    public ParallelDialogElementsBuilder initializeParallelDialogElements() {
+        ParallelDialogElementsBuilder builder = new ParallelDialogElementsBuilder(this);
+        return builder;
+    }
+
+    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
+                                            Consumer<Message> onReactCallback, Optional<String> counterIdRestriction) {
+        elements.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction));
+        return this;
+    }
+
+    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact) {
+        return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, Optional.empty());
+    }
+
+    public Dialogue addWaitForAnyDialogueElement(DialogueElement... elementsToWaitFor) {
+        elements.add(new ParallelDialogElements(elementsToWaitFor));
+        return this;
+    }
+
+    public Dialogue addEmojiReaction(ReactionEmoji emoji) {
+        elements.add(new EmojiReaction((emoji)));
         return this;
     }
 
@@ -50,9 +65,16 @@ public class Dialogue {
     public void playAtIndex(Message message, int idx) {
         currentState = idx;
         thread = new Thread(() -> {
+            Message currentMessage = message;
             while (currentState < elements.size()) {
                 DialogueElement element = elements.get(currentState);
-                element.run(message);
+                element.run(currentMessage);
+                if (element.shouldCancelRemaningElements()) {
+                    currentState = elements.size();
+                }
+                if (element.getNewMessage().isPresent()) {
+                    currentMessage = element.getNewMessage().get();
+                }
                 currentState++;
             }
             for (Runnable runnable : thenRuns) {
@@ -77,5 +99,9 @@ public class Dialogue {
     public Dialogue setNpcLineConverter(Function<String, String> npcLineConverter) {
         this.npcLineConverter = npcLineConverter;
         return this;
+    }
+
+    public List<DialogueElement> getElements() {
+        return elements;
     }
 }
