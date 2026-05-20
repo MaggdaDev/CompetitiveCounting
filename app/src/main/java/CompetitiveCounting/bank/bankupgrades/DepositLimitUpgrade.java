@@ -1,6 +1,7 @@
 package CompetitiveCounting.bank.bankupgrades;
 
 public class DepositLimitUpgrade extends BankUpgrade{
+    public final static DepositLimitUpgrade EMPTY = new DepositLimitUpgrade();
     private final static String UPGRADE_ID = "DEPOSIT_LIMIT";
     private final static String UNLOCK_NAME = "deposit_limit";
     private final static int[] PRICES = {0, 10000, 100000, 1000000};
@@ -9,6 +10,16 @@ public class DepositLimitUpgrade extends BankUpgrade{
     private final static String DESCRIPTION = "Allows me to hoard more money! You should definitely buy this one.";
     private final static String ADVERTISEMENT = "Raise your bank account's deposit limit from {0} to {1}.";
     private final static String UNIT = " money";
+    private final static String BUY_FEEDBACK = "You can now deposit a total of {0} instead of {1}! ";
+
+    @Override
+    public String getBoughtFeedback() {
+        if (currentLvl == 0) {
+            return "";  // Should be called AFTER upgrade is bought
+        }
+        return BUY_FEEDBACK.replace("{0}", getCurrentValue() + UNIT).replace("{1}", DEPOSIT_LIMIT_VALUES[currentLvl-1] + UNIT);
+    }
+
     protected DepositLimitUpgrade() {
         super(UPGRADE_ID);
     }

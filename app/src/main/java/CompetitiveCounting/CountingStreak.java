@@ -111,7 +111,8 @@ public class CountingStreak {
                 }
             }
             if (timeLimitNewlyAdded) {
-                CountingBot.write(message, "Watch out! The next number will activate the timelimit countdown!\n" + user.getPing() + " be ready to keep counting!");
+                CountingBot.write(message, "Watch out! The next number will activate the timelimit countdown!\n" + user.getPing() + " be ready to keep counting!\n" +
+                        "-# Hint: `~addrule notime` can be used to remove the time limit, but it will cost more money.");  // 67 wer das findet ist dumm leel kann das auf sohn ~~500~~ 450 upgraden bin zu faul leel
                 timeLimitNewlyAdded = false;
             }
             lastCounter = user;
@@ -137,7 +138,7 @@ public class CountingStreak {
         message.addReaction(ReactionEmoji.unicode("\u274C")).subscribe();
 
         int pendingFailScore = user.getPendingStreakScore(this);
-        int cuckPayout = 0;
+        int cuckPayout;
 
         Rule winnerRule = getWinnerRule(number);
         if ((!(winnerRule instanceof TimeLimitRule)) && timeLimitRule != null) {
@@ -156,7 +157,7 @@ public class CountingStreak {
                 // user fucks up from own rule
                 cuckPayout = (int) (pendingFailScore / 2.0d);
                 System.out.println(cuckPayout);
-                loss = user.failFromOwn(message, this, sumOfAllCountsSoFar);
+                loss = user.failFromOwn(message, this);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
                 } else {
@@ -172,7 +173,7 @@ public class CountingStreak {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ") and lost " + loss + " money.");
                 }
 
-                int win = (int) (loss);
+                int win = loss;
                 winnerName = counters.get(winnerRule.getOwnerId()).getName();
                 CountingBot.write(message, winnerName + " has pulled a fast one on " + user.getName() + " with their '" + winnerRule.toString() + "' rule and got all of the victim's lost money, which is " + win + ".");
                 counters.get(winnerRule.getOwnerId()).notifyWin(win, currentBase, message);
@@ -222,7 +223,7 @@ public class CountingStreak {
             CountingBot.write(message, payoutMessage);
         }
 
-        // todo streak payouts unified with "he messed up" messages
+        // irgendwanntodo streak payouts unified with "he messed up" messages
 
         CountingBot.getInstance().save();
     }

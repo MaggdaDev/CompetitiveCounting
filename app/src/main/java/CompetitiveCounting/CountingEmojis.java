@@ -9,7 +9,8 @@ public interface CountingEmojis {
             THREE = ReactionEmoji.unicode("\u0033\u20E3"),
             BOLT = ReactionEmoji.unicode("\u26A1"),
             TROPHY = ReactionEmoji.unicode("\uD83C\uDFC6"),
-            GOLDEN_KEKMARK = ReactionEmoji.of(Long.parseLong("1309598712896557196"), "goldenkekmark", false),
+            GOLDEN_KEKMARK = ReactionEmoji.of(Long.parseLong("1506024606522282045"), "goldenkekmark", false),
+            KEKMARK_BOLT = ReactionEmoji.of(Long.parseLong("1506021088528695417"), "kekmark_bolt", false),
             WARNING = ReactionEmoji.unicode("\u26A0"),
             GOBLIN = ReactionEmoji.unicode("\uD83D\uDC7A"),
             HANDSHAKE = ReactionEmoji.unicode("\uD83E\uDD1D");

@@ -4,7 +4,6 @@ import CompetitiveCounting.bank.exceptions.BankTransactionException;
 import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.contracts.ContractHandler;
 import CompetitiveCounting.contracts.ContractOwner;
-import CompetitiveCounting.items.Inventory;
 import discord4j.core.object.entity.Message;
 
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public class Bank implements ContractOwner {
         }
     }
 
-    public void donate(int amount) {
+    public void addMoney(int amount) {
         totalScore += amount;
     }
 
@@ -135,4 +134,6 @@ public class Bank implements ContractOwner {
     public ContractHandler getContractHandler() {
         return contractHandler;
     }
+
+
 }

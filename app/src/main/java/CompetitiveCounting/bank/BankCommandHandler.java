@@ -5,11 +5,9 @@ import CompetitiveCounting.bank.bankupgrades.BankUpgrade;
 import CompetitiveCounting.bank.exceptions.*;
 import CompetitiveCounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
+import reactor.core.Disposable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class BankCommandHandler {
     private final BankTransactionsHandler transactionsHandler;
@@ -51,6 +49,11 @@ public class BankCommandHandler {
             return false;
         }
         String authorId = message.getAuthor().get().getId().asString();
+        String content = message.getContent().toLowerCase();
+        if (Objects.equals(content.strip(), "~bank")) {
+            sendBankDescription(message);
+            return false;
+        }
         String[] splitMessage = message.getContent().split(" ");
         if (splitMessage.length < 2 || !splitMessage[0].endsWith("bank")) {
             sendCommandNotUnderstoodMessage(message);
@@ -74,7 +77,7 @@ public class BankCommandHandler {
                     sendDonationMessage(message, donationAmount);
                     shouldSaveJson = true;
                     break;
-                case "balance":
+                case "balance": case "bal":
                     int balance = bank.getBalance(authorId);
                     int roundedBalance = 100 * (balance / 100);
                     if (roundedBalance == 0) {
@@ -83,14 +86,14 @@ public class BankCommandHandler {
                         bankWrite(message, "As long as there's enough money in my stash, you can get around " + roundedBalance + " money from me.");
                     }
                     break;
-                case "withdraw":
+                case "withdraw": case "wd":
                     int withdrawAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     int newBalance = bank.getBalance(authorId) - withdrawAmount;
                     transactionsHandler.withdraw(guildId, authorId, withdrawAmount, message);
                     shouldSaveJson = true;
                     sendWithdrawMessage(message, withdrawAmount, newBalance);
                     break;
-                case "deposit":
+                case "deposit": case "dp":
                     int depositAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     int newBalance2 = bank.getBalance(authorId) + depositAmount - Bank.DEPOSIT_COST;
                     transactionsHandler.deposit(guildId, authorId, depositAmount);
@@ -99,7 +102,7 @@ public class BankCommandHandler {
                     break;
                 case "loan":
                     if (splitMessage.length < 4) {
-                        bankWrite(message, "You have to specify how much money you want to take out and the rate in % of paying that money back!\nExample: `~bank loan 1000000 50");
+                        bankWrite(message, "You have to specify how much money you want to take out and the rate in % of paying that money back!\nExample: `~bank loan 1000000 50`");
                         break;
                     }
                     int loanAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
@@ -113,10 +116,11 @@ public class BankCommandHandler {
                 case "help":
                     sendHelpMessage(message);
                     break;
-                case "upgrades":
-                    bankWrite(message, bank.getAccount(authorId).getUpgradesInfoString());
-                    break;
+//                case "upgrades":
+//                    bankWrite(message, bank.getAccount(authorId).getUpgradesInfoString());
+//                    break;
                 case "upgrade":
+                case "upgrades":
                     upgrade(message, splitMessage, bank, authorId);
                     shouldSaveJson = true;
                     break;
@@ -140,10 +144,21 @@ public class BankCommandHandler {
                 default:
                     bankWrite(message, "You need " + e.moneyNeeded + " money for that, but you only have " + e.moneyAvailable + ". I would recommend loaning " + (e.moneyNeeded - e.moneyAvailable + (int) (Math.random() * 1000.0) + " money from me!"));
             }
-        } catch (BankLoanException | BankUpgradeException e) {
+        } catch (BankLoanException | BankUpgradeException | BankDepositException e) {
             bankWrite(message, e.getMessage());
         }
         return shouldSaveJson;
+    }
+
+    private void sendBankDescription(Message message) {
+        CountingBot.write(message, "## The CrocBank Inc. \n" +
+               toCrocText("Welcome to the glorious CrocBank Inc.! I, the crocodile, will gladly assist you with all your banking needs.\n" +
+                       "Money that is deposited here is safe from being lost after failing streaks.\n" +
+                       "-# Since running a bank comes with high costs, please be aware that you might have to pay some small fees here or there.\n\n" +
+                       "Furthermore, instead of contracts, you can now take out loans from the CrocBank. " +
+                       "You can freely pick the rate of repayment just like with a normal contract, but you will pay some interest.\n\n" +
+                       "At the start, your account is limited in its features and can be improved by purchasing bank upgrades.\n\n" +
+                       "For more information, please check `~bank help`, whatever that means."));
     }
 
     public void upgrade(Message message, String[] splitMessage, Bank bank, String authorId) throws BankUpgradeException {
@@ -181,8 +196,7 @@ public class BankCommandHandler {
         String oldLevel = upgrade.getCurrentName();
         String newLevel = upgrade.getNextName();
         upgrade.incrementLvl();
-        bankWrite(message, "Congratulations! You have upgraded your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'.");
-        // todo add some sort of message about the benefits of the new upgrade level
+        bankWrite(message, "Congratulations! You have upgraded your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'. " + upgrade.getBoughtFeedback());
     }
 
     public void handBagBought(Message message) {
@@ -190,45 +204,64 @@ public class BankCommandHandler {
         String authorId = message.getAuthor().get().getId().asString();
         CountingGuild countingGuild = guilds.get(guildId);
         Bank bank = countingGuild.getBank();
-        if (bank.isUnlocked()) {  // todo
-            bankWrite(message, "You bought another gucci purse. Are you some sort of collector or what's the motive behind your actions?");
+        if (bank.isUnlocked()) {
+        new Dialogue()
+                .addNpcLine("Oh look, another customer!", 1000)
+                .addNpcLine("This area seems to be heavily interested in handbags, I'll need to think about raising the prices soon...", 1000)
+                .addNpcLine("I'm sure this handbag will also be of great *use* to you.", 500)
+                .addRunnable((msg) -> {
+                    CountingBot.getInstance().getShopCommandHandler().acquireHandBag(msg, guildId, authorId);
+                    CountingBot.getInstance().save();
+                })
+                .setNpcLineConverter(BankCommandHandler::toCrocText)
+                .play(message);
             return;
         }
-        Counter counter = countingGuild.getCounter(authorId);
-        if (counter.getActiveUnlockBankDialog() != null) {
-            counter.getActiveUnlockBankDialog().stop();
-            counter.setActiveUnlockBankDialog(null);
-        }
-        Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId, bank);
+        Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId);
         dialogue.play(message);
-        counter.setActiveUnlockBankDialog(dialogue);
     }
 
-    public void handBagRefundRequestedViaItemUse(Message message) { // todo: What happens if bank item is used after the bank is already unlocked?
+    public void handBagRefundRequestedViaItemUse(Message message, TrophyHandler trophyHandler) {
         String guildId = message.getGuildId().get().asString();
         String authorId = message.getAuthor().get().getId().asString();
         CountingGuild countingGuild = guilds.get(guildId);
         Bank bank = countingGuild.getBank();
         if (bank.isUnlocked()) {
-            bankWrite(message, "You cannot refund this item. But you can visit the CrocBank by writing ~bank!");
+            new Dialogue().addNpcLine("Wow, that is some dedication!", 1000)
+                        .addNpcLine("To buy an item you know is a sham, and to then try to refund it again. Such audacity is almost worth a trophy.", 3000)
+                        .addNpcLine("Hmm, trophy...", 3000)
+                        .addRunnable(trophyHandler::spawnSecondHandbagTrophy)
+                        .setNpcLineConverter(BankCommandHandler::toCrocText)
+                        .play(message);
+
         } else {
-            Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId, bank);
-            dialogue.playAtIndex(message, 5);
+            Dialogue dialogue = createRequestHandbagRefundDialogue(message, bank);
+            dialogue.play(message);
         }
     }
 
-    private Dialogue createHandBagBoughtDialogue(Message message, String guildId, String authorId, Bank bank) {
+    private Dialogue createHandBagBoughtDialogue(Message message, String guildId, String authorId) {
         return new Dialogue().addNpcLine(toCrocText("Oh look, finally, a customer!"), 2000)
                 .addNpcLine(toCrocText("Me? I'm the Crocodile, and I'm the salesman selling those handbags! I am very grateful for your purchase."), 4000)
-                .addNpcLine(toCrocText("By the way, I am obligated to inform you of the possibility to react with the :goblin: emoji to this message if you have any complaints... But now I'm off to my next customer, see ya!"), 0)
-                .addRunnable((m) -> CountingBot.getInstance().getShopCommandHandler().acquireHandBag(message, guildId, authorId))
-                .addWaitForEmojiReaction(CountingEmojis.GOBLIN, false)
-                .addNpcLine(toCrocText("Fake? What do you mean fake? Everything about this leather is as real as it gets! Do you not trust me? I don't think a refund is appropriate."), 6000)
-                .addNpcLine(toCrocText("However, it seems like this is a thriving spot to do business. Therefore, I will create a branch of my very own *CrocBank* here."), 2000)
-                .addNpcLine(toCrocText("I will consider your generous, ahem, *donation* an investment! Consider this a great financial opportunity for the future!"), 0)
+                .addNpcLine(toCrocText("If you find yourself having any qualms about using the handbag, you can contact me by " +
+                        "*using* your handbag in your inventory."), 0)
+                .addRunnable((m) -> {
+                    CountingBot.getInstance().getShopCommandHandler().acquireHandBag(message, guildId, authorId);
+                    CountingBot.getInstance().save();
+                });
+
+    }
+
+    private Dialogue createRequestHandbagRefundDialogue(Message message, Bank bank) {
+        return new Dialogue().addNpcLine(toCrocText("You want to give it back? You really want to give back my" +
+                        "Crocodile-Leather Lacoste Purse? Well, fine, just don't come crying when you regret it..."), 5000)
+                .addNpcLine(toCrocText("Although I have just come up with an idea - this looks like an immaculate spot with great business opportunities."), 3000)
+                .addNpcLine(toCrocText("To kickstart my campaign, I'm just gonna take the money you paid for your handbag and reinvest it into the future!"), 2000)
+                .addNpcLine(toCrocText("I will get started on the paperwork right away, and open a local branch of my very own CrocBank in this location."), 2000)
                 .addRunnable(m -> bank.unlock())
                 .addRunnable(m -> CountingBot.getInstance().save())
-                .addNpcLine("You have unlocked the bank on *" + message.getGuild().block().getName() + "*! Every member can now use the ~bank commands. For more details, run ~bank help.", 0);
+                .addNpcLine("You have unlocked the bank on *" + message.getGuild().block().getName() +
+                        "*! Every member can now use the ~bank commands. For more details, run ~bank.", 0);
     }
 
 
@@ -275,7 +308,7 @@ public class BankCommandHandler {
     }
 
     private void sendWithdrawMessage(Message message, int withdrawAmount, int newBalance) {
-        bankWrite(message, "You have taken " + withdrawAmount + "from the bank. You better give it back! You now have " + newBalance + " left here.");
+        bankWrite(message, "You have taken " + withdrawAmount + " from the bank. You better give it back! You now have " + newBalance + " left here.");
     }
 
     /**
@@ -331,11 +364,13 @@ public class BankCommandHandler {
                 "### ~bank deposit\n" +
                 "\uD83D\uDC0A: Deposit some of your (negligible) riches into your own personal bank account, keep it safe and profit from an astounding 0% interest rate! But at least nobody's gonna steal it...\n" +
                 "### ~bank withdraw\n" +
-                "\uD83D\uDC0A: You broke? You need your money back? Better think twice about it, it's safe and protected at the CrocBank after all!\n" +
+                "\uD83D\uDC0A: You're broke? You need your money back? Better think twice about it, it's safe and protected at the CrocBank after all!\n" +
                 "### ~bank balance\n" +
                 "\uD83D\uDC0A: Accurately displays your balance at the CrocBank with absolutely no margin of error. Trust us, we have your best interests at heart.\n" +
                 "### ~bank loan\n" +
                 "\uD83D\uDC0A: You can take out a loan from us too! With very small and fair interest rates, you can choose how much of your income you can dedicate to paying us back. [Syntax: `~bank loan <amount> <rate in %>`]\n" +
+                "### ~bank upgrade\n" +
+                "\uD83D\uDC0A: Your account has a deposit-limit, a loan-limit, a debt-limit... which can fortunately all be increased using bank upgrades! [Syntax: `~bank upgrade` for more info, `~bank upgrade <upgrade_id>` to purchase an upgrade]\n" +
                 "### ~bank flex\n" +
                 "\uD83D\uDC0A: Lets us at the CrocBank show you just how deep our pockets are. Try it out!\n" +
                 "### ~bank help\n" +

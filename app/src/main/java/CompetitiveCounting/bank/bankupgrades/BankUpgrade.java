@@ -1,10 +1,7 @@
 package CompetitiveCounting.bank.bankupgrades;
 
 public abstract class BankUpgrade {
-    // todo accept decline buttons loan
-    // todo info rückmeldung feedback dings wenn vong upgrade her durchgestrichen du wiest schon brudi
-    // todo bessere communication bei loan (geht nich weil loan limit, geht nich weil debt limit ects)
-    // todo secrets einbauen die dann vong die trophies her geben rum
+    // irgendwanntodo secrets einbauen die dann vong die trophies her geben rum
     protected final String upgradeId;
     protected int currentLvl = 0;
 
@@ -16,6 +13,7 @@ public abstract class BankUpgrade {
     public abstract int getNextValue();
     public abstract String getAdvertisement();
     public abstract String getUnit();  // note this has a space like " money" so that "%" can not have a space
+    public abstract String getBoughtFeedback();
 
     protected BankUpgrade(String upgradeId) {
         this.upgradeId = upgradeId;
@@ -68,4 +66,6 @@ public abstract class BankUpgrade {
     public String getCurrentName() {
         return getNames()[currentLvl];
     }
+
+
 }

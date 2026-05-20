@@ -23,9 +23,6 @@ public class InventoryCommandHandler {
             inventory(message, counter);
             return;
         }
-        if (!content.contains(" ")) {
-            return; // Todo write shit
-        }
         String[] splittedArgs = content.split(" ");
         String command = splittedArgs[1];
         switch (command) {

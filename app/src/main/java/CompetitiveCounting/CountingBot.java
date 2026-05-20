@@ -6,7 +6,6 @@
 package CompetitiveCounting;
 
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
-import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferParser;
 import CompetitiveCounting.bank.Bank;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
@@ -25,7 +24,6 @@ import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.Disposable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,7 +38,6 @@ public class CountingBot {
     private Storage storage;
     private HashMap<String, CountingGuild> guilds;
     private HashMap<String, CountingStreak> streaks;
-
     private final BankCommandHandler bankCommandHandler;
     private final BankTransactionsHandler bankTransitionsHandler;
 
@@ -314,7 +311,7 @@ public class CountingBot {
             return;
         }
         String content = Util.userIdToPing(requestedUser.getId()) + " do you accept to remove the following contract with " + author.getId() + "?\n"
-                + contractToRemove.toString();
+                + contractToRemove;
         contractToRemove.requestRemove();
         Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Accept");
         Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Decline");
@@ -360,10 +357,6 @@ public class CountingBot {
 
     public void handBagBought(Message message) {
         bankCommandHandler.handBagBought(message);
-        String guildId = message.getGuildId().get().asString();
-        if (guilds.containsKey(guildId) && guilds.get(guildId).getBank().isUnlocked()) {
-            write(message, "CHIPPIE CHIPPIE CHAPPA CHAPPA DUBIDUBI DABABA MAGICOMA DOOBIE DOOBIE BAM BAM BAM BAM this server already has a bank"); // todo
-        }
     }
 
     private void baseInfo(Message message) {
@@ -722,7 +715,12 @@ public class CountingBot {
     }
 
     public void requestHandBagRefundViaItem(Message message) {
-        bankCommandHandler.handBagRefundRequestedViaItemUse(message);
+        String chanelId = message.getChannelId().asString();
+        EmojiReactHandler emojiHandler = new EmojiReactHandler(chanelId, true);
+        Disposable disposableSubscription = subscribeEmojiReactHandler(emojiHandler, chanelId);
+        emojiHandler.activateWithSingleUseMode(disposableSubscription);
+        TrophyHandler trophyHandler = new TrophyHandler(emojiHandler);
+        bankCommandHandler.handBagRefundRequestedViaItemUse(message, trophyHandler);
     }
 
     public void subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(EmojiReactHandler handler, String messageId) {
@@ -730,7 +728,7 @@ public class CountingBot {
                 .filter(event -> event.getMessage().block().getId().asString().equals(messageId))
                 .doOnNext(handler)
                 .subscribe();
-        handler.activate(subscription);
+        handler.activateWithSingleUseMode(subscription);
     }
 
     private Counter getCounterFromMessage(Message message) {

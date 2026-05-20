@@ -30,6 +30,10 @@ public class TrophyHandler {
 
     }
 
+    public void spawnSecondHandbagTrophy(Message message) {
+        spawnTrophy(message, -1050505);
+    }
+
     public void considerSpawningTrophy(int number, Message message, Counter user) {
         if (randBool(trophyChanceFromNumber(number))) {
             spawnTrophy(message, number);
@@ -86,7 +90,7 @@ public class TrophyHandler {
         if (trophy > 0) {
             return trophy + "-trophy";
         }
-        String startText = trophy + " trophy: ";
+        String startText = "trophy #" + trophy + ": ";
         switch (trophy) {
             case -753:
                 return startText + "_Relic of Prestige from the Fallen Empire_";
@@ -96,6 +100,8 @@ public class TrophyHandler {
                 return startText + "_Dirty methods_";
             case -2019:
                 return startText + "_Moose_";
+            case -1050505:
+                return startText + "_Gucci Fendi & Prada Collector_";
             default:
                 return startText;
         }

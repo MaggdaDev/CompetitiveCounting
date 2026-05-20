@@ -105,7 +105,7 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         onAnyReact.add(consumer);
     }
 
-    public void activate(Disposable disposableForSingleUse) {
+    public void activateWithSingleUseMode(Disposable disposableForSingleUse) {
         isActive = true;
         singleUseHandlerDisposable = disposableForSingleUse;
     }

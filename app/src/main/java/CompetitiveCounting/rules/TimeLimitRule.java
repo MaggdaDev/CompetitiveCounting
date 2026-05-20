@@ -62,22 +62,24 @@ public class TimeLimitRule implements Rule {
         }
 
         @Override
-        public void run() { // todo remove timer logic fully or just react with a drei
+        public void run() {
             int timer = time + 1;
-            message.addReaction(CountingEmojis.KEKMARK).subscribe();
+            message.addReaction(CountingEmojis.KEKMARK_BOLT).subscribe();
             while (timer >= 0) {
                 if (shouldStop) {
-                    message.addReaction(CountingEmojis.KEKMARK).subscribe();
                     return;
                 } else if (shouldCancel) {
                     timer = 0;
                 }
                 switch (timer) {
-                    case 1:
-                        break;
                     case 2:
+                        message.addReaction(CountingEmojis.ONE).subscribe();
                         break;
-                    case 3:
+                    case 4:
+                        message.addReaction(CountingEmojis.TWO).subscribe();
+                        break;
+                    case 6:
+                        message.addReaction(CountingEmojis.THREE).subscribe();
                         break;
                 }
                 try {

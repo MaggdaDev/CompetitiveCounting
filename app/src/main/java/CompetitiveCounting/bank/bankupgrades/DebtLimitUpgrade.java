@@ -1,6 +1,8 @@
 package CompetitiveCounting.bank.bankupgrades;
 
 public class DebtLimitUpgrade extends BankUpgrade{
+    public final static DebtLimitUpgrade EMPTY = new DebtLimitUpgrade();
+
     private final static String UPGRADE_ID = "DEBT_LIMIT";
     private final static String UNLOCK_NAME = "debt_limit";
     private final static int[] PRICES = {0, 50000, 200000, 1000000};
@@ -9,8 +11,17 @@ public class DebtLimitUpgrade extends BankUpgrade{
     private final static String DESCRIPTION = "Allows you to have more total debt! I hope you bought this first...";
     private final static String ADVERTISEMENT = "This upgrades your total debt limit across all of the bank's loans, increasing it from {0} to {1}.";
     private final static String UNIT = " money";
+    private final static String BUY_FEEDBACK = "You can now have a total debt of {0} instead of {1}.";
     protected DebtLimitUpgrade() {
         super(UPGRADE_ID);
+    }
+
+    @Override
+    public String getBoughtFeedback() {
+        if (currentLvl == 0) {
+            return "";  // Should be called AFTER upgrade is bought
+        }
+        return BUY_FEEDBACK.replace("{0}", getCurrentValue() + UNIT).replace("{1}", DEBT_LIMIT_VALUES[currentLvl-1] + UNIT);
     }
 
     public int[] getDebtLimitValues() {

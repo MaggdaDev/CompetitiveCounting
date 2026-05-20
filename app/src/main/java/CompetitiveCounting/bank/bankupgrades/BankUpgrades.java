@@ -58,6 +58,10 @@ public class BankUpgrades {
         return debtLimitUpgrade;
     }
 
+    public DepositLimitUpgrade getDepositLimitUpgrade() {
+        return depositLimitUpgrade;
+    }
+
     /**
      *
      * @param unlockName
@@ -71,4 +75,6 @@ public class BankUpgrades {
         }
         return null;
     }
+
+
 }

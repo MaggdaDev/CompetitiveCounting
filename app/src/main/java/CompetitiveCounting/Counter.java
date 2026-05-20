@@ -47,8 +47,6 @@ public class Counter implements ContractOwner {
     private transient String guildId;   // Will be set in initContracts method
     private Inventory inventory;
 
-    private transient Dialogue activeUnlockBankDialog = null;
-
     public Counter(String guildId, String key, String name) {
         this.key = key;
         this.score = 0;
@@ -434,18 +432,20 @@ public class Counter implements ContractOwner {
     }
 
     public void use(Purchasable item, Message message) {
-        inventory.removeItem(item);
         switch (item) {
             case FAKE_HAND_BAG: case HAND_BAG:
-                if (activeUnlockBankDialog != null) {
-                    activeUnlockBankDialog.stop();
-                    activeUnlockBankDialog = null;
-                }
+                writeUseMessage(Purchasable.FAKE_HAND_BAG, message);
                 CountingBot.getInstance().requestHandBagRefundViaItem(message);
                 break;
             default:
                 throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
         }
+        inventory.removeItem(item);
+        CountingBot.getInstance().save();
+    }
+
+    private void writeUseMessage(Purchasable item, Message message) {
+        CountingBot.write(message, "You used a " + item.getName() + "...");
     }
 
     public Integer[] getOwnedTrophies() {
@@ -494,12 +494,11 @@ public class Counter implements ContractOwner {
         return couldHaveBeenPossible - getScore();
     }
 
-    public int failFromOwn(Message message, CountingStreak streak, int sumOfCounts) {
-        int couldHaveBeenPossible = getPossibleTotalInStreak(streak);
-        int currScoreAdd = this.currScoreAdds.get(streak.getKey());
-        currScoreAdd /= 2.0d;
+    public int failFromOwn(Message message, CountingStreak streak) {
+        int couldHaveBeenPossible = getPossibleTotalInStreak(streak); // possible from total streak
+        int currScoreAdd = this.currScoreAdds.get(streak.getKey()); // possible for losing user for streak
+        currScoreAdd /= 2.0d; // gain is halved
         int scoreLose = (int) ((double) score / 4.0d);
-        scoreLose = Math.min(scoreLose, sumOfCounts);
         score -= scoreLose;
         addBonusScore(currScoreAdd, message);
         this.currScoreAdds.replace(streak.getKey(), 0);
@@ -566,14 +565,6 @@ public class Counter implements ContractOwner {
             }
         }
         return false;
-    }
-
-    public Dialogue getActiveUnlockBankDialog() {
-        return activeUnlockBankDialog;
-    }
-
-    public void setActiveUnlockBankDialog(Dialogue activeUnlockBankDialog) {
-        this.activeUnlockBankDialog = activeUnlockBankDialog;
     }
 
     public int[] getUnlockedBases() {

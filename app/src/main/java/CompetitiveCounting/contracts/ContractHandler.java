@@ -47,9 +47,9 @@ public class ContractHandler {
     public void addContract(ContractOwner getter, int percentage, int limit) {
         Contract add = new Contract(getter, percentage, limit);
         add.owner = owner;
-        Contract equalContract = null;  // Todo not all contracts are stacked
+        Contract equalContract = null;
         for (Contract currContract : contracts) {
-            if (currContract.toId.equals(add.toId) && ((add.limit == -1) == (currContract.limit == -1))) {
+            if (currContract.toId.equals(add.toId) && (add.limit == currContract.limit)) {
                 equalContract = currContract;
                 break;
             }

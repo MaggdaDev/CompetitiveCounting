@@ -35,25 +35,41 @@ public class BankLoanHandler {
         }
 
         int maxLoanLimit = loanLimitUpgrade.getCurrentValue();
+        int maxLoanLimitWithoutUpgrade = LoanLimitUpgrade.EMPTY.getCurrentValue();
         int maxTotalOwedToBank = debtLimitUpgrade.getCurrentValue();
+        int maxTotalOwedToBankWithoutUpgrade = DebtLimitUpgrade.EMPTY.getCurrentValue();
         int crocLoanFee = 999;
 
         if (loanAmount < 1000) {
             throw new BankLoanException("This small amount of money is not even worth the paperwork to give a loan to you!");
         }
         if (loanAmount > maxLoanLimit) {
-            throw new BankLoanException("I will not entrust you with more than " + maxLoanLimit + " money, for I have no faith in your ability to pay it back.");
+            String amount = maxLoanLimit + " money";
+            if(loanLimitUpgrade.getCurrentLvl() > 0) {
+                amount = "~~" + maxLoanLimitWithoutUpgrade + "~~" + amount;
+            }
+            String exception = "I will not entrust you with more than " + amount + ", for I have no faith in your ability to pay it back.";
+            if (!loanLimitUpgrade.isMaxedOut()) {
+                exception += " Buying the '" + loanLimitUpgrade.getNextName() + "' could, however, increase your trustworthiness.";
+            }
+            throw new BankLoanException(exception);
         }
 
         int resultingTotalOwed = initCounter.getOwedToBank() + loanAmount + extraPayback;
         if (resultingTotalOwed > maxTotalOwedToBank) {
-            throw new BankLoanException(
-                    "Do you take me for a fool? This loan would increase your debt to " + resultingTotalOwed
-                    + " money. Pay back your debt before asking for more money! The maximum money you may owe me is " +
-                            maxTotalOwedToBank + " money.");
+            String s = "Do you take me for a fool? This loan would increase your total debt across all loans to " + resultingTotalOwed + " money." +
+                    "The maximum money you may owe me is ~~" + maxTotalOwedToBankWithoutUpgrade + "~~ " +
+                    maxTotalOwedToBank + " money.";
+            if (!debtLimitUpgrade.isMaxedOut()) {
+                s += "\nYou can raise this ceiling by buying the " + debtLimitUpgrade.getNextName() + ".";
+            }
+
+            // Todo: Total interest sagen
+            throw new BankLoanException(s);
         }
 
-
+        // Todo ~~ geld ~~ syntax nur wenn tatsächlich ein upgrade gekauft wurde!
+        // Todo bei allen stellen mit ~~ überprüfen, ob das dort richtig ist
         new Dialogue().addNpcLine("Ok, I'll hand " + loanAmount + " money over to you, and you will pay me back " +
                         "~~" + (loanAmount + extraPaybackWithoutUpgrade) + "~~ " +
                 (loanAmount + extraPayback) + " money by giving me " + percentOfIncomeRepay + "% of your income. Do we have a deal?", 0)
@@ -61,7 +77,9 @@ public class BankLoanHandler {
                 .addEmojiReaction(CountingEmojis.GOBLIN)
                 .initializeParallelDialogElements()
                 .addWaitForEmojiReaction(CountingEmojis.GOBLIN, true, m-> {
-                    BankCommandHandler.bankWrite(message, "Why are you wasting my time?! Get out of here if you don't want a loan!");
+                    int consultingFee = Math.min(599, initCounter.getScore() / 10);
+                    BankCommandHandler.bankWrite(message, "Even though you have decided not to move forward with this transaction, I must inform you that I have meticulously measured the administrative expenses for this consultation you have requested, and you will receive an invoice of " + consultingFee + " money.");
+                    initCounter.subtractScore(consultingFee);
                 }, Optional.of(userId))
                 .addWaitForEmojiReaction(CountingEmojis.HANDSHAKE, false, m->{}, Optional.of(userId))
                 .finishParallelDialogElementsAndAdd()
@@ -83,7 +101,7 @@ public class BankLoanHandler {
         return (int) ((Math.ceil(Math.sqrt(money) / 10) / (4 * rate) * loanRateUpgrade.getCurrentValue()));
     }
 
-    private static int calculateLoanRepayAmount(int money, int rate, LoanRateUpgrade loanRateUpgrade) { // change back to int
+    private static int calculateLoanRepayAmount(int money, int rate, LoanRateUpgrade loanRateUpgrade) { // go int it down midlane
         return (int) (calculateLoanInterestRate(money, rate, loanRateUpgrade) * 0.01 * money);
     }
 }
