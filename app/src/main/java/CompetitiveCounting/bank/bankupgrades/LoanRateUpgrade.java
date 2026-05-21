@@ -15,6 +15,7 @@ public class LoanRateUpgrade extends BankUpgrade{
     protected LoanRateUpgrade() {
         super(UPGRADE_ID);
     }
+    private final static String BUY_RECOMMENDATION = "You can buy the *{0}* to increase this discount.";
 
     public double[] getLoanRateValues() {
         return LOAN_RATE_VALUES;
@@ -27,6 +28,14 @@ public class LoanRateUpgrade extends BankUpgrade{
         }
         return BUY_FEEDBACK.replace("{0}", getCurrentValue() + UNIT).replace("{1}", (int) LOAN_RATE_VALUES[currentLvl-1] + UNIT);
     }
+    @Override
+    public int getEmptyValue() {
+        return EMPTY.getCurrentValue();
+    }
+    @Override
+    protected String getBuyRecommendationString() {
+        return BUY_RECOMMENDATION.replace("{0}", getNextName());
+    }
 
     @Override
     String[] getNames() {
@@ -34,7 +43,7 @@ public class LoanRateUpgrade extends BankUpgrade{
     }
 
     @Override
-    int[] getPrices() {
+    public int[] getPrices() {
         return PRICES;
     }
 

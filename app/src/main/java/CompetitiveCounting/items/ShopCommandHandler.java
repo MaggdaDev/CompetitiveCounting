@@ -29,7 +29,7 @@ public class ShopCommandHandler {
             shopNotUnlocked(message);
             return;
         }
-        if (commandContent.equals("shop")) {
+        if (commandContent.equals("shop") || commandContent.equals("shop buy")) {
             shop(message);
             return;
         }
@@ -38,6 +38,10 @@ public class ShopCommandHandler {
             String[] splittedArgs = commandContent.split(" ");
             switch (splittedArgs[1]) {
                 case "buy":
+                    if(splittedArgs.length < 3 || commandContent.length() <= 9) {
+                        shop(message);
+                        return;
+                    }
                     buy(message, commandContent.substring(9), counter);
                     return;
                 default:
@@ -55,13 +59,18 @@ public class ShopCommandHandler {
         }
         if (counter.getInventory().isShopUnlocked()) {
             CountingBot.write(message, "You have already unlocked the shop. There's nothing left to do for the unlock_shop command.");
+            return;
         }
         if (!counter.canAfford(UNLOCK_COMMAND_USAGE_PRICE)) {
-            CountingBot.write(message, "You need to pay " + UNLOCK_COMMAND_USAGE_PRICE + " money to unlock the shop, but you currently only have " + counter.getScore() + " money. \n(This money adds to your net worth needed to prestige)");
+            CountingBot.write(message, "You need to pay " + UNLOCK_COMMAND_USAGE_PRICE + " money to unlock the shop, but you currently only have " + counter.getScore() + " money.");
+            return;
         }
         counter.subtractScore(UNLOCK_COMMAND_USAGE_PRICE);
         counter.getInventory().setShopUnlocked(true);
-        CountingBot.write(message, "You paid " + UNLOCK_COMMAND_USAGE_PRICE + " and unlocked the shop! Use ~shop to browse for a variety of useful items.\n(This money adds to your net worth needed to prestige)");
+        boolean isBankUnlocked = guilds.get(message.getGuildId().get().asString()).getBank().isUnlocked();
+        String unlock_shop_message = "You paid " + UNLOCK_COMMAND_USAGE_PRICE + " and unlocked the shop! Use ~shop to browse for a variety of useful items. Bought items can be viewed using `" + "~inv" + "`.";
+        unlock_shop_message += isBankUnlocked ? "" : "\n-# Legends say that one of these items could change your server forever...";
+        CountingBot.write(message, unlock_shop_message);
         CountingBot.getInstance().save();
     }
 
@@ -76,10 +85,9 @@ public class ShopCommandHandler {
                     .append(" money")
                     .append("\n");
         }
+        sb.append("\nTo buy an item, use `~shop buy <item name>` or `~shop buy <item number>`.\n");
         CountingBot.write(message, sb.toString());
     }
-
-
 
     public void buy(Message message, String itemToBuy, Counter counter) {
         if (!Purchasable.isValidPurchasable(itemToBuy)) {
@@ -102,7 +110,7 @@ public class ShopCommandHandler {
     }
 
     private void writeItemBoughtMessage(Message message, Purchasable item) {
-        CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + " money.");
+        CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + " money. Use `" + "~inv" + "` to check out your inventory!");
     }
 
     public void acquireHandBag(Message message, String guildId, String counterId) {
@@ -113,7 +121,7 @@ public class ShopCommandHandler {
     }
 
     private void shopNotUnlocked(Message message) {
-        CountingBot.write(message, "You haven't unlocked the shop yet! You need to use the unlock_shop command first.");
+        CountingBot.write(message, "You haven't unlocked the shop yet! You need to use the unlock_shop command first.\nIn the shop, you can buy some useful items! (more will be added later™...)");
     }
 
 

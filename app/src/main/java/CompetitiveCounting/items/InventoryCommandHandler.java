@@ -23,6 +23,7 @@ public class InventoryCommandHandler {
             inventory(message, counter);
             return;
         }
+
         String[] splittedArgs = content.split(" ");
         String command = splittedArgs[1];
         switch (command) {
@@ -50,7 +51,11 @@ public class InventoryCommandHandler {
     }
 
     private void inventory(Message message, Counter counter) {
-        StringBuilder stringBuilder = new StringBuilder("Your inventory:\n");
+        if (counter.getInventory().getBoughtItemTypes().length == 0) {
+            CountingBot.write(message, "Your inventory is empty. You can buy items in the shop using `~shop buy <item>`.");
+            return;
+        }
+        StringBuilder stringBuilder = new StringBuilder("Your inventory:\n\n");
         for (Purchasable item : counter.getInventory().getBoughtItemTypes()) {
             stringBuilder.append(counter.getInventory().getAmountOfItem(item))
                     .append("x ")
@@ -59,6 +64,7 @@ public class InventoryCommandHandler {
                     .append(item.getDescription())
                     .append("\n");
         }
+        stringBuilder.append("\nYou can use items with `~inv use <item name>`.");
         CountingBot.write(message, stringBuilder.toString());
     }
 }

@@ -166,7 +166,7 @@ public class BankCommandHandler {
             int amountBuyableUpgrades = bank.getAccount(authorId).getUpgrades().getAmountBuyableUpgrades();
             String s;
             if(amountBuyableUpgrades == 0) {
-                bankWrite(message, "You have bought all available upgrades! If you donate, there might be more soon...");
+                bankWrite(message, "You have bought all available upgrades! ");
                 return;
             } else if (amountBuyableUpgrades == 1) {
                 s = "You can buy the following upgrade (so close to maxed out!): \n";
@@ -193,10 +193,16 @@ public class BankCommandHandler {
         if (upgrade.isMaxedOut()) {
             throw new BankUpgradeException("This upgrade is already maxed out, your greed is spoken about in the bible.");
         }
+        Counter counter = CountingBot.getInstance().getCounter(bank.getGuildId(), authorId);
+        int upgradeCost = upgrade.getPriceOfNextLvl();
+        if (counter.getScore() < upgradeCost) {
+            throw new BankUpgradeException("It clearly said you needed " + upgradeCost + " money for this upgrade, and you only came here with " + counter.getScore() + " money in your purse. Go count some more or something.");
+        }
+        counter.subtractScore(upgradeCost);
         String oldLevel = upgrade.getCurrentName();
         String newLevel = upgrade.getNextName();
         upgrade.incrementLvl();
-        bankWrite(message, "Congratulations! You have upgraded your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'. " + upgrade.getBoughtFeedback());
+        bankWrite(message, "Congratulations! You have spent " + upgradeCost + " money to upgrade your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'. " + upgrade.getBoughtFeedback());
     }
 
     public void handBagBought(Message message) {

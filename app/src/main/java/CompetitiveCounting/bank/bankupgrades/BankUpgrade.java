@@ -6,7 +6,7 @@ public abstract class BankUpgrade {
     protected int currentLvl = 0;
 
     abstract String[] getNames();
-    abstract int[] getPrices();
+    public abstract int[] getPrices();
     abstract String getDescription();
     abstract String getUnlockName();
     public abstract int getCurrentValue();
@@ -14,6 +14,14 @@ public abstract class BankUpgrade {
     public abstract String getAdvertisement();
     public abstract String getUnit();  // note this has a space like " money" so that "%" can not have a space
     public abstract String getBoughtFeedback();
+    public abstract int getEmptyValue();
+    protected abstract String getBuyRecommendationString();
+    public int getPriceOfNextLvl() {
+        if (isMaxedOut()) {
+            return -1;
+        }
+        return getPrices()[currentLvl+1];
+    }
 
     protected BankUpgrade(String upgradeId) {
         this.upgradeId = upgradeId;
@@ -27,6 +35,25 @@ public abstract class BankUpgrade {
             result_string += "(Level " + getCurrentLvl() + " of " + getMaxLvl() + "): ";
         }
         return result_string + getCurrentValue() + getUnit() + "\n-# " + getDescription() + "\n";
+    }
+
+    /**
+     * @return "~~emptyValue~~ currentValue unit" if the upgrade is not at lvl 0, otherwise just "currentValue unit"
+     */
+    public String getCurrentValueStringPotentiallyIndicatingEmptyValue() {
+        String str = "";
+        if (getCurrentLvl() > 0) {
+            str += "~~" + getEmptyValue() + "~~ ";
+        }
+        str += getCurrentValue() + getUnit();
+        return str;
+    }
+
+    public String getBuyRecommendationStringIfNotMaxedOut() {
+        if (isMaxedOut()) {
+            return "";
+        }
+        return getBuyRecommendationString();
     }
 
     public void incrementLvl() {

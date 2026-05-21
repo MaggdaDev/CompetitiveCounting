@@ -113,7 +113,7 @@ public class TrophyHandler {
 
 
     private double trophyChanceFromNumber(double number) {
-        return 1.0 / (200.0 + 600.0 * Math.exp(-0.045 * number) + 225.0 * Math.exp(-0.0015 * number));
+        return 1.0 / (150.0 + 1000.0 * Math.exp(-0.02 * number) + 100.0 * Math.exp(-0.001 * number));
     }
 
     private boolean randBool(double prop) {

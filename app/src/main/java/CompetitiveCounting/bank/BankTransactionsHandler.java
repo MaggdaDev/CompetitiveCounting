@@ -58,15 +58,9 @@ public class BankTransactionsHandler {
         }
         if (depositAmount + currentlyDepositedAmount > depositLimit) {
             String startOfSentence = "No? This would increase your balance to " + (depositLimit + currentlyDepositedAmount) +
-                    ", but your maximum deposit limit is only ";
-            String endOfSentence = ".";
-            if (depositLimitUpgrade.getCurrentLvl() > 0) {
-                startOfSentence += "~~" + DepositLimitUpgrade.EMPTY.getCurrentValue() + "~~ ";
-            }
-            if (!depositLimitUpgrade.isMaxedOut()) {
-                endOfSentence += " You can buy the *" + depositLimitUpgrade.getNextName() + "* to increase this limit.";
-            }
-            throw new BankDepositException(startOfSentence + depositLimit + endOfSentence);
+                    ", but your maximum deposit limit is only " + depositLimitUpgrade.getCurrentValueStringPotentiallyIndicatingEmptyValue()
+                    + ".\n" + depositLimitUpgrade.getBuyRecommendationStringIfNotMaxedOut();
+            throw new BankDepositException(startOfSentence);
         }
         counter.subtractScore(depositAmount);
         bank.deposit(authorId, depositAmount);

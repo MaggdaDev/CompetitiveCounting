@@ -14,6 +14,7 @@ public class LoanLimitUpgrade extends BankUpgrade {
     protected LoanLimitUpgrade() {
         super(UPGRADE_ID);
     }
+    private final static String BUY_RECOMMENDATION = "You can buy the *{0}* to increase this limit.";
 
     public int[] getLoanLimitValues() {
         return LOAN_LIMIT_VALUES;
@@ -25,6 +26,14 @@ public class LoanLimitUpgrade extends BankUpgrade {
             return "";  // Should be called AFTER upgrade is bought
         }
         return BUY_FEEDBACK.replace("{0}", getCurrentValue() + UNIT).replace("{1}", LOAN_LIMIT_VALUES[currentLvl-1] + UNIT);
+    }
+    @Override
+    public int getEmptyValue() {
+        return EMPTY.getCurrentValue();
+    }
+    @Override
+    protected String getBuyRecommendationString() {
+        return BUY_RECOMMENDATION.replace("{0}", getNextName());
     }
 
     @Override
@@ -38,7 +47,7 @@ public class LoanLimitUpgrade extends BankUpgrade {
     }
 
     @Override
-    int[] getPrices() {
+    public int[] getPrices() {
         return PRICES;
     }
 

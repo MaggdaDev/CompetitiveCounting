@@ -12,6 +12,7 @@ public class DebtLimitUpgrade extends BankUpgrade{
     private final static String ADVERTISEMENT = "This upgrades your total debt limit across all of the bank's loans, increasing it from {0} to {1}.";
     private final static String UNIT = " money";
     private final static String BUY_FEEDBACK = "You can now have a total debt of {0} instead of {1}.";
+    private final static String BUY_RECOMMENDATION = "You can raise this ceiling by buying the {0}.";
     protected DebtLimitUpgrade() {
         super(UPGRADE_ID);
     }
@@ -24,6 +25,16 @@ public class DebtLimitUpgrade extends BankUpgrade{
         return BUY_FEEDBACK.replace("{0}", getCurrentValue() + UNIT).replace("{1}", DEBT_LIMIT_VALUES[currentLvl-1] + UNIT);
     }
 
+    @Override
+    public int getEmptyValue() {
+        return EMPTY.getCurrentValue();
+    }
+
+    @Override
+    protected String getBuyRecommendationString() {
+        return BUY_RECOMMENDATION.replace("{0}", getNextName());
+    }
+
     public int[] getDebtLimitValues() {
         return DEBT_LIMIT_VALUES;
     }
@@ -34,7 +45,7 @@ public class DebtLimitUpgrade extends BankUpgrade{
     }
 
     @Override
-    int[] getPrices() {
+    public int[] getPrices() {
         return PRICES;
     }
 

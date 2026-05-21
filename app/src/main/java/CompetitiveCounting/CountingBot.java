@@ -7,6 +7,7 @@ package CompetitiveCounting;
 
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
 import CompetitiveCounting.bank.Bank;
+import CompetitiveCounting.bank.BankAccount;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
@@ -425,7 +426,7 @@ public class CountingBot {
         if (author.prestige(message)) {
             if (author.getPrestiges() < 2) {
                 CountingBot.write(message, "GG WP, you just prestiged! You get:\n "
-                        + "- 1 prestige point for buying new bases (try out the upgraded ~unlock shop!)\n "
+                        + "- 1 prestige point for buying new bases (purchasable with the other ~unlock unlocks!)\n "
                         + "- a global boost of " + Math.round(Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% for counting");
             } else {
                 CountingBot.write(message, "GG WP, you prestiged again! You get:\n "
@@ -441,7 +442,6 @@ public class CountingBot {
     private void unlock(Message message) {
         Counter author = getCounterFromMessage(message);
         String[] splitted = message.getContent().split(" ");
-
         if (author.isUnlocked(Unlockable.UNLOCK_COMMAND)) {
             if (splitted.length != 2 && !(splitted.length == 3 && "base".equals(splitted[1]))) {
                 this.unlockInfo(message, author);
@@ -467,12 +467,17 @@ public class CountingBot {
 
             CountingBot.write(message, "Error: Invalid unlock!");
         } else {
+            if (message.getContent().contains(" ")) {
+                this.unlockInfo(message, author);
+                return;
+            }
             if (author.canAfford(Unlockable.UNLOCK_COMMAND.getPrice())) {
                 author.unlock(Unlockable.UNLOCK_COMMAND, message);
             } else {
                 this.unlockInfo(message, author);
             }
         }
+        CountingBot.getInstance().save();
     }
 
     private void unlockInfo(Message message, Counter author) {
@@ -672,11 +677,15 @@ public class CountingBot {
 
     private void scoreInfo(Message message) {
         Counter counter = getCounterFromMessage(message);
-        String msg;
-        if (counter.getPrestiges() == 0) {
-            msg = "Your current score is " + counter.getPossibleTotal() + " money (" + counter.getScore() + " in your bank + " + counter.getCurrentScoreAdd() + " possible from current streaks)";
-        } else {
-            msg = "Your current score is " + counter.getPossibleTotal() + " money (" + counter.getScore() + " in your bank + " + counter.getCurrentScoreAdd() + " possible from current streaks)\nYou have " + counter.getPrestigePoints() + " prestige points";
+        BankAccount potentialAccount = guilds.get(message.getGuildId().get().asString()).getBank().getAccount(message.getAuthor().get().getId().asString());
+        String msg = "Your current score is " + (counter.getPossibleTotal() + (potentialAccount == null ? 0 : potentialAccount.getBalance())) + " money " +
+                "(" + counter.getScore() + " in your purse + " + counter.getCurrentScoreAdd() + " possible from current streaks";
+        if (!(potentialAccount == null) && !(potentialAccount.getBalance() == 0)) {
+            msg += " + " + potentialAccount.getBalance() + " in your CrocBank:tm: account";
+        }
+        msg += ").";
+        if (counter.getPrestiges() != 0) {
+            msg += "\nYou have " + counter.getPrestigePoints() + " prestige points.";
         }
         CountingBot.write(message, msg);
     }

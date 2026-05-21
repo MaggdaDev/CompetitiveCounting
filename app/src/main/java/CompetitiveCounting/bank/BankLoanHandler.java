@@ -44,35 +44,28 @@ public class BankLoanHandler {
             throw new BankLoanException("This small amount of money is not even worth the paperwork to give a loan to you!");
         }
         if (loanAmount > maxLoanLimit) {
-            String amount = maxLoanLimit + " money";
-            if(loanLimitUpgrade.getCurrentLvl() > 0) {
-                amount = "~~" + maxLoanLimitWithoutUpgrade + "~~" + amount;
-            }
-            String exception = "I will not entrust you with more than " + amount + ", for I have no faith in your ability to pay it back.";
-            if (!loanLimitUpgrade.isMaxedOut()) {
-                exception += " Buying the '" + loanLimitUpgrade.getNextName() + "' could, however, increase your trustworthiness.";
-            }
+            String exception = "I will not entrust you with more than " + loanLimitUpgrade.getCurrentValueStringPotentiallyIndicatingEmptyValue()
+                    + ", for I have no faith in your ability to pay it back. " + loanLimitUpgrade.getBuyRecommendationStringIfNotMaxedOut();
             throw new BankLoanException(exception);
         }
 
         int resultingTotalOwed = initCounter.getOwedToBank() + loanAmount + extraPayback;
         if (resultingTotalOwed > maxTotalOwedToBank) {
-            String s = "Do you take me for a fool? This loan would increase your total debt across all loans to " + resultingTotalOwed + " money." +
-                    "The maximum money you may owe me is ~~" + maxTotalOwedToBankWithoutUpgrade + "~~ " +
-                    maxTotalOwedToBank + " money.";
-            if (!debtLimitUpgrade.isMaxedOut()) {
-                s += "\nYou can raise this ceiling by buying the " + debtLimitUpgrade.getNextName() + ".";
-            }
+            String exceptionText = "Do you take me for a fool?\n" +
+                    "This loan of " + loanAmount + " (+" +  extraPayback + " interest) money " +
+                    "would increase your total debt across all loans to " + resultingTotalOwed + " money.\n" +
+                    "The maximum money you may owe me is " + debtLimitUpgrade.getCurrentValueStringPotentiallyIndicatingEmptyValue() +
+                    ". " + debtLimitUpgrade.getBuyRecommendationStringIfNotMaxedOut();
 
-            // Todo: Total interest sagen
-            throw new BankLoanException(s);
+            throw new BankLoanException(exceptionText);
         }
 
-        // Todo ~~ geld ~~ syntax nur wenn tatsächlich ein upgrade gekauft wurde!
-        // Todo bei allen stellen mit ~~ überprüfen, ob das dort richtig ist
+        String paybackAmount = (loanAmount + extraPayback) + " money";
+        if (extraPayback != extraPaybackWithoutUpgrade) {
+            paybackAmount = "~~" + (loanAmount + extraPaybackWithoutUpgrade) + "~~ " + paybackAmount;
+        }
         new Dialogue().addNpcLine("Ok, I'll hand " + loanAmount + " money over to you, and you will pay me back " +
-                        "~~" + (loanAmount + extraPaybackWithoutUpgrade) + "~~ " +
-                (loanAmount + extraPayback) + " money by giving me " + percentOfIncomeRepay + "% of your income. Do we have a deal?", 0)
+                paybackAmount + " by giving me " + percentOfIncomeRepay + "% of your income. Do we have a deal?", 0)
                 .addEmojiReaction(CountingEmojis.HANDSHAKE)
                 .addEmojiReaction(CountingEmojis.GOBLIN)
                 .initializeParallelDialogElements()
@@ -88,9 +81,10 @@ public class BankLoanHandler {
                     bank.removeMoney(loanAmount - crocLoanFee);
                     initCounter.addBonusScore(loanAmount - crocLoanFee, message);
                     initCounter.getContractHandler().addContract(bank, percentOfIncomeRepay, loanAmount + extraPayback);
+                    CountingBot.getInstance().save();
                 })
                 .addNpcLine("Here, take these " + (loanAmount - crocLoanFee) + " money! With all of your loans, you now owe me a total of " +
-                        resultingTotalOwed + " money. Btw, you can always check your debts with ~contracts.", 2000)
+                        resultingTotalOwed + " money. You can always check your debts with ~contracts.", 2000)
                 .addNpcLine("By the way... you'd better pay me back my money soon, or else...", 3000)
                 .addNpcLine("... I will tell my cousins... they already know your IP address...", 0)
                 .setNpcLineConverter(BankCommandHandler::toCrocText)
