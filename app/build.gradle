@@ -32,22 +32,16 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
-application {
-    // Define the main class for the application.
-    mainClass = 'CompetitiveCounting.Main'
-}
-
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
-mainClassName = 'CompetitiveCounting.Main'
 
 task fatJar(type: Jar) {
     manifest {
         attributes 'Main-Class': 'CompetitiveCounting.Main'
     }
-    baseName = 'CompetitiveCounting'
+    archiveBaseName.set('CompetitiveCounting')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar

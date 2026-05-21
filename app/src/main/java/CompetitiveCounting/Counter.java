@@ -268,7 +268,7 @@ public class Counter implements ContractOwner {
         }
         String contractRemoveRequestExpiredPleaseCreateNewOneMessage = "This request to remove the contract has expired and a new request has already been created.";
         if (customId.startsWith("-")) {  // DECLINE
-            System.out.println("Tradeoffer declined!");
+//            System.out.println("Tradeoffer declined!");
             String newId = customId.substring(1);
             if (tradeOffers.containsKey(newId)) {
                 tradeOffers.remove(newId);
@@ -416,7 +416,7 @@ public class Counter implements ContractOwner {
 
     public void notifyCount(int number, CountingStreak streak) {
         int scoreAdd = (int) Math.round(number * getBonusFact(streak) * getTrophyBonus(number));
-        System.out.println("ScoreAdd: " + scoreAdd + " for number " + number);
+//        System.out.println("ScoreAdd: " + scoreAdd + " for number " + number);
         if (this.currScoreAdds.containsKey(streak.getKey())) {
             this.currScoreAdds.replace(streak.getKey(), this.currScoreAdds.get(streak.getKey()) + scoreAdd);
         } else {

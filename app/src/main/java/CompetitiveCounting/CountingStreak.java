@@ -156,7 +156,6 @@ public class CountingStreak {
             if (winnerRule.getOwnerId().equals(user.getId())) {
                 // user fucks up from own rule
                 cuckPayout = (int) (pendingFailScore / 2.0d);
-                System.out.println(cuckPayout);
                 loss = user.failFromOwn(message, this);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
@@ -165,7 +164,6 @@ public class CountingStreak {
                 }
             } else {
                 cuckPayout = (int) (pendingFailScore / 3.0d);
-                System.out.println(cuckPayout);
                 loss = user.fail(message, this);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " and lost " + loss + " money.");

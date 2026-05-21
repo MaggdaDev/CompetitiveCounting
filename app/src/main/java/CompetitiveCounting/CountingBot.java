@@ -541,7 +541,7 @@ public class CountingBot {
     private String scoreboard(Message message) {
         String guildId = message.getGuildId().get().asString();
         ArrayList<Counter> countersSorted = new ArrayList<>();
-        System.out.println(guilds.get(guildId).getCounters());
+//        System.out.println(guilds.get(guildId).getCounters());
         guilds.get(guildId).getCounters().forEach((String counterId, Counter counter) ->
         { countersSorted.add(counter); });
         countersSorted.sort((arg0, arg1) -> {    // arg0 > arg1 => 1
