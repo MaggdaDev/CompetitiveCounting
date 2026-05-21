@@ -26,7 +26,7 @@ public class TradeOfferChecker {
 
     public static boolean isValid(String toCheck, Message message) {
         try {
-            System.out.println(toCheck);
+//            System.out.println(toCheck);
             //AtomicBoolean isValid = new AtomicBoolean(true);
             TradeOfferBaseListener listener = new TradeOfferBaseListener();
             TradeOfferLexer lexer = new TradeOfferLexer(CharStreams.fromString(toCheck));

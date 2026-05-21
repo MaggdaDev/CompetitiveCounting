@@ -3,8 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting;
+package CompetitiveCounting.tradeoffer;
 
+
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.Util;
 
 /**
  *

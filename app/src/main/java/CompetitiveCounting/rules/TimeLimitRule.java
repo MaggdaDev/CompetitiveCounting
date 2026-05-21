@@ -3,14 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting.Rules;
+package CompetitiveCounting.rules;
 
 import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingStreak;
-import CompetitiveCounting.Emojis;
+import CompetitiveCounting.CountingEmojis;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 
 /**
  *
@@ -65,30 +64,22 @@ public class TimeLimitRule implements Rule {
         @Override
         public void run() {
             int timer = time + 1;
-            message.addReaction(Emojis.KEKMARK).subscribe();
-            message.addReaction(Emojis.BOLT).subscribe();
+            message.addReaction(CountingEmojis.KEKMARK_BOLT).subscribe();
             while (timer >= 0) {
                 if (shouldStop) {
-                    message.removeSelfReaction(Emojis.ONE).subscribe();
-                    message.removeSelfReaction(Emojis.TWO).subscribe();
-                    message.removeSelfReaction(Emojis.THREE).subscribe();
-                    message.removeSelfReaction(Emojis.BOLT).subscribe();
-                    message.addReaction(Emojis.KEKMARK).subscribe();
                     return;
                 } else if (shouldCancel) {
                     timer = 0;
                 }
                 switch (timer) {
-                    case 1:
-                        message.removeSelfReaction(Emojis.TWO).subscribe();
-                        message.addReaction(Emojis.ONE).subscribe();
-                        break;
                     case 2:
-                        message.removeSelfReaction(Emojis.THREE).subscribe();
-                        message.addReaction(Emojis.TWO).subscribe();
+                        message.addReaction(CountingEmojis.ONE).subscribe();
                         break;
-                    case 3:
-                        message.addReaction(Emojis.THREE).subscribe();
+                    case 4:
+                        message.addReaction(CountingEmojis.TWO).subscribe();
+                        break;
+                    case 6:
+                        message.addReaction(CountingEmojis.THREE).subscribe();
                         break;
                 }
                 try {
@@ -99,22 +90,12 @@ public class TimeLimitRule implements Rule {
                 timer -= 1;
             }
             if (shouldStop) {
-                message.removeSelfReaction(Emojis.THREE).subscribe();
-                message.removeSelfReaction(Emojis.ONE).subscribe();
-                message.removeSelfReaction(Emojis.TWO).subscribe();
-                message.removeSelfReaction(Emojis.BOLT).subscribe();
                 return;
             } else if (shouldCancel) {
-                message.removeSelfReaction(Emojis.THREE).subscribe();
-                message.removeSelfReaction(Emojis.ONE).subscribe();
-                message.removeSelfReaction(Emojis.TWO).subscribe();
-                message.removeSelfReaction(Emojis.BOLT).subscribe();
                 shouldCancel = false;
                 return;
             }
             hasLost = true;
-            message.removeSelfReaction(Emojis.ONE).subscribe();
-            message.removeSelfReaction(Emojis.BOLT).subscribe();
             streak.timeLimitLost(ownerId, message, loser);
             CountingBot.getInstance().removeStreak(streak.getKey());
 

@@ -3,9 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting;
+package CompetitiveCounting.contracts;
+
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.bank.Bank;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * @author DavidPrivat
@@ -18,7 +23,7 @@ public class Contract {
     public int percentage;  //1 - 100
     public int limit;       //  limti = -1 := no limit
     public String toId;
-    public transient Counter owner; // default: null
+    public transient ContractOwner owner; // default: null
 
     public transient String requested_remove_id = null;
     public transient long remove_request_time = 0;
@@ -43,7 +48,7 @@ public class Contract {
         return System.currentTimeMillis() - remove_request_time > REMOVE_REQUEST_TIMEOUT;
     }
 
-    public Contract(Counter getter, int percentage, int limit) {
+    public Contract(ContractOwner getter, int percentage, int limit) {
         toId = getter.getId();
         this.percentage = percentage;
         this.limit = limit;
@@ -81,7 +86,13 @@ public class Contract {
 
     @Override
     public String toString() {
-        String countersInfo = owner.getName() + " -> " + CountingBot.getInstance().getCounter(owner.getGuildId(), toId).getName();
+        String toName;
+        if (Objects.equals(toId, Bank.CONTRACT_OWNER_ID)) { // bank
+            toName = Bank.CONTRACT_ENTITY_NAME;
+        } else {
+            toName = CountingBot.getInstance().getCounter(owner.getGuildId(), toId).getName();
+        }
+        String countersInfo = owner.getName() + " -> " + toName;
         if (limit == -1) {
             return countersInfo + ": " + percentage + "% of income (" + paidBack + " paid so far)";
         } else {

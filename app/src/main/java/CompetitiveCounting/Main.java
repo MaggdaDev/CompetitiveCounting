@@ -8,19 +8,10 @@ package CompetitiveCounting;
 
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.core.event.domain.Event;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.User;
-
-import org.antlr.v4.runtime.*;
-
-import CompetitiveCounting.Parser.TradeOfferParser.*;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 /**
  *
@@ -34,7 +25,6 @@ public class Main {
     private static CountingBot bot;
 
     public static void main(String[] args) {
-        System.out.println(TimeHandler.nowInEpochDay());
         GatewayDiscordClient client;
         try {
             
@@ -55,7 +45,7 @@ public class Main {
                             "Logged in as %s#%s", self.getUsername(), self.getDiscriminator()
                     ));
                 });
-        
+
         bot = new CountingBot(client);
         MessageHandler messageHandler = new MessageHandler(bot);
         client.getEventDispatcher().on(MessageCreateEvent.class).subscribe(messageHandler);

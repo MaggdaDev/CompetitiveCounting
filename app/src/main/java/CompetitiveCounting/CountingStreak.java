@@ -5,7 +5,7 @@
  */
 package CompetitiveCounting;
 
-import CompetitiveCounting.Rules.*;
+import CompetitiveCounting.rules.*;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
@@ -13,6 +13,7 @@ import reactor.core.Disposable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author DavidPrivat
@@ -43,6 +44,8 @@ public class CountingStreak {
     private final EmojiReactHandler emojiReactHandler;
 
     private boolean destroyedByWrongCapture = false;
+
+    private int sumOfAllCountsSoFar = 0;
 
     public CountingStreak(String key, int base) {
         this.key = key;
@@ -81,6 +84,7 @@ public class CountingStreak {
         if (isNumCorrect(number, message) && (!user.equals(lastCounter))) { // Count is accepted
             lastCount = number;
             incrementCounter();
+            sumOfAllCountsSoFar += number;
             user.notifyCount(number, this);
 
             if(captureHandler.raisedCapture(message, number, user.getId(), lastCaptureTimes, () -> {    // onCaptureFailed
@@ -101,20 +105,20 @@ public class CountingStreak {
                 timeLimitRule.applyTimerToMessage(message, lastCounter);
             } else {
                 if (user.hasTrophy(number)) {
-                    message.addReaction(Emojis.GOLDEN_KEKMARK).subscribe();
+                    message.addReaction(CountingEmojis.GOLDEN_KEKMARK).subscribe();
                 } else {
-                    message.addReaction(Emojis.KEKMARK).subscribe();
+                    message.addReaction(CountingEmojis.KEKMARK).subscribe();
                 }
             }
             if (timeLimitNewlyAdded) {
-                CountingBot.write(message, "Watch out! The next number will activate the timelimit countdown!\n" + user.getPing() + " be ready to keep counting!");
+                CountingBot.write(message, "Watch out! The next number will activate the timelimit countdown!\n" + user.getPing() + " be ready to keep counting!\n" +
+                        "-# Hint: `~addrule notime` can be used to remove the time limit, but it will cost more money.");  // 67 wer das findet ist dumm leel kann das auf sohn ~~500~~ 450 upgraden bin zu faul leel
                 timeLimitNewlyAdded = false;
             }
             lastCounter = user;
             return true;
         } else {
             fail(message, number, user);
-
             return false;
         }
     }
@@ -132,13 +136,17 @@ public class CountingStreak {
 
     private void fail(Message message, int number, Counter user) {
         message.addReaction(ReactionEmoji.unicode("\u274C")).subscribe();
+
+        int pendingFailScore = user.getPendingStreakScore(this);
+        int cuckPayout;
+
         Rule winnerRule = getWinnerRule(number);
         if ((!(winnerRule instanceof TimeLimitRule)) && timeLimitRule != null) {
             timeLimitRule.cancel();
         }
-        String winnerName = "";
+        String winnerName;
         if (winnerRule != null) {
-            int loss = 0;
+            int loss;
             String causeForLose = "Wrong number";
             if (winnerRule instanceof SlowModeRule) {
                 causeForLose = "Slowmode-rule broken";
@@ -146,6 +154,8 @@ public class CountingStreak {
                 causeForLose = "Timelimit-rule broken";
             }
             if (winnerRule.getOwnerId().equals(user.getId())) {
+                // user fucks up from own rule
+                cuckPayout = (int) (pendingFailScore / 2.0d);
                 loss = user.failFromOwn(message, this);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
@@ -153,6 +163,7 @@ public class CountingStreak {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ") due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
                 }
             } else {
+                cuckPayout = (int) (pendingFailScore / 3.0d);
                 loss = user.fail(message, this);
                 if (currentBase == 10) {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + lastCount + " and lost " + loss + " money.");
@@ -160,13 +171,14 @@ public class CountingStreak {
                     CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ") and lost " + loss + " money.");
                 }
 
-                int win = (int) (loss);
+                int win = loss;
                 winnerName = counters.get(winnerRule.getOwnerId()).getName();
                 CountingBot.write(message, winnerName + " has pulled a fast one on " + user.getName() + " with their '" + winnerRule.toString() + "' rule and got all of the victim's lost money, which is " + win + ".");
                 counters.get(winnerRule.getOwnerId()).notifyWin(win, currentBase, message);
             }
 
         } else {
+            cuckPayout = (int) (pendingFailScore / 3.0d);
             int loss = user.fail(message, this);
             if (currentBase == 10) {
                 if (!user.equals(lastCounter)) {
@@ -183,11 +195,34 @@ public class CountingStreak {
             }
         }
 
-        counters.forEach((String key, Counter counter) -> {
-            if (!key.equals(user.getId())) {
+        String payoutMessage = "**Streak payouts:**\n";
+        boolean someoneWon = false;
+
+        if (cuckPayout > 0) {
+            payoutMessage += user.getPing() + " receives " + cuckPayout + " money.\n";
+            someoneWon = true;
+        }
+
+        for (Map.Entry<String, Counter> entry : counters.entrySet()) {
+            Counter counter = entry.getValue();
+            if (!entry.getKey().equals(user.getId())) {
+                int wonAmount = counter.getPendingStreakScore(this);
+
+                if (wonAmount > 0) {
+                    payoutMessage += (counter.getPing()) + " receives " + wonAmount + " money.\n";
+                    someoneWon = true;
+                }
+
                 counter.succeed(this, message);
             }
-        });
+        }
+
+        if (someoneWon) {
+            CountingBot.write(message, payoutMessage);
+        }
+
+        // irgendwanntodo streak payouts unified with "he messed up" messages
+
         CountingBot.getInstance().save();
     }
 
@@ -226,8 +261,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currDivPrice * author.getAddruleDiscountFactor() > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDivPrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currDivPrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt + " money to add this new rule.");
             return false;
         }
 
@@ -239,8 +275,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currDigPrice * author.getAddruleDiscountFactor() > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currDigPrice * author.getAddruleDiscountFactor()) + " money to add this new rule.");
+        int priceInt = (int) (currDigPrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt + " money to add this new rule.");
             return false;
         }
 
@@ -252,8 +289,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currRootPrice * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currRootPrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currRootPrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
             return false;
         }
 
@@ -265,8 +303,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currTimePrice * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currTimePrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
             return false;
         }
 
@@ -279,8 +318,9 @@ public class CountingStreak {
             CountingBot.write(message, "You have to unlock this rule before you can use it.");
             return false;
         }
-        if (currTimePrice * author.getAddruleDiscountFactor()  > author.getScore()) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + (int)(currTimePrice * author.getAddruleDiscountFactor())  + " money to add this new rule.");
+        int priceInt = (int) (currTimePrice * author.getAddruleDiscountFactor());
+        if (!author.canAfford(priceInt)) {
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
             return false;
         }
         return true;
@@ -493,7 +533,7 @@ public class CountingStreak {
                 currTimePrice *= timePriceFact;
                 break;
             case "notime":
-                if (author.getScore() < currTimePrice) {
+                if (!author.canAfford(currTimePrice)) {
                     CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + currTimePrice + " money to remove the current time rule.");
                     break;
                 }
@@ -598,6 +638,10 @@ public class CountingStreak {
     public void timeLimitLost(String ownerId, Message message, Counter loser) {
         Message lostMessage = message.getChannel().block().createMessage("Whoops! Time ran out!").block();
         fail(lostMessage, lastCount, loser);
+    }
+
+    public EmojiReactHandler getEmojiReactHandler() {
+        return emojiReactHandler;
     }
 
     public int getBase() {

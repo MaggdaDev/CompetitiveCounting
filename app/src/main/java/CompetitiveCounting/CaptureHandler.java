@@ -47,11 +47,15 @@ public class CaptureHandler {
         CountingBot.write(message, msg, (sentCaptureMessage) -> {
             if(secret) {
                 emojiReactHandler.addOnAnyReact((reactedMessage, user, reactedEmoji) -> {
-                    if(Arrays.stream(Emojis.ALL_NUMBER_EMOJIS).filter(e -> e.equals(reactedEmoji)).count() > 0) {
+                    if(Arrays.asList(CountingEmojis.ALL_NUMBER_EMOJIS).contains(reactedEmoji)) {
+                        CountingBot.write(reactedMessage, "Alright, for now you don't seem to be a malevolent scripter, <@!" + userId + ">. You can continue counting now!");
+                        onCaptureSucceeded.run();
                         return true;
                     }
-                    if("\uD83C\uDDFA".equals(reactedEmoji.getRaw())) {
+                    if("\uD83C\uDDFA".equals(reactedEmoji.getRaw())) { // u emoji
                         trophyHandler.spawnMooseTrophy(sentCaptureMessage, capture.question, reactedEmoji);
+                        CountingBot.write(reactedMessage, "Alright, for now moose don't soose to be a maloosevolent scrooster, <@!" + userId + ">. You can continue moosing now!");
+                        onCaptureSucceeded.run();
                         return true;
                     }
                     return false;
@@ -59,7 +63,7 @@ public class CaptureHandler {
             }
             Mono<Void>[] reactions = new Mono[10];
             for(int i = 0; i < 10; i ++) {
-                reactions[i] = sentCaptureMessage.addReaction(Emojis.ALL_NUMBER_EMOJIS[i]);
+                reactions[i] = sentCaptureMessage.addReaction(CountingEmojis.ALL_NUMBER_EMOJIS[i]);
             }
             Mono.when(reactions).doOnSuccess((v) -> {
                 emojiReactHandler.addOnNumberReact((reactedMessage, user, reactedNumber) -> {
@@ -67,12 +71,11 @@ public class CaptureHandler {
                         if(reactedNumber == capture.getAnswer()) {
                             CountingBot.write(reactedMessage, "Alright, for now you don't seem to be a malevolent scripter, <@!" + userId + ">. You can continue counting now!");
                             onCaptureSucceeded.run();
-                            return true;
                         } else {
                             CountingBot.write(reactedMessage, "You failed the captcha, <@!" + userId + ">! Nefarious scripter!");
                             onCaptureFailed.run();
-                            return true;
                         }
+                        return true;
                     }
                     return false;
                 });

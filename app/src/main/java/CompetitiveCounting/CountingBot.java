@@ -6,8 +6,15 @@
 package CompetitiveCounting;
 
 import CompetitiveCounting.Parser.TradeOfferParser.TradeOfferChecker;
+import CompetitiveCounting.bank.Bank;
+import CompetitiveCounting.bank.BankAccount;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
+import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.items.InventoryCommandHandler;
+import CompetitiveCounting.items.ShopCommandHandler;
+import CompetitiveCounting.tradeoffer.TradeHandler;
+import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
@@ -18,7 +25,6 @@ import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.Disposable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -33,14 +39,16 @@ public class CountingBot {
     private Storage storage;
     private HashMap<String, CountingGuild> guilds;
     private HashMap<String, CountingStreak> streaks;
-
-    private final BankCommandHandler bankMessages;
+    private final BankCommandHandler bankCommandHandler;
     private final BankTransactionsHandler bankTransitionsHandler;
 
+    private final ShopCommandHandler shopCommandHandler;
+    private final InventoryCommandHandler inventoryCommandHandler;
     private static CountingBot instance;
-
     private static int currId = 0;
     private static GatewayDiscordClient client;
+
+    private final static boolean isDevMode = true;
 
     public CountingBot(GatewayDiscordClient client) {
         storage = new Storage();
@@ -49,12 +57,14 @@ public class CountingBot {
         System.out.println("Counters loaded!");
         streaks = new HashMap<>();
         instance = this;
+
         bankTransitionsHandler = new BankTransactionsHandler(guilds);
-        bankMessages = new BankCommandHandler(bankTransitionsHandler);
+        bankCommandHandler = new BankCommandHandler(bankTransitionsHandler);
+        shopCommandHandler = new ShopCommandHandler(guilds);
+        inventoryCommandHandler = new InventoryCommandHandler(guilds);
     }
 
     public void message(Message message) {
-        String content = message.getContent();
         addGuildOrCounterIfNotYetRegistered(message);
         checkCommands(message);
         count(message);
@@ -71,7 +81,7 @@ public class CountingBot {
                 if (commandWithoutIndicator.startsWith("help")) {
                     write(message, "tasukete kudasai!\nhttp://hyperlexus.net/old/competitivecountinghelp.html");
                 } else if (commandWithoutIndicator.startsWith("scoreboard") || commandWithoutIndicator.equals("top")) {
-                    write(message, scoreboard());
+                    write(message, scoreboard(message));
                 } else if (commandWithoutIndicator.startsWith("score")) {
                     this.scoreInfo(message);
                 } else if (commandWithoutIndicator.startsWith("num")) {
@@ -85,7 +95,7 @@ public class CountingBot {
                     addRule(message);
                 } else if (commandWithoutIndicator.startsWith("rules")) {
                     rules(message);
-                } else if (commandWithoutIndicator.startsWith("unlock")) {
+                } else if (commandWithoutIndicator.startsWith("unlock ") || commandWithoutIndicator.equals("unlock")) {
                     unlock(message);
                 } else if (commandWithoutIndicator.equals("prestige")) {
                     prestige(message);
@@ -109,33 +119,28 @@ public class CountingBot {
                     trophiesInfo(message);
                 } else if (commandWithoutIndicator.startsWith("shunlock")) {
                     shunlock(message);
-                } else if (commandWithoutIndicator.startsWith("createbank")) {
-                    createBank(message);
-                } else if (commandWithoutIndicator.startsWith("bank ")) {
-                    if (bankMessages.handleBankCommand(message)) {  // Returns true iff json should be updated
+                } else if (commandWithoutIndicator.startsWith("bank")) {
+                    if(!isDevMode) {
+                        return;
+                    }
+                    if (bankCommandHandler.handleBankCommand(message)) {  // Returns true iff json should be updated
                         save();
                     }
+                } else if (commandWithoutIndicator.startsWith("shop") || commandWithoutIndicator.equals("unlock_shop")) {
+                    if(!isDevMode) {
+                        return;
+                    }
+                    shopCommandHandler.handleShopCommand(message);
+                } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
+                    if(!isDevMode) {
+                        return;
+                    }
+                    inventoryCommandHandler.handleInventoryCommand(message);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void createBank(Message message) { // TEMP todo remove replace by croc gucci handbag
-        if (message.getGuildId().isEmpty()) {
-            write(message, "You can only create a bank on a server.");
-            return;
-        }
-        String guildId = message.getGuildId().get().asString();
-        if (guilds.containsKey(guildId)) {
-            if (guilds.get(guildId).getBank().isUnlocked()) {
-                write(message, "This server already has a bank.");
-                return;
-            }
-        }
-        guilds.get(guildId).getBank().unlock();
-        write(message, "created bank. note that this is for debugging only so if you ever encounter this maggda and alex are three niggers");
     }
 
     private void shunlock(Message message) {
@@ -235,7 +240,6 @@ public class CountingBot {
             }
             if (lastCounter.getId().equals(author.getId())) {
                 CountingBot.write(message, "Attention! You were the last person counting! Don't count now!");
-                return;
             } else {
                 CountingBot.write(message, lastCounter.getName() + " counted the last number. You can count safely now.");
             }
@@ -308,7 +312,7 @@ public class CountingBot {
             return;
         }
         String content = Util.userIdToPing(requestedUser.getId()) + " do you accept to remove the following contract with " + author.getId() + "?\n"
-                + contractToRemove.toString();
+                + contractToRemove;
         contractToRemove.requestRemove();
         Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Accept");
         Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Decline");
@@ -321,7 +325,7 @@ public class CountingBot {
         Counter author = getCounterFromMessage(message);
         String guildId = message.getGuildId().get().asString();
         if (TradeOfferChecker.isValid(message.getContent(), message)) {
-            TradeOffer tradeOffer = new TradeOffer(content, author);
+            TradeOffer tradeOffer = TradeHandler.parse(content, author);
             if (tradeOffer.getRequestedUser() == null) {
                 CountingBot.write(message, "This user doesn't seem to have ever counted!");
                 return;
@@ -332,6 +336,11 @@ public class CountingBot {
             }
             Counter requested = this.getCounter(guildId, tradeOffer.getRequestedUserId());
             if (!tradeOffer.isTradeOfferValid(message)) {
+                return;
+            }
+            if (requested == null) {
+                CountingBot.write(message, "Something went wrong, please try again.");
+                System.err.println("Error: Requested counter in trade offer is null although it should exist.");
                 return;
             }
             String tradeId = getNextTradeId();
@@ -345,6 +354,10 @@ public class CountingBot {
 
         }
 
+    }
+
+    public void handBagBought(Message message) {
+        bankCommandHandler.handBagBought(message);
     }
 
     private void baseInfo(Message message) {
@@ -413,7 +426,7 @@ public class CountingBot {
         if (author.prestige(message)) {
             if (author.getPrestiges() < 2) {
                 CountingBot.write(message, "GG WP, you just prestiged! You get:\n "
-                        + "- 1 prestige point for buying new bases (try out the upgraded ~unlock shop!)\n "
+                        + "- 1 prestige point for buying new bases (purchasable with the other ~unlock unlocks!)\n "
                         + "- a global boost of " + Math.round(Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% for counting");
             } else {
                 CountingBot.write(message, "GG WP, you prestiged again! You get:\n "
@@ -429,7 +442,6 @@ public class CountingBot {
     private void unlock(Message message) {
         Counter author = getCounterFromMessage(message);
         String[] splitted = message.getContent().split(" ");
-
         if (author.isUnlocked(Unlockable.UNLOCK_COMMAND)) {
             if (splitted.length != 2 && !(splitted.length == 3 && "base".equals(splitted[1]))) {
                 this.unlockInfo(message, author);
@@ -455,12 +467,17 @@ public class CountingBot {
 
             CountingBot.write(message, "Error: Invalid unlock!");
         } else {
-            if (author.getScore() < Unlockable.UNLOCK_COMMAND.getPrice()) {
+            if (message.getContent().contains(" ")) {
                 this.unlockInfo(message, author);
-            } else {
+                return;
+            }
+            if (author.canAfford(Unlockable.UNLOCK_COMMAND.getPrice())) {
                 author.unlock(Unlockable.UNLOCK_COMMAND, message);
+            } else {
+                this.unlockInfo(message, author);
             }
         }
+        CountingBot.getInstance().save();
     }
 
     private void unlockInfo(Message message, Counter author) {
@@ -526,41 +543,49 @@ public class CountingBot {
         }
     }
 
-    private String scoreboard() {
-//        if (message.getGuildId().isEmpty()) {
-//            write(message, "This command can only be used in a server.");
-//            return "";
-//        }
-//        String guildId = message.getGuildId().get().asString();
+    private String scoreboard(Message message) {
+        String guildId = message.getGuildId().get().asString();
         ArrayList<Counter> countersSorted = new ArrayList<>();
-        /*
-        guilds.get(getGuilds()).forEach((String key, Counter counter) -> {
-            countersSorted.add(counter);
-        });*/ // Todo
-        countersSorted.sort(new Comparator<Counter>() {
-            @Override
-            public int compare(Counter arg0, Counter arg1) {    // arg0 > arg1 => 1
-                if (arg1.getPrestiges() > arg0.getPrestiges() || (arg1.getPrestiges() == arg0.getPrestiges() && arg1.getPossibleTotal() > arg0.getPossibleTotal())) {
-                    return 1;
-                } else if (arg1.getPrestiges() == arg0.getPrestiges() && arg1.getPossibleTotal() == arg0.getPossibleTotal()) {
-                    return 0;
-                } else {
-                    return -1;
-                }
+//        System.out.println(guilds.get(guildId).getCounters());
+        guilds.get(guildId).getCounters().forEach((String counterId, Counter counter) ->
+        { countersSorted.add(counter); });
+        countersSorted.sort((arg0, arg1) -> {    // arg0 > arg1 => 1
+            if (arg1.getPrestiges() > arg0.getPrestiges() || (arg1.getPrestiges() == arg0.getPrestiges() && arg1.getPossibleTotal() > arg0.getPossibleTotal())) {
+                return 1;
+            } else if (arg1.getPrestiges() == arg0.getPrestiges() && arg1.getPossibleTotal() == arg0.getPossibleTotal()) {
+                return 0;
+            } else {
+                return -1;
             }
         });
-        String message = "Scoreboard:";
+        String ret = "Scoreboard: ";
+        Bank bank = guilds.get(guildId).getBank();
+        String bankString = "The CrocBank Inc. \uD83D\uDC0A: " + bank.getTotalScore() + " money";
+        boolean bankDisplayed = false;
+        if (!bank.isUnlocked()) {
+            bankDisplayed = true;   // Dont show bank if not unlocked
+        }
+        int position = 1;
         for (Counter counter : countersSorted) {
             if (counter.getPrestiges() == 0 && counter.getPossibleTotal() == 0) {
-                break;
+                continue;
+            }
+            if (!bankDisplayed && (bank.getTotalScore() > counter.getPossibleTotal() && counter.getPrestiges() == 0)) {
+                ret += "\n" + position + ") " +  bankString;
+                bankDisplayed = true;
+                position +=1;
             }
             if (counter.getPrestiges() != 0) {
-                message += "\n" + counter.getName() + " : " + counter.getPossibleTotal() + " money (Amount of Prestiges: " + counter.getPrestiges() + ")";
+                ret += "\n" + position + ") " + counter.getName() + ": " + counter.getPossibleTotal() + " money (Amount of Prestiges: " + counter.getPrestiges() + ")";
             } else {
-                message += "\n" + counter.getName() + " : " + counter.getPossibleTotal() + " money";
+                ret += "\n" + position + ") "  + counter.getName() + ": " + counter.getPossibleTotal() + " money";
             }
+            position += 1;
         }
-        return message;
+        if (!bankDisplayed) {
+            ret += "\n" + position + ") " + bankString;
+        }
+        return ret;
     }
 
     private void count(Message message) {
@@ -624,7 +649,7 @@ public class CountingBot {
             amountOfNeitherDangerousCharactersNorNumbers++;
         }
         if (amountOfNumbers != 0 && amountOfNeitherDangerousCharactersNorNumbers == 0 && amountOfDangerousCharacters > 0) {
-            message.addReaction(Emojis.WARNING).subscribe();
+            message.addReaction(CountingEmojis.WARNING).subscribe();
             streak.getTrophyHandler().considerSpawningIllegalCharacterTrophy(message, streak.getLastNum());
         }
     }
@@ -641,6 +666,10 @@ public class CountingBot {
         message.getChannel().block().createMessage(s).subscribe(onMessageSent);
     }
 
+    public static Message writeBlocking(Message message, String s) {
+        return message.getChannel().block().createMessage(s).block();
+    }
+
     public static void write(Message message, String s) {
         write(message, s, (msg) -> {
         });
@@ -648,11 +677,15 @@ public class CountingBot {
 
     private void scoreInfo(Message message) {
         Counter counter = getCounterFromMessage(message);
-        String msg;
-        if (counter.getPrestiges() == 0) {
-            msg = "Your current score is " + counter.getPossibleTotal() + " money (" + counter.getScore() + " in your bank + " + counter.getCurrentScoreAdd() + " possible from current streaks)";
-        } else {
-            msg = "Your current score is " + counter.getPossibleTotal() + " money (" + counter.getScore() + " in your bank + " + counter.getCurrentScoreAdd() + " possible from current streaks)\nYou have " + counter.getPrestigePoints() + " prestige points";
+        BankAccount potentialAccount = guilds.get(message.getGuildId().get().asString()).getBank().getAccount(message.getAuthor().get().getId().asString());
+        String msg = "Your current score is " + (counter.getPossibleTotal() + (potentialAccount == null ? 0 : potentialAccount.getBalance())) + " money " +
+                "(" + counter.getScore() + " in your purse + " + counter.getCurrentScoreAdd() + " possible from current streaks";
+        if (!(potentialAccount == null) && !(potentialAccount.getBalance() == 0)) {
+            msg += " + " + potentialAccount.getBalance() + " in your CrocBank:tm: account";
+        }
+        msg += ").";
+        if (counter.getPrestiges() != 0) {
+            msg += "\nYou have " + counter.getPrestigePoints() + " prestige points.";
         }
         CountingBot.write(message, msg);
     }
@@ -686,7 +719,25 @@ public class CountingBot {
     public Disposable subscribeEmojiReactHandler(EmojiReactHandler handler, String channelId) {
         return client.on(ReactionAddEvent.class).filter(
                         (reactionEvent) -> reactionEvent.getChannelId().asString().equals(channelId))
-                .doOnNext(handler).subscribe();
+                .doOnNext(handler)
+                .subscribe();
+    }
+
+    public void requestHandBagRefundViaItem(Message message) {
+        String chanelId = message.getChannelId().asString();
+        EmojiReactHandler emojiHandler = new EmojiReactHandler(chanelId, true);
+        Disposable disposableSubscription = subscribeEmojiReactHandler(emojiHandler, chanelId);
+        emojiHandler.activateWithSingleUseMode(disposableSubscription);
+        TrophyHandler trophyHandler = new TrophyHandler(emojiHandler);
+        bankCommandHandler.handBagRefundRequestedViaItemUse(message, trophyHandler);
+    }
+
+    public void subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(EmojiReactHandler handler, String messageId) {
+        Disposable subscription = client.on(ReactionAddEvent.class)
+                .filter(event -> event.getMessage().block().getId().asString().equals(messageId))
+                .doOnNext(handler)
+                .subscribe();
+        handler.activateWithSingleUseMode(subscription);
     }
 
     private Counter getCounterFromMessage(Message message) {
@@ -714,5 +765,13 @@ public class CountingBot {
 
     public HashMap<String, CountingGuild> getGuilds() {
         return guilds;
+    }
+
+    public BankCommandHandler getBankCommandHandler() {
+        return bankCommandHandler;
+    }
+
+    public ShopCommandHandler getShopCommandHandler() {
+        return shopCommandHandler;
     }
 }

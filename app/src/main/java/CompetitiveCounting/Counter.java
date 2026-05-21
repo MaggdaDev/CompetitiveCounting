@@ -5,6 +5,15 @@
  */
 package CompetitiveCounting;
 
+import CompetitiveCounting.bank.Bank;
+import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.contracts.ContractHandler;
+import CompetitiveCounting.contracts.ContractOwner;
+import CompetitiveCounting.dialogue.Dialogue;
+import CompetitiveCounting.items.Inventory;
+import CompetitiveCounting.items.Purchasable;
+import CompetitiveCounting.items.ShopCommandHandler;
+import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
@@ -13,7 +22,7 @@ import java.util.stream.Stream;
 /**
  * @author DavidPrivat
  */
-public class Counter {
+public class Counter implements ContractOwner {
 
     public final static int PRESTIGE_WORTH = 1000000;
     public final static double SYSTEM_OWNED_FACT = 1.5;
@@ -28,13 +37,15 @@ public class Counter {
     private int[] unlockedSystems;
     private BonusStreak[] bonusStreaks;
     private List<Contract> contracts;
+    private transient List<Contract> incomingContracts;
     private ArrayList<Integer> ownedTrophies;
     private int trophyShards;
-    private transient List<Contract> incomingContracts;
     private transient HashMap<String, TradeOffer> tradeOffers = new HashMap<String, TradeOffer>();
     private transient ContractHandler contractHandler;
 
+
     private transient String guildId;   // Will be set in initContracts method
+    private Inventory inventory;
 
     public Counter(String guildId, String key, String name) {
         this.key = key;
@@ -46,11 +57,13 @@ public class Counter {
         this.prestigePoints = 0;
         this.unlockedSystems = new int[]{};
         this.bonusStreaks = new BonusStreak[]{};
-        init();
-        initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
+        inventory = new Inventory();
+        init(guildId);
+        contractHandler.initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
 
-    public void init() {
+    public void init(String guildId) {
+        this.guildId = guildId;
         if (contracts == null) {    // MUST BE BEFORE CONTRACT HANDLER
             contracts = new ArrayList<>();
         }
@@ -69,23 +82,13 @@ public class Counter {
         if (ownedTrophies == null) {
             ownedTrophies = new ArrayList<>();
         }
-
-    }
-
-    public void initIncomingContracts(CountingGuild activeGuild) {
-        guildId = activeGuild.getGuildId();
-        if (incomingContracts.isEmpty()) {
-            activeGuild.getCounters().forEach((String currId, Counter counter) -> {
-                for (Contract currContract : counter.getContracts()) {
-                    if (currContract.toId.equals(this.getId())) {
-                        currContract.owner = counter;
-                        incomingContracts.add(currContract);
-                    }
-                }
-            });
-
+        if (inventory == null) {
+            inventory = new Inventory();
         }
+
     }
+
+
 
     public void unlock(Unlockable unlockable, Message message) {
         if (unlockable.ordinal() >= Unlockable.BASE_1.ordinal()) {
@@ -150,6 +153,15 @@ public class Counter {
             }
         }
 
+    }
+    public int getOwedToBank() {
+        int total = 0;
+        for (Contract curr : contracts) {
+            if (curr.toId.equals(Bank.CONTRACT_OWNER_ID)) {
+                total += curr.limit;
+            }
+        }
+        return total;
     }
 
     public void unlockBase(Message message, String base) {
@@ -234,8 +246,11 @@ public class Counter {
     public int getAccWorth() {
         int worth = 0;
         worth += score;
-        for (int i = 0; i < unlocked.length; i++) {
-            worth += Unlockable.values()[this.unlocked[i]].getPrice();
+        for (int j : unlocked) {
+            worth += Unlockable.values()[j].getPrice();
+        }
+        if (inventory.isShopUnlocked()) {
+            worth += ShopCommandHandler.UNLOCK_COMMAND_USAGE_PRICE;
         }
         return worth;
     }
@@ -253,7 +268,7 @@ public class Counter {
         }
         String contractRemoveRequestExpiredPleaseCreateNewOneMessage = "This request to remove the contract has expired and a new request has already been created.";
         if (customId.startsWith("-")) {  // DECLINE
-            System.out.println("Tradeoffer declined!");
+//            System.out.println("Tradeoffer declined!");
             String newId = customId.substring(1);
             if (tradeOffers.containsKey(newId)) {
                 tradeOffers.remove(newId);
@@ -401,7 +416,7 @@ public class Counter {
 
     public void notifyCount(int number, CountingStreak streak) {
         int scoreAdd = (int) Math.round(number * getBonusFact(streak) * getTrophyBonus(number));
-        System.out.println("ScoreAdd: " + scoreAdd + " for number " + number);
+//        System.out.println("ScoreAdd: " + scoreAdd + " for number " + number);
         if (this.currScoreAdds.containsKey(streak.getKey())) {
             this.currScoreAdds.replace(streak.getKey(), this.currScoreAdds.get(streak.getKey()) + scoreAdd);
         } else {
@@ -414,6 +429,23 @@ public class Counter {
             return TROPHY_BONUS_MULT;
         }
         return 1.0;
+    }
+
+    public void use(Purchasable item, Message message) {
+        switch (item) {
+            case FAKE_HAND_BAG: case HAND_BAG:
+                writeUseMessage(Purchasable.FAKE_HAND_BAG, message);
+                CountingBot.getInstance().requestHandBagRefundViaItem(message);
+                break;
+            default:
+                throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
+        }
+        inventory.removeItem(item);
+        CountingBot.getInstance().save();
+    }
+
+    private void writeUseMessage(Purchasable item, Message message) {
+        CountingBot.write(message, "You used a " + item.getName() + "...");
     }
 
     public Integer[] getOwnedTrophies() {
@@ -437,6 +469,13 @@ public class Counter {
         this.currScoreAdds.replace(streak.getKey(), 0);
     }
 
+    public int getPendingStreakScore(CountingStreak streak) {
+        if (this.currScoreAdds.containsKey(streak.getKey())) {
+            return this.currScoreAdds.get(streak.getKey());
+        }
+        return 0;
+    }
+
     public String getId() {
         return key;
     }
@@ -456,10 +495,11 @@ public class Counter {
     }
 
     public int failFromOwn(Message message, CountingStreak streak) {
-        int couldHaveBeenPossible = getPossibleTotalInStreak(streak);
-        int currScoreAdd = this.currScoreAdds.get(streak.getKey());
-        currScoreAdd /= 4.0d;
-        score = (int) ((2.0d * (double) score / 3.0d));
+        int couldHaveBeenPossible = getPossibleTotalInStreak(streak); // possible from total streak
+        int currScoreAdd = this.currScoreAdds.get(streak.getKey()); // possible for losing user for streak
+        currScoreAdd /= 2.0d; // gain is halved
+        int scoreLose = (int) ((double) score / 4.0d);
+        score -= scoreLose;
         addBonusScore(currScoreAdd, message);
         this.currScoreAdds.replace(streak.getKey(), 0);
         return couldHaveBeenPossible - getScore();
@@ -470,7 +510,7 @@ public class Counter {
     }
 
     public void addBonusScoreFromContract(int score, Message message) {
-        int taxed = (int) (score / 2);
+        int taxed = (score / 2);
         if (taxed != 0) {
             addBonusScore(taxed, message);
         }
@@ -480,6 +520,10 @@ public class Counter {
 
     public int getScore() {
         return score;
+    }
+
+    public boolean canAfford(int price) {
+        return price <= score;
     }
 
     public int getPossibleTotalInStreak(CountingStreak streak) {
@@ -523,7 +567,6 @@ public class Counter {
         return false;
     }
 
-
     public int[] getUnlockedBases() {
         return unlockedSystems;
     }
@@ -557,6 +600,20 @@ public class Counter {
     public String getGuildId() {
         return guildId;
     }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public boolean isShopUnlocked() {
+        return getInventory().isShopUnlocked();
+    }
+
+    public void setGuildId(String guildId) {
+        this.guildId = guildId;
+    }
+
+
 
 
 }

@@ -3,8 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting;
+package CompetitiveCounting.contracts;
 
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.CountingGuild;
+import CompetitiveCounting.bank.Bank;
 import discord4j.core.object.entity.Message;
 
 import java.util.Iterator;
@@ -16,21 +20,36 @@ import java.util.List;
  */
 public class ContractHandler {
 
-    private transient Counter owner;
+    private transient ContractOwner owner;
     private transient List<Contract> contracts;
     private transient boolean currentlyAlreadyIterating = false;
 
-    public ContractHandler(Counter owner) {
+    public ContractHandler(ContractOwner owner) {
         this.owner = owner;
         contracts = owner.getContracts();
     }
 
-    public void addContract(Counter getter, int percentage, int limit) {
+    public void initIncomingContracts(CountingGuild activeGuild) {
+        owner.getGuildId();
+        if (owner.getIncomingContracts().isEmpty()) {
+            activeGuild.getCounters().forEach((String currId, Counter counter) -> {
+                for (Contract currContract : counter.getContracts()) {
+                    if (currContract.toId.equals(owner.getId())) {
+                        currContract.owner = counter;
+                        owner.getIncomingContracts().add(currContract);
+                    }
+                }
+            });
+
+        }
+    }
+
+    public void addContract(ContractOwner getter, int percentage, int limit) {
         Contract add = new Contract(getter, percentage, limit);
         add.owner = owner;
         Contract equalContract = null;
         for (Contract currContract : contracts) {
-            if (currContract.toId.equals(add.toId) && ((add.limit == -1 && currContract.limit == -1) || (currContract.limit == add.limit && currContract.percentage == add.percentage))) {
+            if (currContract.toId.equals(add.toId) && (add.limit == currContract.limit)) {
                 equalContract = currContract;
                 break;
             }
@@ -54,9 +73,9 @@ public class ContractHandler {
 
             if (!currContr.isValid()) {
                 it.remove();
-                Counter toCounter = CountingBot.getInstance().getCounter(guildId, currContr.toId);
-                toCounter.getIncomingContracts().remove(currContr);
-                CountingBot.write(message, "Contract from " + currContr.owner.getPing() + " to " + toCounter.getPing() + " expired:\n" + currContr.toString());
+                ContractOwner toOwner = findContractOwner(guildId, currContr.toId);
+                toOwner.getIncomingContracts().remove(currContr);
+                CountingBot.write(message, "Contract from " + currContr.owner.getPing() + " to " + toOwner.getPing() + " expired:\n" + currContr.toString());
                 CountingBot.getInstance().save();
             }
         }
@@ -64,7 +83,7 @@ public class ContractHandler {
 
     public void removeContract(Contract contract) {
         contract.owner.getContracts().remove(contract);
-        CountingBot.getInstance().getCounter(owner.getGuildId(), contract.toId).getIncomingContracts().remove(contract);
+        findContractOwner(owner.getGuildId(), contract.toId).getIncomingContracts().remove(contract);
         CountingBot.getInstance().save();
     }
 
@@ -98,7 +117,7 @@ public class ContractHandler {
         for (Contract curr : contracts) {
             int pay = curr.getPaid(brutto);
             netto -= pay;
-            CountingBot.getInstance().getCounter(owner.getGuildId(), curr.toId).addBonusScoreFromContract(pay, message);
+            findContractOwner(owner.getGuildId(), curr.toId).addBonusScoreFromContract(pay, message);
         }
         if (!isInRecursive) {
             currentlyAlreadyIterating = false;
@@ -109,4 +128,11 @@ public class ContractHandler {
         return netto;
     }
 
-}
+        public static ContractOwner findContractOwner(String guildId, String ownerId) {
+            if (ownerId.equals(Bank.CONTRACT_OWNER_ID)) {
+                return CountingBot.getInstance().getGuilds().get(guildId).getBank();
+            } else {
+                return CountingBot.getInstance().getCounter(guildId, ownerId);
+            }
+        }
+    }

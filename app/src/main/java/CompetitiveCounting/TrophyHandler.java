@@ -30,6 +30,10 @@ public class TrophyHandler {
 
     }
 
+    public void spawnSecondHandbagTrophy(Message message) {
+        spawnTrophy(message, -1050505);
+    }
+
     public void considerSpawningTrophy(int number, Message message, Counter user) {
         if (randBool(trophyChanceFromNumber(number))) {
             spawnTrophy(message, number);
@@ -37,31 +41,35 @@ public class TrophyHandler {
     }
 
     private void spawnTrophy(Message message, int number) {
-        message.addReaction(Emojis.TROPHY).subscribe();
+        message.addReaction(CountingEmojis.TROPHY).subscribe();
         reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
             if (messageReactedTo.getId().equals(message.getId())) {
                 String reactingUserId = reactingUser.getId().asString();
-                if (!CountingBot.getInstance().isCounter(message.getGuildId().get().asString(), reactingUserId)) {
-                    CountingBot.write(message, "You cannot claim trophies without having counted at least once, " + reactingUser.getUsername() + "!");
+                if (!CountingBot.getInstance().isCounter(messageReactedTo.getGuildId().get().asString(), reactingUserId)) {
+                    CountingBot.write(messageReactedTo, "You cannot claim trophies without having counted at least once, " + reactingUser.getUsername() + "!");
                     return false;
                 }
-                String guildId = message.getGuildId().get().asString();
+                String guildId = messageReactedTo.getGuildId().get().asString();
                 Counter reactingCounter = CountingBot.getInstance().getCounter(guildId, reactingUserId);
                 if (reactingCounter.hasTrophy(number)) {
                     if (number > 0) {
                         reactingCounter.addTrophyShard();
                         if (reactingCounter.getTrophyShards() <= 1) {
-                            CountingBot.write(message, "You have already found this trophy and hence get nothing, " + reactingCounter.getName() +
+                            CountingBot.write(messageReactedTo, "You have already found this trophy and hence get nothing, " + reactingCounter.getName() +
                                     "!\n\nJust joking. Congratulations for finding your first trophy shard! Trophy shards are extremely rare and can be spent in the ~shunlock shop.");
                         } else {
-                            CountingBot.write(message, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + reactingCounter.getName() + ". You now have " + reactingCounter.getTrophyShards() + " trophy shards!");
+                            CountingBot.write(messageReactedTo, "You have already found this trophy and hence get an extraordinarily valuable trophy shard instead, " + reactingCounter.getName() + ". You now have " + reactingCounter.getTrophyShards() + " trophy shards!");
                         }
                     } else {
-                        CountingBot.write(message, "You have already found this special trophy and hence get nothing. But at least you stopped other counters from being able to claim this trophy. You truly are a competitive counter, " + reactingCounter.getName() + "!");
+                        CountingBot.write(messageReactedTo, "You have already found this special trophy and hence get nothing. But at least you stopped other counters from being able to claim this trophy. You truly are a competitive counter, " + reactingCounter.getName() + "!");
                     }
                 } else {
                     reactingCounter.addTrophy(number);
-                    CountingBot.write(message, "Congratulations " + reactingCounter.getName() + "! You have earned the " + getTrophyDescription(number) + "! You now have " + reactingCounter.getTrophyAmount() + " trophies!");
+                    int trophyAmount = reactingCounter.getTrophyAmount();
+                    String s = "Congratulations " + reactingCounter.getName() + "!" +
+                            " You have earned the " + getTrophyDescription(number) + "! You now have " + trophyAmount;
+                    s += trophyAmount > 1 ? " trophies!" : " trophy.";
+                    CountingBot.write(messageReactedTo, s);
                 }
                 return true;
             } else {
@@ -84,9 +92,9 @@ public class TrophyHandler {
 
     public static String getTrophyDescription(int trophy) {
         if (trophy > 0) {
-            return trophy + "-trophy";
+            return "trophy #" + trophy;
         }
-        String startText = trophy + " trophy: ";
+        String startText = "trophy #" + trophy + ": ";
         switch (trophy) {
             case -753:
                 return startText + "_Relic of Prestige from the Fallen Empire_";
@@ -96,6 +104,8 @@ public class TrophyHandler {
                 return startText + "_Dirty methods_";
             case -2019:
                 return startText + "_Moose_";
+            case -1050505:
+                return startText + "_Gucci Fendi & Prada Collector_";
             default:
                 return startText;
         }
@@ -103,7 +113,7 @@ public class TrophyHandler {
 
 
     private double trophyChanceFromNumber(double number) {
-        return 1.0 / (200.0 + 600.0 * Math.exp(-0.045 * number) + 225.0 * Math.exp(-0.0015 * number));
+        return 1.0 / (150.0 + 1000.0 * Math.exp(-0.02 * number) + 100.0 * Math.exp(-0.001 * number));
     }
 
     private boolean randBool(double prop) {
