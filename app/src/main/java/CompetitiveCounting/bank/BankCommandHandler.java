@@ -253,7 +253,7 @@ public class BankCommandHandler {
     }
 
     private Dialogue createRequestHandbagRefundDialogue(Message message, Bank bank) {
-        return new Dialogue().addNpcLine(toCrocText("You want to give it back? You really want to give back my" +
+        return new Dialogue().addNpcLine(toCrocText("You want to give it back? You really want to give back my " +
                         "Crocodile-Leather Lacoste Purse? Well, fine, just don't come crying when you regret it..."), 5000)
                 .addNpcLine(toCrocText("Although I have just come up with an idea - this looks like an immaculate spot with great business opportunities."), 3000)
                 .addNpcLine(toCrocText("To kickstart my campaign, I'm just gonna take the money you paid for your handbag and reinvest it into the future!"), 2000)

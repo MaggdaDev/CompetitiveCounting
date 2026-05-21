@@ -65,7 +65,11 @@ public class TrophyHandler {
                     }
                 } else {
                     reactingCounter.addTrophy(number);
-                    CountingBot.write(messageReactedTo, "Congratulations " + reactingCounter.getName() + "! You have earned the " + getTrophyDescription(number) + "! You now have " + reactingCounter.getTrophyAmount() + " trophies!");
+                    int trophyAmount = reactingCounter.getTrophyAmount();
+                    String s = "Congratulations " + reactingCounter.getName() + "!" +
+                            " You have earned the " + getTrophyDescription(number) + "! You now have " + trophyAmount;
+                    s += trophyAmount > 1 ? " trophies!" : " trophy.";
+                    CountingBot.write(messageReactedTo, s);
                 }
                 return true;
             } else {
@@ -88,7 +92,7 @@ public class TrophyHandler {
 
     public static String getTrophyDescription(int trophy) {
         if (trophy > 0) {
-            return trophy + "-trophy";
+            return "trophy #" + trophy;
         }
         String startText = "trophy #" + trophy + ": ";
         switch (trophy) {
