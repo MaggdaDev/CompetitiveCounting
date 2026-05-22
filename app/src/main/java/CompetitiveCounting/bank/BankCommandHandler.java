@@ -199,10 +199,11 @@ public class BankCommandHandler {
             throw new BankUpgradeException("It clearly said you needed " + upgradeCost + " money for this upgrade, and you only came here with " + counter.getScore() + " money in your purse. Go count some more or something.");
         }
         counter.subtractScore(upgradeCost);
+        bank.addMoney(upgradeCost);
         String oldLevel = upgrade.getCurrentName();
         String newLevel = upgrade.getNextName();
         upgrade.incrementLvl();
-        bankWrite(message, "Congratulations! You have spent " + upgradeCost + " money to upgrade your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'. " + upgrade.getBoughtFeedback());
+        bankWrite(message, "Congratulations! You have given " + upgradeCost + " money to the CrocBank Inc. to upgrade your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'. " + upgrade.getBoughtFeedback());
     }
 
     public void handBagBought(Message message) {
