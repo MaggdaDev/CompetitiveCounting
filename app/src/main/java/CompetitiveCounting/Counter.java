@@ -9,7 +9,6 @@ import CompetitiveCounting.bank.Bank;
 import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.contracts.ContractHandler;
 import CompetitiveCounting.contracts.ContractOwner;
-import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.items.Inventory;
 import CompetitiveCounting.items.Purchasable;
 import CompetitiveCounting.items.ShopCommandHandler;
@@ -229,7 +228,7 @@ public class Counter implements ContractOwner {
         return ownedTrophies.size();
     }
 
-    public double getFactFromSys(int base) {
+    public double getFactFromSysAndPrestiges(int base) {
         return (1.0 + MULT_PLUS_PER_PRESTIGE * prestiges) * ((isBaseUnlocked(base) && base != 10) ? SYSTEM_OWNED_FACT : 1.0);
     }
 
@@ -331,6 +330,7 @@ public class Counter implements ContractOwner {
             prestigePoints++;
             score = 0;
             unlocked = new int[]{};
+            setShopUnlocked(false);
             CountingBot.getInstance().save();
             return true;
         } else {
@@ -453,7 +453,7 @@ public class Counter implements ContractOwner {
     }
 
     public double getBonusFact(CountingStreak streak) {
-        return getFactFromSys(streak.getBase()) * streak.getCurrentBonusFactor();
+        return getFactFromSysAndPrestiges(streak.getBase()) * streak.getCurrentBonusFactor();
     }
 
     public void notifyWin(int win, int base, Message message) {
@@ -607,6 +607,10 @@ public class Counter implements ContractOwner {
 
     public boolean isShopUnlocked() {
         return getInventory().isShopUnlocked();
+    }
+
+    private void setShopUnlocked(boolean unlocked) {
+        getInventory().setShopUnlocked(unlocked);
     }
 
     public void setGuildId(String guildId) {
