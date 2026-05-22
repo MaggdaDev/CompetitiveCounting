@@ -86,6 +86,8 @@ public class CountingBot {
                     write(message, scoreboard(message, "networth"));
                 } else if (commandWithoutIndicator.startsWith("score")) {
                     this.scoreInfo(message);
+                } else if (commandWithoutIndicator.startsWith("networth")) {
+                    this.netWorthInfo(message);
                 } else if (commandWithoutIndicator.startsWith("num")) {
                     numberInfo(message);
                 } else if (commandWithoutIndicator.startsWith("addrule")) {
@@ -725,6 +727,40 @@ public class CountingBot {
             msg += "\nYou have " + counter.getPrestigePoints() + " prestige points.";
         }
         CountingBot.write(message, msg);
+    }
+
+    private void netWorthInfo(Message message) {
+        Counter counter = getCounterFromMessage(message);
+        int netWorth = counter.getAccWorth();
+        String netWorthOutput = "Your account's total net worth, including your score and all upgrades bought:\n";
+
+        int digits = (netWorth == 0) ? 0 : (int) Math.log10(netWorth) + 1;
+        System.out.println(digits);
+        String formatting;
+        switch(digits) {
+            case 0:
+                formatting = "-# {0}";
+                break;
+            case 4:
+                formatting = "*{0}*";
+                break;
+            case 5:
+                formatting = "**{0}**";
+                break;
+            case 6:
+                formatting = "***{0}***";
+                break;
+            case 7:
+                formatting = "## {0}";
+                break;
+            default:
+                formatting = "{0}";
+                break;
+        }
+        if (digits > 7) { formatting = "# {0}"; }
+        netWorthOutput += formatting.replace("{0}", String.valueOf(netWorth));
+        netWorthOutput += "\nThis is made up of " + counter.getScore() + " money in your purse and " + (netWorth - counter.getScore()) + " value from upgrades.";
+        CountingBot.write(message, netWorthOutput);
     }
 
     public boolean isCounter(String guildId, String counterId) {
