@@ -580,21 +580,20 @@ public class CountingStreak {
         } else {
             String ret = "Active rules:";
             for (NumberRule rule : numberRules) {
-                ret += "\n\t-" + rule.toString();
+                ret += "\n\t\\-" + rule.toString();
             }
             if (slowModeRule != null) {
-                ret += "\n\t-" + slowModeRule.toString();
+                ret += "\n\t\\-" + slowModeRule.toString();
             }
             if (timeLimitRule != null) {
-                ret += "\n\t-" + timeLimitRule.toString();
+                ret += "\n\t\\-" + timeLimitRule.toString();
             }
             return ret;
         }
     }
 
     public String getBaseInfoRespond() {
-        String ret = "Current base: " + currentBase;
-        ret += "\nWith the characters:\n";
+        String ret = "The current base is **" + currentBase + "** with these characters:\n";
         if (currentBase == 1) {
             ret += "1&1";
         } else {

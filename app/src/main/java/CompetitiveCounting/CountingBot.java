@@ -81,16 +81,13 @@ public class CountingBot {
                 if (commandWithoutIndicator.startsWith("help")) {
                     write(message, "tasukete kudasai!\nhttp://hyperlexus.net/old/competitivecountinghelp.html");
                 } else if (commandWithoutIndicator.startsWith("scoreboard") || commandWithoutIndicator.equals("top")) {
-                    write(message, scoreboard(message));
+                    write(message, scoreboard(message, "bal"));
+                } else if (commandWithoutIndicator.startsWith("topnetworth")) {
+                    write(message, scoreboard(message, "networth"));
                 } else if (commandWithoutIndicator.startsWith("score")) {
                     this.scoreInfo(message);
                 } else if (commandWithoutIndicator.startsWith("num")) {
-                    String channelId = message.getChannelId().asString();
-                    if (streaks.containsKey(channelId)) {
-                        write(message, "The last number was " + (streaks.get(channelId).getLastNum()));
-                    } else {
-                        write(message, "No current streak! You can start with 1.");
-                    }
+                    numberInfo(message);
                 } else if (commandWithoutIndicator.startsWith("addrule")) {
                     addRule(message);
                 } else if (commandWithoutIndicator.startsWith("rules")) {
@@ -115,26 +112,19 @@ public class CountingBot {
                     personInfo(message);
                 } else if (commandWithoutIndicator.startsWith("fact") || commandWithoutIndicator.startsWith("mult")) {
                     factorInfo(message);
+                } else if (commandWithoutIndicator.startsWith("streak")) {
+                    streakInfo(message);
                 } else if (commandWithoutIndicator.startsWith("trophies") || commandWithoutIndicator.startsWith("trophy")) {
                     trophiesInfo(message);
                 } else if (commandWithoutIndicator.startsWith("shunlock")) {
                     shunlock(message);
                 } else if (commandWithoutIndicator.startsWith("bank")) {
-                    if(!isDevMode) {
-                        return;
-                    }
                     if (bankCommandHandler.handleBankCommand(message)) {  // Returns true iff json should be updated
                         save();
                     }
                 } else if (commandWithoutIndicator.startsWith("shop") || commandWithoutIndicator.equals("unlock_shop")) {
-                    if(!isDevMode) {
-                        return;
-                    }
                     shopCommandHandler.handleShopCommand(message);
                 } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
-                    if(!isDevMode) {
-                        return;
-                    }
                     inventoryCommandHandler.handleInventoryCommand(message);
                 }
             }
@@ -248,6 +238,52 @@ public class CountingBot {
         }
     }
 
+    private void numberInfo(Message message) {
+        String channelId = message.getChannelId().asString();
+        if (!streaks.containsKey(channelId)) {
+            write(message, "No current streak! You can start with 1.");
+            return;
+        }
+        CountingStreak streak = streaks.get(channelId);
+        int base = streak.getBase();
+        int lastNumberCounted = streak.getLastNum();
+        String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
+        write(message, "The last number was **" + (base == 10 ? lastNumberCounted + "**." : lastNumberInBase + "** (=" + lastNumberCounted + ")."));
+    }
+
+    private void streakInfo(Message message) {
+        String channelId = message.getChannelId().asString();
+        if (!streaks.containsKey(channelId)) {
+            CountingBot.write(message, "No current streak! You can be the first person to count.");
+            return;
+        }
+        Counter author = getCounterFromMessage(message);
+        CountingStreak streak = streaks.get(channelId);
+
+        int lastNumberCounted = streak.getLastNum();
+        int base = streak.getBase();
+        double streakFactor = streak.getCurrentBonusFactor();
+        Counter lastCounter = streak.getLastCounter();
+
+        String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
+
+        String ruleInfo = streak.getRulesRespond();
+        String baseInfo = streak.getBaseInfoRespond();
+        String factorInfo = "***Everyone***'s collected score in this streak gets a " + streakFactor + "x bonus multiplier.\n" +
+                "***Your*** collected score in this streak gets a " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x total bonus multiplier.";
+        if (lastCounter == null) {
+            CountingBot.write(message, "No current streak! You can be the first person to count.");
+            return;
+        }
+        String resultInfo = "Information about the current streak:\n\n";
+        resultInfo += "**" + lastCounter.getName() + "** counted the previous number.";
+        resultInfo += "\nThe last number was **" + (base == 10 ? lastNumberCounted + "**." : lastNumberInBase + "** (=" + lastNumberCounted + ").");
+        resultInfo += "\n\n" + baseInfo;
+        resultInfo += "\n\n" + factorInfo;
+        resultInfo += "\n\n" + ruleInfo;
+        CountingBot.write(message, resultInfo);
+    }
+
     private void contractInfo(Message message) {
         Counter author = getCounterFromMessage(message);
         author.contractInfo(message);
@@ -256,7 +292,7 @@ public class CountingBot {
     private void removeContract(Message message) {
         String guildId = message.getGuildId().get().asString();
         Counter author = getCounterFromMessage(message);
-        if (author.getContracts().size() == 0 && author.getIncomingContracts().size() == 0) {
+        if (author.getContracts().isEmpty() && author.getIncomingContracts().isEmpty()) {
             CountingBot.write(message, "You don't have any contracts.");
             return;
         }
@@ -282,7 +318,6 @@ public class CountingBot {
                 contract -> contract.toId.equals(otherCounterId) || (contract.owner != null && contract.owner.getId().equals(otherCounterId))).collect(Collectors.toList());
         if (contractsMatchingToGivenId.isEmpty()) {
             CountingBot.write(message, "You don't have any contracts with this person.");
-            return;
         } else if (contractsMatchingToGivenId.size() > 1) {
             if (contractNumber == -1) {
                 StringBuilder content = new StringBuilder("Please specify the contract you want to remove by providing the corresponding number after the user ping. " +
@@ -291,10 +326,8 @@ public class CountingBot {
                     content.append("\n").append(i).append("): ").append(contractsMatchingToGivenId.get(i).toString());
                 }
                 CountingBot.write(message, content.toString());
-                return;
             } else if (contractNumber >= contractsMatchingToGivenId.size()) {
                 CountingBot.write(message, "This number does not match a contract.");
-                return;
             } else {
                 initiateRemoveContractButtonInteraction(message, author, this.getCounter(guildId, otherCounterId), contractsMatchingToGivenId.get(contractNumber));
             }
@@ -543,7 +576,7 @@ public class CountingBot {
         }
     }
 
-    private String scoreboard(Message message) {
+    private String scoreboard(Message message, String mode) {
         String guildId = message.getGuildId().get().asString();
         ArrayList<Counter> countersSorted = new ArrayList<>();
 //        System.out.println(guilds.get(guildId).getCounters());
@@ -575,10 +608,14 @@ public class CountingBot {
                 bankDisplayed = true;
                 position +=1;
             }
+            ret += "\n" + position + ") " + counter.getName() + ": ";
+            if (mode.equals("bal")) {
+                ret +=  + counter.getPossibleTotal() + " money";
+            } else if (mode.equals("networth")) {
+                ret += counter.getAccWorth() + " net worth"; // did not check if counter has acc worth since they must if included in countersSorted
+            }
             if (counter.getPrestiges() != 0) {
-                ret += "\n" + position + ") " + counter.getName() + ": " + counter.getPossibleTotal() + " money (Amount of Prestiges: " + counter.getPrestiges() + ")";
-            } else {
-                ret += "\n" + position + ") "  + counter.getName() + ": " + counter.getPossibleTotal() + " money";
+                ret += " (Amount of Prestiges: " + counter.getPrestiges() + ")";
             }
             position += 1;
         }
