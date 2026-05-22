@@ -153,7 +153,7 @@ public class BankCommandHandler {
     private void sendBankDescription(Message message) {
         CountingBot.write(message, "## The CrocBank Inc. \n" +
                toCrocText("Welcome to the glorious CrocBank Inc.! I, the crocodile, will gladly assist you with all your banking needs.\n" +
-                       "Money that is deposited here is safe from being lost after failing streaks.\n" +
+                       "Money that is deposited here is safe from being lost after failing streaks and is even carried over when you prestige.\n" +
                        "-# Since running a bank comes with high costs, please be aware that you might have to pay some small fees here or there.\n\n" +
                        "Furthermore, instead of contracts, you can now take out loans from the CrocBank. " +
                        "You can freely pick the rate of repayment just like with a normal contract, but you will pay some interest.\n\n" +
