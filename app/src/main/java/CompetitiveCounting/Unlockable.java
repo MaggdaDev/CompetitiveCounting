@@ -16,7 +16,7 @@ public enum Unlockable {
     DIGSUM_RULE(30000, "digsum_rule", "Numbers with digsum n must be skipped"),
     
     SLOWMODE_RULE(50000, "slowmode_rule", "A certain time n has to pass between counts"),
-    TIMELIMIT_RULE(100000, "timelimit_rule", "The next number must have been counted before a certain time n has passed"),
+    TIMELIMIT_RULE(100000, "timelimit_rule", "The next number must be counted within 10 seconds"),
 
     RULE_COST_UPGRADE_1(150000, "rule_cost_upgrade", "Adding a rule to a streak costs 10% less"),
     RULE_COST_UPGRADE_2(200000, "rule_cost_upgrade", "Adding a rule to a streak costs 20% less"),

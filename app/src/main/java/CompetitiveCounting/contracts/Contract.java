@@ -11,6 +11,7 @@ import CompetitiveCounting.bank.Bank;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * @author DavidPrivat
@@ -18,35 +19,12 @@ import java.util.Objects;
 public class Contract {
     public final static String ACCEPT_REMOVE_CONTRACT_PREFIX = "accept_remove_contract:";
     public final static String DECLINE_REMOVE_CONTRACT_PREFIX = "decline_remove_contract:";
-    private static int currRemoveId = 0;
     public int paidBack;
     public int percentage;  //1 - 100
     public int limit;       //  limti = -1 := no limit
     public String toId;
     public transient ContractOwner owner; // default: null
-
-    public transient String requested_remove_id = null;
-    public transient long remove_request_time = 0;
-
-    public final static long REMOVE_REQUEST_TIMEOUT = 1000 * 60 * 60; // 1h
-
-    public final transient ArrayList<String> expired_remove_request_ids = new ArrayList<>();
-
-    public void requestRemove() {
-        if (requested_remove_id != null) {
-            expired_remove_request_ids.add(requested_remove_id);
-        }
-        remove_request_time = System.currentTimeMillis();
-        requested_remove_id = String.valueOf(currRemoveId);
-        currRemoveId++;
-    }
-
-    public boolean isRemoveRequestTimedOut() {
-        if (requested_remove_id == null) {
-            return false;
-        }
-        return System.currentTimeMillis() - remove_request_time > REMOVE_REQUEST_TIMEOUT;
-    }
+    private String contractId = "";
 
     public Contract(ContractOwner getter, int percentage, int limit) {
         toId = getter.getId();
@@ -66,10 +44,6 @@ public class Contract {
             }
         }
         return paid;
-    }
-
-    public boolean isExpiredRemoveRequestId(String id) {
-        return expired_remove_request_ids.contains(id);
     }
 
     public boolean isValid() {
@@ -98,5 +72,12 @@ public class Contract {
         } else {
             return countersInfo + ": " + percentage + "% of income until " + limit + " paid (" + paidBack + " paid so far)";
         }
+    }
+
+    public String getContractId() {
+        if (contractId == null || contractId.isEmpty()) {
+            contractId = UUID.randomUUID().toString();
+        }
+        return contractId;
     }
 }

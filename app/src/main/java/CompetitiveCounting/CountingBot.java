@@ -300,6 +300,7 @@ public class CountingBot {
         }
         if (message.getContent().split(" ").length != 2 && message.getContent().split(" ").length != 3) {
             CountingBot.write(message, "Usage: ~removecontract [@OtherCounter] _[in case of multiple contracts with that person: contract number]_");
+            contractInfo(message);
             return;
         }
         int contractNumber = -1;
@@ -341,16 +342,11 @@ public class CountingBot {
     }
 
     private void initiateRemoveContractButtonInteraction(Message message, Counter author, Counter requestedUser, Contract contractToRemove) {
-        if (contractToRemove.requested_remove_id != null && !contractToRemove.isRemoveRequestTimedOut()) {
-            CountingBot.write(message, "This contract has already been requested to be removed. The request will expire in "
-                    + Math.round((float) (10.0 * (Contract.REMOVE_REQUEST_TIMEOUT + contractToRemove.remove_request_time - System.currentTimeMillis())) / (1000.0 * 60.0 * 60.0)) / 10.0 + "h.");
-            return;
-        }
-        String content = Util.userIdToPing(requestedUser.getId()) + " do you accept to remove the following contract with " + author.getId() + "?\n"
+        String requestedUserId = requestedUser.getId();
+        String content = Util.userIdToPing(requestedUserId) + " do you accept to remove the following contract with " + author.getId() + "?\n"
                 + contractToRemove;
-        contractToRemove.requestRemove();
-        Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Accept");
-        Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREFIX + contractToRemove.requested_remove_id, "Decline");
+        Button acceptButton = Button.success(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX + requestedUserId + ":" +  contractToRemove.getContractId(), "Accept");
+        Button declineButton = Button.danger(Contract.DECLINE_REMOVE_CONTRACT_PREFIX + requestedUserId + ":" + contractToRemove.getContractId(), "Decline");
         MessageCreateSpec spec = MessageCreateSpec.builder().addComponent(ActionRow.of(List.of(declineButton, acceptButton))).build().withContent(content);
         message.getChannel().block().createMessage(spec).subscribe();
     }

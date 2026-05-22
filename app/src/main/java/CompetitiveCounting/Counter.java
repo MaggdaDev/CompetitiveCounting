@@ -265,7 +265,6 @@ public class Counter implements ContractOwner {
         if (tradeOffers == null) {
             tradeOffers = new HashMap<>();
         }
-        String contractRemoveRequestExpiredPleaseCreateNewOneMessage = "This request to remove the contract has expired and a new request has already been created.";
         if (customId.startsWith("-")) {  // DECLINE
 //            System.out.println("Tradeoffer declined!");
             String newId = customId.substring(1);
@@ -276,29 +275,32 @@ public class Counter implements ContractOwner {
                 return "This offer doesn't match any of yours";
             }
         } else if (customId.startsWith(Contract.ACCEPT_REMOVE_CONTRACT_PREFIX)) {
-            String contractRemoveId = customId.split(":")[1];
+            String requestedRemoveId = customId.split(":")[1];
+            String contractId = customId.split(":")[2];
+            if (!Objects.equals(getId(), requestedRemoveId)) {
+                return "Only " + CountingBot.getInstance().getCounter(guildId, requestedRemoveId).getName() + " can accept the removal!";
+            }
             // iterate through both incoming contracts and contracts at once
             ArrayList<Contract> contractsToIterate = new ArrayList<>(contracts);
             contractsToIterate.addAll(incomingContracts);
             for (Contract currContract : contractsToIterate) {
-                if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
+                if (Objects.equals(currContract.getContractId(), contractId)) {
                     contractHandler.removeContract(currContract);
                     return "Contract removed successfully!";
-                } else if (currContract.isExpiredRemoveRequestId(contractRemoveId)) {
-                    return contractRemoveRequestExpiredPleaseCreateNewOneMessage;
                 }
             }
             return "This contract doesn't match any of yours";
         } else if (customId.startsWith(Contract.DECLINE_REMOVE_CONTRACT_PREFIX)) {
-            String contractRemoveId = customId.split(":")[1];
+            String requestedRemoveId = customId.split(":")[1];
+            String contractId = customId.split(":")[2];
+            if (!Objects.equals(getId(), requestedRemoveId)) {
+                return "Only " + CountingBot.getInstance().getCounter(guildId, requestedRemoveId).getName() + " can decline the removal!";
+            }
             ArrayList<Contract> contractsToIterate = new ArrayList<>(contracts);
             contractsToIterate.addAll(incomingContracts);
             for (Contract currContract : contractsToIterate) {
-                if (Objects.equals(currContract.requested_remove_id, contractRemoveId)) {
-                    currContract.requested_remove_id = null;
+                if (Objects.equals(currContract.getContractId(), contractId)) {
                     return "Contract removal declined!";
-                } else if (currContract.isExpiredRemoveRequestId(contractRemoveId)) {
-                    return contractRemoveRequestExpiredPleaseCreateNewOneMessage;
                 }
             }
             return "This contract doesn't match any of yours";
@@ -375,7 +377,7 @@ public class Counter implements ContractOwner {
     }
 
     public void contractInfo(Message message) {
-        String mess = "";
+        String mess = "# " + getName() + "' contracts\n\n";
         if (contracts.size() == 0 && incomingContracts.size() == 0) {
             CountingBot.write(message, "You don't have any active contracts!");
             return;
