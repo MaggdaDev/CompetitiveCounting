@@ -11,10 +11,12 @@ import CompetitiveCounting.BaseSystems;
  * @author DavidPrivat
  */
 public abstract class NumberRule implements Rule {
-    private String ownerId;
-    
-    public NumberRule(String ownerId) {
+    private final String ownerId;
+    private final String numberRuleType;
+
+    public NumberRule(String ownerId, String numberRuleType) {
         this.ownerId = ownerId;
+        this.numberRuleType = numberRuleType;
     }
     
     public abstract boolean numberAccepted(int number);
@@ -25,24 +27,8 @@ public abstract class NumberRule implements Rule {
     public String getOwnerId() {
         return ownerId;
     }
-    
-    public static class DividerRule extends NumberRule {
-        private final int divider, base;
-        public DividerRule(String ownerId, int divider, int base) {
-            super(ownerId);
-            this.divider = divider;
-            this.base = base;
-        }
-        
-        @Override 
-        public boolean numberAccepted(int number) {
-            return (number % divider) != 0;
-        }
-        
-        @Override
-        public String toString() {
-            return "Numbers must not be divisible by: " + BaseSystems.decimalToSystem(divider, base);
-        }
-        
+
+    public String getNumberRuleType() {
+        return numberRuleType;
     }
 }

@@ -31,7 +31,7 @@ public class Counter implements ContractOwner {
     private final String key, name;
     private int score, prestiges, prestigePoints;
 
-    private transient HashMap<String, Integer> currScoreAdds;
+    private HashMap<String, Integer> currScoreAdds;
     private int[] unlocked;
     private int[] unlockedSystems;
     private BonusStreak[] bonusStreaks;
@@ -468,7 +468,7 @@ public class Counter implements ContractOwner {
 
     public void succeed(CountingStreak streak, Message message) {
         addBonusScore(this.currScoreAdds.get(streak.getKey()), message);
-        this.currScoreAdds.replace(streak.getKey(), 0);
+        this.currScoreAdds.remove(streak.getKey());
     }
 
     public int getPendingStreakScore(CountingStreak streak) {
@@ -488,11 +488,11 @@ public class Counter implements ContractOwner {
 
     public int fail(Message message, CountingStreak streak) {
         int couldHaveBeenPossible = getPossibleTotalInStreak(streak);
-        int currScoreAdd = this.currScoreAdds.get(streak.getKey());
+        int currScoreAdd = getStreakScoreAdd(streak);
         currScoreAdd /= 3.0d;
         score = (int) ((2.0d * (double) score / 3.0d));
         addBonusScore(currScoreAdd, message);
-        this.currScoreAdds.replace(streak.getKey(), 0);
+        this.currScoreAdds.remove(streak.getKey());
         return couldHaveBeenPossible - getScore();
     }
 
@@ -503,7 +503,7 @@ public class Counter implements ContractOwner {
         int scoreLose = (int) ((double) score / 4.0d);
         score -= scoreLose;
         addBonusScore(currScoreAdd, message);
-        this.currScoreAdds.replace(streak.getKey(), 0);
+        this.currScoreAdds.remove(streak.getKey());
         return couldHaveBeenPossible - getScore();
     }
 
@@ -529,7 +529,15 @@ public class Counter implements ContractOwner {
     }
 
     public int getPossibleTotalInStreak(CountingStreak streak) {
-        return score + currScoreAdds.get(streak.getKey());
+        return score + getStreakScoreAdd(streak);
+    }
+
+    private int getStreakScoreAdd(CountingStreak streak) {
+        if (! this.currScoreAdds.containsKey(streak.getKey())) {
+            System.err.println("Trying to calculate streak score add for a streak which thinks I am in the streak, but I dont know this streak from currScoreAdds!");
+            return 0;
+        }
+        return currScoreAdds.get(streak.getKey());
     }
 
 

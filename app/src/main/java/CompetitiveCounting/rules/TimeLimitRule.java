@@ -18,15 +18,18 @@ import discord4j.core.object.entity.Message;
 public class TimeLimitRule implements Rule {
     public final static double BONUS_FACTOR = 2.0d;
     private String ownerId;
-    private CountingStreak streak;
+    private transient CountingStreak streak;
     private int time = 10;
-    private AnimationThread thread;
+    private transient AnimationThread thread;
     private boolean hasLost = false, shouldCancel = false;
 
     public TimeLimitRule(String ownerId, CountingStreak streak) {
         this.ownerId = ownerId;
-        this.streak = streak;
+        initialize(streak);
+    }
 
+    public void initialize(CountingStreak streak) {
+        this.streak = streak;
     }
 
     public void applyTimerToMessage(Message message, Counter loser) {
@@ -59,6 +62,9 @@ public class TimeLimitRule implements Rule {
         public AnimationThread(Message message, Counter loser) {
             this.message = message;
             this.loser = loser;
+            if (streak == null) {
+                throw new IllegalStateException("Non-initialized timelimit rule in streak!");
+            }
         }
 
         @Override
@@ -97,7 +103,7 @@ public class TimeLimitRule implements Rule {
             }
             hasLost = true;
             streak.timeLimitLost(ownerId, message, loser);
-            CountingBot.getInstance().removeStreak(streak.getKey());
+            CountingBot.getInstance().disposeStreak(streak.getKey());
 
         }
     }

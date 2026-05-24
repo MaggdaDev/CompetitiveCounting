@@ -13,6 +13,7 @@ import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.items.InventoryCommandHandler;
 import CompetitiveCounting.items.ShopCommandHandler;
+import CompetitiveCounting.storage.Storage;
 import CompetitiveCounting.tradeoffer.TradeHandler;
 import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.GatewayDiscordClient;
@@ -35,15 +36,17 @@ import java.util.stream.Collectors;
  */
 public class CountingBot {
 
-    private String commandIndicator = "~";
-    private Storage storage;
-    private HashMap<String, CountingGuild> guilds;
-    private HashMap<String, CountingStreak> streaks;
+    private final static String commandIndicator = "~";
+    private final Storage storage;
+    private final HashMap<String, CountingGuild> guilds;
+    private final HashMap<String, CountingStreak> streaks;
+
+    // Command handlers
     private final BankCommandHandler bankCommandHandler;
     private final BankTransactionsHandler bankTransitionsHandler;
-
     private final ShopCommandHandler shopCommandHandler;
     private final InventoryCommandHandler inventoryCommandHandler;
+
     private static CountingBot instance;
     private static int currId = 0;
     private static GatewayDiscordClient client;
@@ -51,17 +54,19 @@ public class CountingBot {
     private final static boolean isDevMode = true;
 
     public CountingBot(GatewayDiscordClient client) {
-        storage = new Storage();
+        streaks = new HashMap<>();
+        storage = new Storage(streaks);
         this.client = client;
         guilds = storage.loadGuilds();
         System.out.println("Counters loaded!");
-        streaks = new HashMap<>();
         instance = this;
 
         bankTransitionsHandler = new BankTransactionsHandler(guilds);
         bankCommandHandler = new BankCommandHandler(bankTransitionsHandler);
         shopCommandHandler = new ShopCommandHandler(guilds);
         inventoryCommandHandler = new InventoryCommandHandler(guilds);
+
+        storage.loadStreaksIntoMapIfFilePresent();
     }
 
     public void message(Message message) {
@@ -626,13 +631,14 @@ public class CountingBot {
     private void count(Message message) {
         Runnable streakDeleteRunnable = () -> {
             String channelId = message.getChannelId().asString();
-            streaks.remove(channelId);
+            disposeStreak(channelId);
         };
         User user = message.getAuthor().get();
         String channelKey = message.getChannelId().asString();
         String content = message.getContent();
         boolean deleteStreak = false;
         Counter author = getCounterFromMessage(message);
+        String guildId = message.getGuildId().get().asString();
         if (streaks.containsKey(channelKey)) {
             CountingStreak streak = streaks.get(channelKey);
             checkIllegalCharacters(message, content, streak);
@@ -644,11 +650,11 @@ public class CountingBot {
             String[] splitted = content.split(" ");
             if (content.equals("1") || (splitted[0].equals("1") && splitted.length == 3 && splitted[1].equals("base") && Util.isNumber(splitted[2]))) {
                 if (content.equals("1")) {
-                    streaks.put(channelKey, new CountingStreak(channelKey, 10));
+                    streaks.put(channelKey, new CountingStreak(channelKey, 10, guildId));
                 } else {
                     int base = Integer.parseInt(splitted[2]);
                     if (author != null && author.isBaseUnlocked(base)) {
-                        streaks.put(channelKey, new CountingStreak(channelKey, base));
+                        streaks.put(channelKey, new CountingStreak(channelKey, base, guildId));
                     } else {
                         CountingBot.write(message, "Unlock this base with prestige-points to start a streak.");
                         return;
@@ -689,11 +695,19 @@ public class CountingBot {
         }
     }
 
-    public void removeStreak(String streakId) {
+    public void disposeStreak(String streakId) {
+        if (streaks.containsKey(streakId)) {
+            streaks.get(streakId).dispose();
+        }
         streaks.remove(streakId);
     }
 
     public void save() {
+        storage.save();
+    }
+
+    public void saveCountersAndStreaks() {
+        storage.saveStreaks();
         storage.save();
     }
 
@@ -819,8 +833,8 @@ public class CountingBot {
         return user.getId().asString();
     }
 
-    public Counter getCounter(String guildId, String id) {
-        return guilds.get(guildId).getCounter(id);
+    public static Counter getCounter(String guildId, String id) {
+        return getInstance().guilds.get(guildId).getCounter(id);
     }
 
     public static CountingBot getInstance() {
@@ -842,5 +856,10 @@ public class CountingBot {
 
     public ShopCommandHandler getShopCommandHandler() {
         return shopCommandHandler;
+    }
+
+
+    public Storage getStorage() {
+        return storage;
     }
 }

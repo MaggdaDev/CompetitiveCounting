@@ -17,9 +17,9 @@ import java.time.Instant;
  */
 public class SlowModeRule implements Rule {
 
-    private Instant lastTime;
+    private long epochAtStart;
     private int secondsDiff;
-    private boolean accepts = true, lost = false, shouldStop = false, newlyAdded = true;
+    private boolean lost = false, shouldStop = false, newlyAdded = true;
     private String ownerId;
 
     public SlowModeRule(int duration, String ownerId) {
@@ -32,7 +32,7 @@ public class SlowModeRule implements Rule {
 
             @Override
             public void run() {
-                accepts = false;
+                epochAtStart = Instant.now().getEpochSecond();
                 int timer = secondsDiff;
                 ReactionEmoji one, two, three, clock;
                 one = ReactionEmoji.unicode("\u0031\u20E3");
@@ -45,16 +45,14 @@ public class SlowModeRule implements Rule {
                         break;
                     }
                     switch (timer) {
-                        case 1:
-                            message.removeSelfReaction(two).subscribe();
+                        case 2:
                             message.addReaction(one).subscribe();
                             break;
-                        case 2:
-                            message.removeSelfReaction(three).subscribe();
+                        case 4:
                             message.addReaction(two).subscribe();
                             newlyAdded = false;
                             break;
-                        case 3:
+                        case 6:
                             message.addReaction(three).subscribe();
                             break;
                     }
@@ -66,19 +64,13 @@ public class SlowModeRule implements Rule {
                     timer -= 1;
                 }
                 if (shouldStop) {
-                    message.removeSelfReaction(three).subscribe();
-                    message.removeSelfReaction(two).subscribe();
-                    message.removeSelfReaction(one).subscribe();
                     message.removeSelfReaction(clock).subscribe();
                     message.addReaction(CountingEmojis.KEKMARK).subscribe();
-                    accepts = true;
                     shouldStop = false;
                     return;
                 }
-                message.removeSelfReaction(one).subscribe();
                 message.removeSelfReaction(clock).subscribe();
                 message.addReaction(CountingEmojis.KEKMARK).subscribe();
-                accepts = true;
 
             }
         };
@@ -102,11 +94,11 @@ public class SlowModeRule implements Rule {
     }
 
     public boolean accepted(Message message) {
-        if (accepts == false) {
+        boolean accepts = Instant.now().getEpochSecond() - epochAtStart >= secondsDiff;
+        if (!accepts) {
             lost = true;
         }
         return accepts;
-
     }
 
     public boolean hasLost() {

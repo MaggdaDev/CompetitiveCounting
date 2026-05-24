@@ -6,12 +6,16 @@
 package CompetitiveCounting;
 
 
+import CompetitiveCounting.storage.LocalHttpServer;
+import CompetitiveCounting.storage.Storage;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
+
+import java.io.IOException;
 
 /**
  *
@@ -45,8 +49,16 @@ public class Main {
                             "Logged in as %s#%s", self.getUsername(), self.getDiscriminator()
                     ));
                 });
-
+        LocalHttpServer httpServer;
+        try {
+            httpServer = new LocalHttpServer();
+        } catch (IOException e) {
+            System.err.println("Failed to start local HTTP server:");
+            e.printStackTrace();
+            return;
+        }
         bot = new CountingBot(client);
+        httpServer.setSaveStreaksRunnable(bot::saveCountersAndStreaks);
         MessageHandler messageHandler = new MessageHandler(bot);
         client.getEventDispatcher().on(MessageCreateEvent.class).subscribe(messageHandler);
         ButtonClickHandler buttonHandler = new ButtonClickHandler(bot);

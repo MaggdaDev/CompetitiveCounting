@@ -21,10 +21,10 @@ import java.util.Map;
 public class CountingStreak {
 
     private final String key;
-    private final Disposable emojiReactSubscription;
+    private final String guildId;
     private int counter, lastCount;
-    private Counter lastCounter;
-    private HashMap<String, Counter> counters;
+    private String lastCounterId;
+    private ArrayList<String> counterIds;
 
     private HashMap<String, Long> lastCaptureTimes = new HashMap<>();
     private final List<String> captureBlockedUsers = new ArrayList<>();
@@ -39,26 +39,39 @@ public class CountingStreak {
     private int currTimePrice = 250, timePriceFact = 2;
     private int currentBase;
 
-    private final TrophyHandler trophyHandler;
-    private final CaptureHandler captureHandler;
-    private final EmojiReactHandler emojiReactHandler;
+    private transient TrophyHandler trophyHandler;
+    private transient CaptureHandler captureHandler;
+    private transient EmojiReactHandler emojiReactHandler;
+    private transient Disposable emojiReactSubscription;
 
     private boolean destroyedByWrongCapture = false;
 
     private int sumOfAllCountsSoFar = 0;
 
-    public CountingStreak(String key, int base) {
+    // Pre-initializing (fully replaced by loading from json!)
+    public CountingStreak(String key, int base, String guildId) {
         this.key = key;
+        this.guildId = guildId;
         counter = 1;
         lastCount = 0;
-        counters = new HashMap<>();
-        lastCounter = null;
+        lastCounterId = "";
+        counterIds = new ArrayList<>();
         numberRules = new ArrayList<>();
         currentBase = base;
+
+        initialize();
+    }
+
+    // Initialize either after constructor or after loaded from json
+    public void initialize() {
         emojiReactHandler = new EmojiReactHandler(key);
         emojiReactSubscription = CountingBot.getInstance().subscribeEmojiReactHandler(emojiReactHandler, key);
         trophyHandler = new TrophyHandler(emojiReactHandler);
         captureHandler = new CaptureHandler(emojiReactHandler);
+
+        if (timeLimitRule != null){
+            timeLimitRule.initialize(this);
+        }
     }
 
     public boolean count(Message message, Counter user, String content, Runnable asyncStreakDelete) {
@@ -68,7 +81,7 @@ public class CountingStreak {
         if (captureBlockedUsers.contains(user.getId())) {
             return true;
         }
-        if (!counters.containsKey(user.getId())) {
+        if (!counterIds.contains(user.getId())) {
             addCounter(user, message);
         }
         int number = BaseSystems.toDecimal(content, currentBase);
@@ -81,7 +94,7 @@ public class CountingStreak {
             return true;
         }
 
-        if (isNumCorrect(number, message) && (!user.equals(lastCounter))) { // Count is accepted
+        if (isNumCorrect(number, message) && (!user.getId().equals(lastCounterId))) { // Count is accepted
             lastCount = number;
             incrementCounter();
             sumOfAllCountsSoFar += number;
@@ -102,7 +115,7 @@ public class CountingStreak {
             if (slowModeRule != null) {
                 slowModeRule.applyTimerToMessage(message);
             } else if (timeLimitRule != null && (!timeLimitNewlyAdded)) {
-                timeLimitRule.applyTimerToMessage(message, lastCounter);
+                timeLimitRule.applyTimerToMessage(message, CountingBot.getCounter(guildId,lastCounterId));
             } else {
                 if (user.hasTrophy(number)) {
                     message.addReaction(CountingEmojis.GOLDEN_KEKMARK).subscribe();
@@ -115,7 +128,7 @@ public class CountingStreak {
                         "-# Hint: `~addrule notime` can be used to remove the time limit, but it will cost more money.");  // 67 wer das findet ist dumm leel kann das auf sohn ~~500~~ 450 upgraden bin zu faul leel
                 timeLimitNewlyAdded = false;
             }
-            lastCounter = user;
+            lastCounterId = user.getId();
             return true;
         } else {
             fail(message, number, user);
@@ -124,7 +137,7 @@ public class CountingStreak {
     }
 
     private void addCounter(Counter add, Message message) {
-        counters.put(add.getId(), add);
+        counterIds.add(add.getId());
         add.addStreakToCurrAdd(this);
         lastCaptureTimes.put(add.getId(), System.currentTimeMillis());
         if (!add.isBaseUnlocked(currentBase)) {
@@ -172,22 +185,24 @@ public class CountingStreak {
                 }
 
                 int win = loss;
-                winnerName = counters.get(winnerRule.getOwnerId()).getName();
-                CountingBot.write(message, winnerName + " has pulled a fast one on " + user.getName() + " with their '" + winnerRule.toString() + "' rule and got all of the victim's lost money, which is " + win + ".");
-                counters.get(winnerRule.getOwnerId()).notifyWin(win, currentBase, message);
+                Counter winnerCounter = CountingBot.getCounter(guildId, winnerRule.getOwnerId());
+                winnerName = winnerCounter.getName();
+                CountingBot.write(message, winnerName + " has pulled a fast one on " + user.getName()
+                        + " with their '" + winnerRule + "' rule and got all of the victim's lost money, which is " + win + ".");
+                winnerCounter.notifyWin(win, currentBase, message);
             }
 
         } else {
             cuckPayout = (int) (pendingFailScore / 3.0d);
             int loss = user.fail(message, this);
             if (currentBase == 10) {
-                if (!user.equals(lastCounter)) {
+                if (!user.getId().equals(lastCounterId)) {
                     CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + lastCount + " and lost " + loss + " money.");
                 } else {
                     CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + lastCount + " and lost " + loss + " money.");
                 }
             } else {
-                if (!user.equals(lastCounter)) {
+                if (!user.getId().equals(lastCounterId)) {
                     CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ") and lost " + loss + " money.");
                 } else {
                     CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ") and lost " + loss + " money.");
@@ -203,16 +218,14 @@ public class CountingStreak {
             someoneWon = true;
         }
 
-        for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-            Counter counter = entry.getValue();
-            if (!entry.getKey().equals(user.getId())) {
+        for (String currCounterId : counterIds) {
+            Counter counter = CountingBot.getCounter(guildId, currCounterId);
+            if (!currCounterId.equals(user.getId())) {
                 int wonAmount = counter.getPendingStreakScore(this);
-
                 if (wonAmount > 0) {
                     payoutMessage += (counter.getPing()) + " receives " + wonAmount + " money.\n";
                     someoneWon = true;
                 }
-
                 counter.succeed(this, message);
             }
         }
@@ -371,13 +384,13 @@ public class CountingStreak {
     }
 
     public void addRule(Message message, String ownerId) {
-        if (!counters.containsKey(ownerId)) {
+        if (!counterIds.contains(ownerId)) {
             String guildId = message.getGuildId().get().asString();
-            addCounter(CountingBot.getInstance().getCounter(guildId, ownerId), message);
+            addCounter(CountingBot.getCounter(guildId, ownerId), message);
         }
         String content = message.getContent();
         String[] splitted = content.split(" ");
-        Counter author = counters.get(ownerId);
+        Counter author = CountingBot.getCounter(guildId, ownerId);
 
         if (splitted.length != 2 && splitted.length != 3) {
             addRuleInfo(message, author);
@@ -418,7 +431,7 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter an integer greater than 1!");
                     return;
                 }
-                NumberRule.DividerRule add = new NumberRule.DividerRule(ownerId, divInDecimal, currentBase);
+                DividerRule add = new DividerRule(ownerId, divInDecimal, currentBase);
                 addNumberRule(add);
                 CountingBot.write(message, createYouPaidToAddRuleString(author, currDivPrice, add.toString()));
                 author.subtractScore((int) (author.getAddruleDiscountFactor() * currDivPrice));
@@ -504,14 +517,14 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter an integer without special characters!");
                     return;
                 }
-                if (slow < 1) {
-                    CountingBot.write(message, "Error: Please enter an integer greater than 0!");
+                if (slow < 6) {
+                    CountingBot.write(message, "Error: Please enter an integer greater than 6!");
                     return;
                 }
                 slowModeRule = new SlowModeRule(slow, ownerId);
                 CountingBot.write(message, createYouPaidToAddRuleString(author, currTimePrice, slowModeRule.toString()));
                 if (timeLimitRule != null) {
-                    CountingBot.write(message, "This rule is being replaced: " + timeLimitRule.toString());
+                    CountingBot.write(message, "This rule is being replaced: " + timeLimitRule);
                     timeLimitRule = null;
                 }
                 author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
@@ -623,7 +636,7 @@ public class CountingStreak {
     }
 
     public Counter getLastCounter() {
-        return lastCounter;
+        return CountingBot.getCounter(guildId, lastCounterId);
     }
 
     public int getLastNum() {

@@ -14,8 +14,9 @@ import CompetitiveCounting.BaseSystems;
 public class RootRule extends NumberRule{
 
     private final int root, base;
+    final static String NUMBER_RULE_TYPE = "ROOT";
     public RootRule(String owner, int nthRoot, int base) {
-        super(owner);
+        super(owner, NUMBER_RULE_TYPE);
         this.root = nthRoot;
         this.base = base;
     }

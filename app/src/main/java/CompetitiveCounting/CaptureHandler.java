@@ -15,7 +15,7 @@ public class CaptureHandler {
     private final List<Capture> captures;
     public CaptureHandler(EmojiReactHandler emojiReactHandler) {
         this.emojiReactHandler = emojiReactHandler;
-        this.captures = Storage.getInstance().loadCaptures();
+        this.captures = CountingBot.getInstance().getStorage().loadCaptures();
     }
 
     public boolean raisedCapture(Message message, int number, String userId, HashMap<String,Long> lastCaptureTimes, Runnable onCaptureFailed, Runnable onCaptureSucceeded, TrophyHandler trophyHandler) {

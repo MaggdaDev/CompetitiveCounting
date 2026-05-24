@@ -15,8 +15,9 @@ public class DigSumRule extends NumberRule{
 
     private final int digSum;
     private final double base;
+    final static String NUMBER_RULE_TYPE = "DIGSUM";
     public DigSumRule(String owner, int digSum, int base) {
-        super(owner);
+        super(owner, NUMBER_RULE_TYPE);
         this.digSum = digSum;
         this.base = base;
     }
