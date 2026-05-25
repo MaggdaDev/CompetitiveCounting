@@ -47,4 +47,13 @@ public class Inventory {
         String itemId = item.toString();
         itemsBoughtAmount.put(itemId, getAmountOfItem(item) - 1);
     }
+
+    /**
+     *
+     * @param itemNumber beginning with 1!!!
+     * @return
+     */
+    public Purchasable getItemByItemNumber(int itemNumber) {
+        return getBoughtItemTypes()[itemNumber - 1];
+    }
 }

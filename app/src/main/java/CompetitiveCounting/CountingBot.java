@@ -28,6 +28,7 @@ import reactor.core.Disposable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -82,7 +83,7 @@ public class CountingBot {
             if (content.startsWith(commandIndicator)) {
                 addGuildOrCounterIfNotYetRegistered(message);
                 String commandWithoutIndicator = content.substring(commandIndicator.length()).trim(); // fixed 30 iterations of 'commandIndicator + "command"'
-
+                Optional<CountingStreak> streak = Optional.ofNullable(streaks.get(message.getChannelId().asString()));
                 if (commandWithoutIndicator.startsWith("help")) {
                     write(message, "tasukete kudasai!\nhttp://hyperlexus.net/old/competitivecountinghelp.html");
                 } else if (commandWithoutIndicator.startsWith("scoreboard") || commandWithoutIndicator.equals("top")) {
@@ -132,7 +133,7 @@ public class CountingBot {
                 } else if (commandWithoutIndicator.startsWith("shop") || commandWithoutIndicator.equals("unlock_shop")) {
                     shopCommandHandler.handleShopCommand(message);
                 } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
-                    inventoryCommandHandler.handleInventoryCommand(message);
+                    inventoryCommandHandler.handleInventoryCommand(message, streak);
                 }
             }
         } catch (Exception e) {

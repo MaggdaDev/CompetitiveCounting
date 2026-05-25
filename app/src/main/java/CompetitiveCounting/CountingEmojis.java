@@ -13,7 +13,9 @@ public interface CountingEmojis {
             KEKMARK_BOLT = ReactionEmoji.of(Long.parseLong("1506021088528695417"), "kekmark_bolt", false),
             WARNING = ReactionEmoji.unicode("\u26A0"),
             GOBLIN = ReactionEmoji.unicode("\uD83D\uDC7A"),
-            HANDSHAKE = ReactionEmoji.unicode("\uD83E\uDD1D");
+            HANDSHAKE = ReactionEmoji.unicode("\uD83E\uDD1D"),
+            THUMBS_UP = ReactionEmoji.unicode("\uD83D\uDC4D"),
+            THUMBS_DOWN = ReactionEmoji.unicode("\uD83D\uDC4E");
 
     ReactionEmoji[] ALL_NUMBER_EMOJIS = {
             ReactionEmoji.unicode("\u0030\u20E3"),

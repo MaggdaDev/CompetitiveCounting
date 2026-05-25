@@ -43,10 +43,7 @@ public class Dialogue {
         return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, Optional.empty());
     }
 
-    public Dialogue addWaitForAnyDialogueElement(DialogueElement... elementsToWaitFor) {
-        elements.add(new ParallelDialogElements(elementsToWaitFor));
-        return this;
-    }
+
 
     public Dialogue addEmojiReaction(ReactionEmoji emoji) {
         elements.add(new EmojiReaction((emoji)));
@@ -103,5 +100,9 @@ public class Dialogue {
 
     public List<DialogueElement> getElements() {
         return elements;
+    }
+
+    public void addParallelWaitingDialogueElement(DialogueElement[] sufficient, DialogueElement[] necessary) {
+        elements.add(new ParallelDialogElements(sufficient, necessary));
     }
 }

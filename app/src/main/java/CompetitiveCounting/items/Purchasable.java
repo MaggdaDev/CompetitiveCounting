@@ -3,11 +3,16 @@ package CompetitiveCounting.items;
 import java.util.HashMap;
 
 public enum Purchasable {
-    HAND_BAG(1050505, "Glamorous crocodile-leather Lacoste purse", "A crocodile-branded handbag made of the finest crocodile leather. Truly an accessory made for kings."),
-    FAKE_HAND_BAG(1050505, "Cheap plastic-leather Lakosde purse", "A crocodile-branded handbag made of some leather from Turkey.");
+    HAND_BAG(1050505, "Glamorous crocodile-leather Lacoste purse",
+            "A crocodile-branded handbag made of the finest crocodile leather. Truly an accessory made for kings."),
+    FAKE_HAND_BAG(1050505, "Cheap plastic-leather Lakosde purse",
+            "A crocodile-branded handbag made of some leather from Turkey."),
+    WHITE_STREAK_ENDER(50000, "Streak⚪Ender",
+            "If the majority of contributing counters agrees, this item is consumed, the streak ends and everyone gets their payout.");
 
 
     public final static Purchasable[] BUYABLES = {
+            WHITE_STREAK_ENDER,
             HAND_BAG
     };
     private final static HashMap<String, Purchasable> purchasablesByLowerCaseName;

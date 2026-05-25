@@ -5,11 +5,14 @@
  */
 package CompetitiveCounting;
 
+import CompetitiveCounting.dialogue.Dialogue;
+import CompetitiveCounting.items.StreakEnders;
 import CompetitiveCounting.rules.*;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,10 +46,11 @@ public class CountingStreak {
     private transient CaptureHandler captureHandler;
     private transient EmojiReactHandler emojiReactHandler;
     private transient Disposable emojiReactSubscription;
+    private transient StreakEnders streakEnders;
 
     private boolean destroyedByWrongCapture = false;
 
-    private int sumOfAllCountsSoFar = 0;
+    private HashMap<String, Integer> amountOfCountsPerCounter = new HashMap<>();
 
     // Pre-initializing (fully replaced by loading from json!)
     public CountingStreak(String key, int base, String guildId) {
@@ -68,6 +72,7 @@ public class CountingStreak {
         emojiReactSubscription = CountingBot.getInstance().subscribeEmojiReactHandler(emojiReactHandler, key);
         trophyHandler = new TrophyHandler(emojiReactHandler);
         captureHandler = new CaptureHandler(emojiReactHandler);
+        streakEnders = new StreakEnders(this);
 
         if (timeLimitRule != null){
             timeLimitRule.initialize(this);
@@ -97,7 +102,7 @@ public class CountingStreak {
         if (isNumCorrect(number, message) && (!user.getId().equals(lastCounterId))) { // Count is accepted
             lastCount = number;
             incrementCounter();
-            sumOfAllCountsSoFar += number;
+            amountOfCountsPerCounter.replace(user.getId(), amountOfCountsPerCounter.get(user.getId()) + 1);
             user.notifyCount(number, this);
 
             if(captureHandler.raisedCapture(message, number, user.getId(), lastCaptureTimes, () -> {    // onCaptureFailed
@@ -136,8 +141,13 @@ public class CountingStreak {
         }
     }
 
-    private void addCounter(Counter add, Message message) {
-        counterIds.add(add.getId());
+    public void addCounter(Counter add, Message message) {
+        if (!counterIds.contains(add.getId())) {
+            counterIds.add(add.getId());
+        }
+        if (!amountOfCountsPerCounter.containsKey(add.getId())) {
+            amountOfCountsPerCounter.put(add.getId(), 0);
+        }
         add.addStreakToCurrAdd(this);
         lastCaptureTimes.put(add.getId(), System.currentTimeMillis());
         if (!add.isBaseUnlocked(currentBase)) {
@@ -209,18 +219,29 @@ public class CountingStreak {
                 }
             }
         }
+        streakPayout(message, user.getId(), cuckPayout);
+        CountingBot.getInstance().save();
+    }
 
+    /**
+     *
+     * @param message
+     * @param idOfCuck - nullable if noone cucked!
+     * @param cuckPayout - ignored if idOfCuck is null (or not equal to any counter id)
+     */
+    public void streakPayout(Message message, String idOfCuck, int cuckPayout) {
+        // todo: ggf. schreiben wieviel des payouts an contracts gezahlt wurde
         String payoutMessage = "**Streak payouts:**\n";
         boolean someoneWon = false;
 
-        if (cuckPayout > 0) {
-            payoutMessage += user.getPing() + " receives " + cuckPayout + " money.\n";
-            someoneWon = true;
-        }
-
         for (String currCounterId : counterIds) {
             Counter counter = CountingBot.getCounter(guildId, currCounterId);
-            if (!currCounterId.equals(user.getId())) {
+            if (currCounterId.equals(idOfCuck)) {
+                if (cuckPayout > 0) {
+                    payoutMessage += CountingBot.getCounter(guildId, idOfCuck).getPing() + " receives " + cuckPayout + " money.\n";
+                    someoneWon = true;
+                }
+            } else {
                 int wonAmount = counter.getPendingStreakScore(this);
                 if (wonAmount > 0) {
                     payoutMessage += (counter.getPing()) + " receives " + wonAmount + " money.\n";
@@ -234,9 +255,7 @@ public class CountingStreak {
             CountingBot.write(message, payoutMessage);
         }
 
-        // irgendwanntodo streak payouts unified with "he messed up" messages
 
-        CountingBot.getInstance().save();
     }
 
     private Rule getWinnerRule(int number) {
@@ -667,10 +686,31 @@ public class CountingStreak {
         if (timeLimitRule != null) {
             timeLimitRule.cancel();
         }
+        streakEnders.dispose();
         emojiReactSubscription.dispose();
     }
 
     public TrophyHandler getTrophyHandler() {
         return trophyHandler;
+    }
+
+    public HashMap<String, Integer> getAmountOfCountsPerCounter() {
+        return amountOfCountsPerCounter;
+    }
+
+    public int getTotalAmountOfCounts() {
+        int total = 0;
+        for (int amount : amountOfCountsPerCounter.values()) {
+            total += amount;
+        }
+        return total;
+    }
+
+    public String getGuildId() {
+        return guildId;
+    }
+
+    public StreakEnders getStreakEnders() {
+        return streakEnders;
     }
 }

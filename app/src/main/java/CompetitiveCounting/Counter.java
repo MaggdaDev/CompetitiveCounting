@@ -12,6 +12,7 @@ import CompetitiveCounting.contracts.ContractOwner;
 import CompetitiveCounting.items.Inventory;
 import CompetitiveCounting.items.Purchasable;
 import CompetitiveCounting.items.ShopCommandHandler;
+import CompetitiveCounting.items.StreakEnders;
 import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
@@ -433,16 +434,28 @@ public class Counter implements ContractOwner {
         return 1.0;
     }
 
-    public void use(Purchasable item, Message message) {
+    public void use(Purchasable item, Message message, Optional<CountingStreak> optionalStreak) {
+        if (optionalStreak.isPresent()) {
+            if (!currScoreAdds.containsKey(optionalStreak.get().getKey())){
+                optionalStreak.get().addCounter(this, message);
+            }
+        }
         switch (item) {
             case FAKE_HAND_BAG: case HAND_BAG:
                 writeUseMessage(Purchasable.FAKE_HAND_BAG, message);
                 CountingBot.getInstance().requestHandBagRefundViaItem(message);
+                inventory.removeItem(item);
+                break;
+            case WHITE_STREAK_ENDER:
+                if (optionalStreak.isEmpty()) {
+                    CountingBot.write(message, "You can only use streak-enders in an active streak!");
+                    return;
+                }
+                optionalStreak.get().getStreakEnders().whiteUsed(message, this);
                 break;
             default:
                 throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
         }
-        inventory.removeItem(item);
         CountingBot.getInstance().save();
     }
 

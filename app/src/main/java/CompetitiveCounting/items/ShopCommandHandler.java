@@ -79,11 +79,12 @@ public class ShopCommandHandler {
         sb.append("Welcome to the shop! The items you can find here are: \n\n");
         int itemCounter = 1;
         for (Purchasable item : Purchasable.BUYABLES) {
-            sb.append(itemCounter + ": " + item.getName())
+            sb.append(itemCounter + ") " + item.getName())
                     .append(" - ")
                     .append(item.getPrice())
                     .append(" money")
                     .append("\n");
+            itemCounter += 1;
         }
         sb.append("\nTo buy an item, use `~shop buy <item name>` or `~shop buy <item number>`.\n");
         CountingBot.write(message, sb.toString());
