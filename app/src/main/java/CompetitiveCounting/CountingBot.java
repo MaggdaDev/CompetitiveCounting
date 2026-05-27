@@ -281,14 +281,47 @@ public class CountingBot {
 
         String ruleInfo = streak.getRulesRespond();
         String baseInfo = streak.getBaseInfoRespond(1);
-        String factorInfo = "***Everyone***'s score multiplier: " + streakFactor + "x\n" +
-                "***Your*** score multiplier: " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x";
+        String factorInfo = "**Everyone**'s score multiplier: " + streakFactor + "x\n" +
+                "**Your** score multiplier: " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x";
+        class PendingPayout {
+            final Counter counter;
+            final int amount;
+            PendingPayout(Counter counter, int amount) {
+                this.counter = counter;
+                this.amount = amount;
+            }
+        }
+
+        List<PendingPayout> pendingPayouts = new ArrayList<>();
+        String guildId = streak.getGuildId();
+        for (String counterId : streak.getAmountOfCountsPerCounter().keySet()) {
+            Counter c = CountingBot.getCounter(guildId, counterId);
+            int pendingScore = c.getPendingStreakScore(streak);
+
+            if (pendingScore > 0) {
+                pendingPayouts.add(new PendingPayout(c, pendingScore));
+            }
+        }
+        pendingPayouts.sort((a, b) -> Integer.compare(b.amount, a.amount));
+
+        StringBuilder pendingInfo = new StringBuilder();
+        if (!pendingPayouts.isEmpty()) {
+            pendingInfo.append("\n\nParticipants of this streak stand to gain:");
+            int position = 1;
+            for (PendingPayout p : pendingPayouts) {
+                pendingInfo.append("\n").append(position).append(". ").append(p.counter.getName())
+                        .append(": **").append(p.amount).append("** money");
+                position++;
+            }
+        }
+
         String resultInfo = "Information about the current streak:\n\n";
         resultInfo += "**" + lastCounter.getName() + "** counted the previous number.";
         resultInfo += "\nThe last number was **" + (base == 10 ? lastNumberCounted + "**." : lastNumberInBase + "** (=" + lastNumberCounted + ").");
         resultInfo += "\n\n" + baseInfo;
         resultInfo += "\n\n" + factorInfo;
         resultInfo += "\n\n" + ruleInfo;
+        resultInfo += pendingInfo.toString();
         CountingBot.write(message, resultInfo);
     }
 
