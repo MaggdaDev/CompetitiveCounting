@@ -582,41 +582,43 @@ public class CountingBot {
 
     private String scoreboard(Message message, String mode) {
         String guildId = message.getGuildId().get().asString();
-        ArrayList<Counter> countersSorted = new ArrayList<>();
-//        System.out.println(guilds.get(guildId).getCounters());
-        guilds.get(guildId).getCounters().forEach((String counterId, Counter counter) ->
-        { countersSorted.add(counter); });
-        countersSorted.sort((arg0, arg1) -> {    // arg0 > arg1 => 1
-            if (arg1.getPrestiges() > arg0.getPrestiges() || (arg1.getPrestiges() == arg0.getPrestiges() && arg1.getPossibleTotal() > arg0.getPossibleTotal())) {
-                return 1;
-            } else if (arg1.getPrestiges() == arg0.getPrestiges() && arg1.getPossibleTotal() == arg0.getPossibleTotal()) {
-                return 0;
+        ArrayList<Counter> countersSorted = new ArrayList<>(guilds.get(guildId).getCounters().values());
+
+        countersSorted.sort((a, b) -> {
+            int prestigeCompare = Integer.compare(b.getPrestiges(), a.getPrestiges());
+            if (prestigeCompare != 0) {
+                return prestigeCompare;
+            }
+
+            if (mode.equals("networth")) {
+                return Integer.compare(b.getAccWorth(), a.getAccWorth());
             } else {
-                return -1;
+                return Integer.compare(b.getPossibleTotal(), a.getPossibleTotal());
             }
         });
         String ret = "Scoreboard: ";
         Bank bank = guilds.get(guildId).getBank();
         String bankString = "The CrocBank Inc. \uD83D\uDC0A: " + bank.getTotalScore() + " money";
-        boolean bankDisplayed = false;
-        if (!bank.isUnlocked()) {
-            bankDisplayed = true;   // Dont show bank if not unlocked
-        }
+        boolean bankDisplayed = !bank.isUnlocked(); // Dont show bank if not unlocked
+
         int position = 1;
         for (Counter counter : countersSorted) {
             if (counter.getPrestiges() == 0 && counter.getPossibleTotal() == 0) {
                 continue;
             }
-            if (!bankDisplayed && (bank.getTotalScore() > counter.getPossibleTotal() && counter.getPrestiges() == 0)) {
+
+            int bankCompareValue = mode.equals("networth") ? counter.getAccWorth() : counter.getPossibleTotal();
+
+            if (!bankDisplayed && (bank.getTotalScore() > bankCompareValue && counter.getPrestiges() == 0)) {
                 ret += "\n" + position + ") " +  bankString;
                 bankDisplayed = true;
-                position +=1;
+                position += 1;
             }
             ret += "\n" + position + ") " + counter.getName() + ": ";
             if (mode.equals("bal")) {
-                ret +=  + counter.getPossibleTotal() + " money";
+                ret += counter.getPossibleTotal() + " money";
             } else if (mode.equals("networth")) {
-                ret += counter.getAccWorth() + " net worth"; // did not check if counter has acc worth since they must if included in countersSorted
+                ret += counter.getAccWorth() + " net worth";
             }
             if (counter.getPrestiges() != 0) {
                 ret += " (Amount of Prestiges: " + counter.getPrestiges() + ")";
