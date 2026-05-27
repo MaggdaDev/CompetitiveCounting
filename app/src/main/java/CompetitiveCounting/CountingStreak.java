@@ -100,6 +100,12 @@ public class CountingStreak {
             return true;
         }
 
+        if (lastCount == 1 && number == 1) {
+            CountingBot.write(message, "This number will be ignored; A streak has already been started, please continue with the next number!");
+            return true;
+        }
+
+
         if (isNumCorrect(number, message) && (!user.getId().equals(lastCounterId))) { // Count is accepted
             lastCount = number;
             incrementCounter();
