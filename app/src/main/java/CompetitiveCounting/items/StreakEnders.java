@@ -106,7 +106,7 @@ public class StreakEnders {
                         }
                         itemUser.getInventory().removeItem(Purchasable.WHITE_STREAK_ENDER);
                         CountingBot.write(message, itemUser.getName() + " used a " + Purchasable.WHITE_STREAK_ENDER.getName() + "...");
-                        streak.streakPayout(message, "", 0, null, 67);
+                        streak.streakPayout(message, "", 0, null, 0, null);
                         currentWhiteStreakEnderDialogue = null;
                         CountingBot.getInstance().disposeStreak(streak.getKey());
                     })
@@ -120,7 +120,7 @@ public class StreakEnders {
             }
             CountingBot.write(message, "You used a " + Purchasable.WHITE_STREAK_ENDER.getName() + "...");
             itemUser.getInventory().removeItem(Purchasable.WHITE_STREAK_ENDER);
-            streak.streakPayout(message, "", 0, null, 67);
+            streak.streakPayout(message, null, 0, null, 0, null); // todo testen ob man da irgendwas schreiben muss so "a streak ender was used heureker jeder kriegt geld" oder soos
             CountingBot.getInstance().disposeStreak(streak.getKey());
         }
     }

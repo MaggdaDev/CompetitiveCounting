@@ -176,6 +176,7 @@ public class CountingStreak {
 
         String ruleWinnerId = null;
         int winFromRules = 0;
+        String moneyInformation = ""; // who lost what to whom, the all known w fragen
 
         if (winnerRule != null) {
             int loss;
@@ -190,19 +191,22 @@ public class CountingStreak {
                 // user fucks up from own rule
                 cuckPayout = (int) (pendingFailScore / 2.0d);
                 loss = user.failFromOwn(message, this);
-                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + " due to his own rule '" + winnerRule.toString() + "' and lost " + loss + " money.");
+                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + ".");
+
+                moneyInformation = user.getName() + " lost **" + loss + "** money due to their own rule '" + winnerRule.toString() + "', but kept **" + cuckPayout + "** money from the streak.";
             } else {
                 // user gets fucked from other rule
                 cuckPayout = (int) (pendingFailScore / 3.0d);
                 loss = user.fail(message, this);
-                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + " and lost " + loss + " money.");
+                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + ".");
 
                 Counter winnerCounter = CountingBot.getCounter(guildId, winnerRule.getOwnerId());
                 ruleWinnerId = winnerCounter.getId();
                 winFromRules = loss;
 
-                CountingBot.write(message, winnerCounter.getName() + " has pulled a fast one on " + user.getName()
-                        + " with their '" + winnerRule + "' rule and got all of the victim's lost money, which is " + loss + ".");
+                // Header updated with bolding and consolation prize
+                moneyInformation = user.getName() + " lost **" + loss + "** total money, but kept **" + cuckPayout + "** money from the streak.\n" + winnerCounter.getName() + " has pulled a fast one on " + user.getName()
+                        + " with their '" + winnerRule + "' rule and got all of the victim's lost money!";
 
                 winnerCounter.notifyWin(loss, currentBase, message);
             }
@@ -212,14 +216,17 @@ public class CountingStreak {
             int loss = user.fail(message, this);
 
             if (!user.getId().equals(lastCounterId)) {
-                CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + countDisplay + " and lost " + loss + " money.");
+                CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + countDisplay + ".");
             } else {
-                CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + countDisplay + " and lost " + loss + " money.");
+                CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + countDisplay + ".");
             }
+
+            // Header updated with bolding and consolation prize
+            moneyInformation = user.getName() + " lost **" + loss + "** money (but kept **" + cuckPayout + "** money).";
         }
 
         // now we are no longer cavemen!
-        streakPayout(message, user.getId(), cuckPayout, ruleWinnerId, winFromRules);
+        streakPayout(message, user.getId(), cuckPayout, ruleWinnerId, winFromRules, moneyInformation);
         CountingBot.getInstance().save();
     }
 
@@ -230,10 +237,11 @@ public class CountingStreak {
      * @param cuckPayout - ignored if idOfCuck is null (or not equal to any counter id)
      * @param ruleWinnerId - nullable if noone won from rules
      * @param ruleWinAmount - ignored if ruleWeinerId is null
+     * @param moneyInformation - string detailing the loser's money loss and rule thefts
      */
-    public void streakPayout(Message message, String idOfCuck, int cuckPayout, String ruleWinnerId, int ruleWinAmount) {
+    public void streakPayout(Message message, String idOfCuck, int cuckPayout, String ruleWinnerId, int ruleWinAmount, String moneyInformation) {
         // todo: ggf. schreiben wieviel des payouts an contracts gezahlt wurde
-        class Payout { // zeit es komplett zu übertreiben
+        class Payout { // zeit es komplett zu übertreiben part 2
             final Counter counter;
             int streakAmount = 0;
             int ruleAmount = 0;
@@ -263,28 +271,37 @@ public class CountingStreak {
         }
 
         // finally sortiert der spast
-        List<Payout> sortedPayouts = streakPayoutMap.values() // alle bluds
+        List<Payout> sortedPayouts = streakPayoutMap.values()
                 .stream()
-                .filter(p -> p.getTotal() > 0) // if (p.getTotal() > 0)
-                .sorted((a, b) ->
-                Integer.compare(b.getTotal(), a.getTotal())).collect(Collectors.toList());
+                .filter(p -> p.getTotal() > 0)
+                .filter(p -> !p.counter.getId().equals(idOfCuck))  // THE WINNER TAKES IT AAAAALLL AND THE LOSER HAS TO FALL
+                .sorted((a, b) -> Integer.compare(b.getTotal(), a.getTotal()))
+                .collect(Collectors.toList());
 
-        if (sortedPayouts.isEmpty()) { return; }  // kein geld
+        StringBuilder payoutMessage = new StringBuilder();
 
-        StringBuilder payoutMessage = new StringBuilder("**Streak payouts:**\n");
-        int position = 1;
-        for (Payout p : sortedPayouts) {
-            payoutMessage.append(position).append(". ").append(p.counter.getName())
-                    .append(": ").append(p.streakAmount).append(" money");
-
-            if (p.ruleAmount > 0) {
-                payoutMessage.append(" (+").append(p.ruleAmount).append(" from rules)");
-            }
-            payoutMessage.append("\n");
-            position++;
+        if (moneyInformation != null && !moneyInformation.isEmpty()) {
+            payoutMessage.append(moneyInformation).append("\n\n");
         }
 
-        CountingBot.write(message, payoutMessage.toString());
+        if (!sortedPayouts.isEmpty()) {
+            payoutMessage.append("**Streak payouts:**\n");
+            int position = 1;
+            for (Payout p : sortedPayouts) {
+                payoutMessage.append("­").append(position).append(". ").append(p.counter.getName())
+                        .append(": **").append(p.streakAmount).append("** money");
+
+                if (p.ruleAmount > 0) {
+                    payoutMessage.append(" (**+").append(p.ruleAmount).append("** from rules)");
+                }
+                payoutMessage.append("\n");
+                position++;
+            }
+        }
+
+        if (payoutMessage.length() > 0) {
+            CountingBot.write(message, payoutMessage.toString().trim());
+        }
     }
 
     private Rule getWinnerRule(int number) {
