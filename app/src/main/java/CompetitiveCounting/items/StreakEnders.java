@@ -106,7 +106,7 @@ public class StreakEnders {
                         }
                         itemUser.getInventory().removeItem(Purchasable.WHITE_STREAK_ENDER);
                         CountingBot.write(message, itemUser.getName() + " used a " + Purchasable.WHITE_STREAK_ENDER.getName() + "...");
-                        streak.streakPayout(message, "", 0);
+                        streak.streakPayout(message, "", 0, null, 67);
                         currentWhiteStreakEnderDialogue = null;
                         CountingBot.getInstance().disposeStreak(streak.getKey());
                     })
@@ -120,7 +120,7 @@ public class StreakEnders {
             }
             CountingBot.write(message, "You used a " + Purchasable.WHITE_STREAK_ENDER.getName() + "...");
             itemUser.getInventory().removeItem(Purchasable.WHITE_STREAK_ENDER);
-            streak.streakPayout(message, "", 0);
+            streak.streakPayout(message, "", 0, null, 67);
             CountingBot.getInstance().disposeStreak(streak.getKey());
         }
     }

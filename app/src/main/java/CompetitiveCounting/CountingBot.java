@@ -272,17 +272,17 @@ public class CountingBot {
         int base = streak.getBase();
         double streakFactor = streak.getCurrentBonusFactor();
         Counter lastCounter = streak.getLastCounter();
-
-        String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
-
-        String ruleInfo = streak.getRulesRespond();
-        String baseInfo = streak.getBaseInfoRespond();
-        String factorInfo = "***Everyone***'s collected score in this streak gets a " + streakFactor + "x bonus multiplier.\n" +
-                "***Your*** collected score in this streak gets a " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x total bonus multiplier.";
         if (lastCounter == null) {
             CountingBot.write(message, "No current streak! You can be the first person to count.");
             return;
         }
+
+        String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
+
+        String ruleInfo = streak.getRulesRespond();
+        String baseInfo = streak.getBaseInfoRespond(1);
+        String factorInfo = "***Everyone***'s score multiplier: " + streakFactor + "x\n" +
+                "***Your*** score multiplier: " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x";
         String resultInfo = "Information about the current streak:\n\n";
         resultInfo += "**" + lastCounter.getName() + "** counted the previous number.";
         resultInfo += "\nThe last number was **" + (base == 10 ? lastNumberCounted + "**." : lastNumberInBase + "** (=" + lastNumberCounted + ").");
@@ -400,7 +400,7 @@ public class CountingBot {
     private void baseInfo(Message message) {
         String channelId = message.getChannelId().asString();
         if (streaks.containsKey(channelId)) {
-            write(message, streaks.get(channelId).getBaseInfoRespond());
+            write(message, streaks.get(channelId).getBaseInfoRespond(0));
         } else {
             write(message, "There is no selected base yet.");
         }
@@ -519,7 +519,7 @@ public class CountingBot {
 
     private void unlockInfo(Message message, Counter author) {
         if (author.isUnlocked(Unlockable.UNLOCK_COMMAND)) {
-            String answ = "Unlock new stuff with the '~unlock' command!\nUsage: ~unlock [unlock name]\n\nYet to unlock:";
+            String answ = "Unlock new stuff with the '~unlock' command!\nUsage: ~unlock [unlock name]\n\nYet to unlock (You have " + author.getScore() + " money):";
             boolean anyUnlockable = false;
             int currCount = 1;
             boolean ruleCostUpgradeAlreadyDisplayed = false;
