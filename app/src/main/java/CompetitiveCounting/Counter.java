@@ -378,7 +378,7 @@ public class Counter implements ContractOwner {
     }
 
     public void contractInfo(Message message) {
-        String mess = "# " + getName() + "' contracts\n\n";
+        String mess = "**Your contracts:**\n\n";
         if (contracts.size() == 0 && incomingContracts.size() == 0) {
             CountingBot.write(message, "You don't have any active contracts!");
             return;

@@ -210,7 +210,6 @@ public class CountingStreak {
                 ruleWinnerId = winnerCounter.getId();
                 winFromRules = loss;
 
-                // Header updated with bolding and consolation prize
                 moneyInformation = user.getName() + " lost **" + loss + "** total money, but kept **" + cuckPayout + "** money from the streak.\n" + winnerCounter.getName() + " has pulled a fast one on " + user.getName()
                         + " with their '" + winnerRule + "' rule and got all of the victim's lost money!";
 
@@ -227,8 +226,7 @@ public class CountingStreak {
                 CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + countDisplay + ".");
             }
 
-            // Header updated with bolding and consolation prize
-            moneyInformation = user.getName() + " lost **" + loss + "** money (but kept **" + cuckPayout + "** money).";
+            moneyInformation = user.getName() + " lost **" + loss + "** money, but kept **" + cuckPayout + "** money from the streak.";
         }
 
         // now we are no longer cavemen!
