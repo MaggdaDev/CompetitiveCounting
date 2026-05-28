@@ -6,6 +6,7 @@
 package CompetitiveCounting;
 
 
+import CompetitiveCounting.items.Item;
 import CompetitiveCounting.storage.LocalHttpServer;
 import CompetitiveCounting.storage.Storage;
 import discord4j.core.DiscordClientBuilder;
@@ -57,6 +58,7 @@ public class Main {
             e.printStackTrace();
             return;
         }
+        Item.initializeItems();
         bot = new CountingBot(client);
         httpServer.setSaveStreaksRunnable(bot::saveCountersAndStreaks);
         MessageHandler messageHandler = new MessageHandler(bot);

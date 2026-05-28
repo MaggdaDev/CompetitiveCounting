@@ -1,9 +1,11 @@
 package CompetitiveCounting.items;
 
 import CompetitiveCounting.Price;
+import CompetitiveCounting.items.equippables.Equippables;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Item {
@@ -13,16 +15,28 @@ public class Item {
 
     public static Item[] ALL_ITEMS;
 
-    static {
+    public static void initializeItems() {
         try {
+            // consumables
             List<Item> consumables = new ArrayList<>();
             for (Field field : Consumables.class.getDeclaredFields()) {
                 consumables.add((Item)field.get(null));
             }
-            int globalItemsCount = consumables.size();
+            // equippables
+            List<Item> equippables = new ArrayList<>();
+            for (Field field : Equippables.class.getDeclaredFields()) {
+                equippables.add((Item)field.get(null));
+            }
+
+            int consumablesCount = consumables.size();
+            int equippablesCount = equippables.size();
+            int globalItemsCount = consumablesCount + equippablesCount;
             ALL_ITEMS = new Item[globalItemsCount];
-            for (int i = 0; i < consumables.size(); i++) {
+            for (int i = 0; i < consumablesCount; i++) {
                 ALL_ITEMS[i] = consumables.get(i);
+            }
+            for (int i = 0; i < equippablesCount; i++) {
+                ALL_ITEMS[consumablesCount + i] = equippables.get(i);
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize items", e);

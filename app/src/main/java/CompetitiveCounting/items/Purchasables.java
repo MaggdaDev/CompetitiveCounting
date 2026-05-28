@@ -1,10 +1,13 @@
 package CompetitiveCounting.items;
 
+import CompetitiveCounting.items.equippables.Equippables;
+
 import java.util.HashMap;
 public class Purchasables {
     public final static Item[] PURCHASABLE_ITEMS = {
             Consumables.WHITE_STREAK_ENDER,
-            Consumables.HAND_BAG
+            Consumables.HAND_BAG,
+            Equippables.VAULT_LOCATOR
     };
 
     public static Item getPurchasableByNameOrNumber(String itemAsNameOrNumber) {

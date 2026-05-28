@@ -32,6 +32,7 @@ public class Inventory {
     public Item[] getBoughtItemTypes() {
         List<Item> list = new ArrayList<>();
         for (Item item : Item.ALL_ITEMS) {
+            System.out.println("Checking item " + item );
             if (getAmountOfItem(item) > 0) {
                 list.add(item);
             }
