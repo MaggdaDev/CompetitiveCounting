@@ -22,6 +22,7 @@ import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.Disposable;
 
@@ -758,6 +759,20 @@ public class CountingBot {
     public static void write(Message message, String s) {
         write(message, s, (msg) -> {
         });
+    }
+
+    // implement me!
+    public static void reactWithBlockPrevention(Message message, ReactionEmoji emoji, String emojiDisplayName) {
+        message.addReaction(emoji)
+                .onErrorResume(discord4j.rest.http.client.ClientException.class, error -> {
+                    if (error.getStatus().code() == 403) {
+                        write(message, "The bot tried to react with " + emojiDisplayName + ", but it appears to have been blocked." +
+                                "Please unblock the bot to ensure a smooth experience for everyone.");
+                        return reactor.core.publisher.Mono.empty();
+                    }
+                    return reactor.core.publisher.Mono.error(error);
+                })
+                .subscribe();
     }
 
     private void scoreInfo(Message message) {
