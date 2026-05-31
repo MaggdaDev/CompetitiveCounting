@@ -31,7 +31,7 @@ public class CountingStreak {
     private ArrayList<String> counterIds;
 
     private HashMap<String, Long> lastCaptureTimes = new HashMap<>();
-    private final List<String> captureBlockedUsers = new ArrayList<>();
+    private List<String> captureBlockedUsers;
 
     private ArrayList<NumberRule> numberRules;
     private SlowModeRule slowModeRule;
@@ -74,6 +74,7 @@ public class CountingStreak {
         trophyHandler = new TrophyHandler(emojiReactHandler);
         captureHandler = new CaptureHandler(emojiReactHandler);
         streakEnders = new StreakEnders(this);
+        captureBlockedUsers = new ArrayList<>();
 
         if (timeLimitRule != null){
             timeLimitRule.initialize(this);
@@ -85,6 +86,7 @@ public class CountingStreak {
             return false;
         }
         if (captureBlockedUsers.contains(user.getId())) {
+            CountingBot.write(message, "Please answer the captcha before counting the next number, " + user.getName() + "!");
             return true;
         }
         if (!counterIds.contains(user.getId())) {

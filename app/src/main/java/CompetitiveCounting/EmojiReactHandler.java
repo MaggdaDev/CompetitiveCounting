@@ -105,6 +105,23 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         onAnyReact.add(consumer);
     }
 
+    public boolean hasOnAnyReact(TriFunction<Message, User, ReactionEmoji.Unicode, Boolean> consumer) {
+        return onAnyReact.contains(consumer);
+    }
+
+    public boolean hasOnNumberReact(TriFunction<Message, User, Integer, Boolean> consumer) {
+        return onNumberReact.contains(consumer);
+    }
+
+    public void removeOnAnyReact(TriFunction<Message, User, ReactionEmoji.Unicode, Boolean> consumer) {
+        onAnyReact.remove(consumer);
+    }
+
+    public void removeOnNumberReact(TriFunction<Message, User, Integer, Boolean> consumer) {
+        onNumberReact.remove(consumer);
+    }
+
+
     public void activateWithSingleUseMode(Disposable disposableForSingleUse) {
         isActive = true;
         singleUseHandlerDisposable = disposableForSingleUse;
