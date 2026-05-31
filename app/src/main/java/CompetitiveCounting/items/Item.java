@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Item {
-    private final Price price;
+    private final Price price;  // todo nicht serializen
     private final String name;
     private final String description;
 

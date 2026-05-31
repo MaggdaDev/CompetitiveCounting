@@ -10,6 +10,8 @@ import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.contracts.ContractHandler;
 import CompetitiveCounting.contracts.ContractOwner;
 import CompetitiveCounting.items.*;
+import CompetitiveCounting.items.Collection;
+import CompetitiveCounting.items.equippables.Equippable;
 import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
@@ -43,6 +45,7 @@ public class Counter implements ContractOwner {
 
     private transient String guildId;   // Will be set in initContracts method
     private Inventory inventory;
+    private Collection collection;
 
     public Counter(String guildId, String key, String name) {
         this.key = key;
@@ -55,6 +58,7 @@ public class Counter implements ContractOwner {
         this.unlockedSystems = new int[]{};
         this.bonusStreaks = new BonusStreak[]{};
         inventory = new Inventory();
+        collection = new Collection();
         init(guildId);
         contractHandler.initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
@@ -81,6 +85,9 @@ public class Counter implements ContractOwner {
         }
         if (inventory == null) {
             inventory = new Inventory();
+        }
+        if (collection == null) {
+            collection = new Collection();
         }
 
     }
@@ -437,7 +444,11 @@ public class Counter implements ContractOwner {
                 optionalStreak.get().addCounter(this, message);
             }
         }
-        if (item == Consumables.FAKE_HAND_BAG || item == Consumables.HAND_BAG) {
+        if (item instanceof Equippable) {
+            Equippable equippable = (Equippable) item;
+            equippable.equip(message, collection);
+            return;
+        } else if (item == Consumables.FAKE_HAND_BAG || item == Consumables.HAND_BAG) {
             writeUseMessage(Consumables.FAKE_HAND_BAG, message);
             CountingBot.getInstance().requestHandBagRefundViaItem(message);
             inventory.removeItem(item);
@@ -652,4 +663,7 @@ public class Counter implements ContractOwner {
     }
 
 
+    public Collection getCollection() {
+        return collection;
+    }
 }

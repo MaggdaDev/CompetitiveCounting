@@ -8,6 +8,8 @@ import CompetitiveCounting.CaptureHandler;
 import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingGuild;
 import CompetitiveCounting.CountingStreak;
+import CompetitiveCounting.items.equippables.Equippable;
+import CompetitiveCounting.items.equippables.EquippablesDeserializer;
 import CompetitiveCounting.rules.NumberRule;
 import CompetitiveCounting.rules.NumberRuleDeserializer;
 import com.google.gson.Gson;
@@ -75,7 +77,9 @@ public class Storage {
             return guilds;
         }
         String asString = loadJsonStringFromFile(COUNTERS_PATH);
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(Equippable.class, new EquippablesDeserializer())
+                .create();
         guilds = gson.fromJson(asString, (new TypeToken<HashMap<String,CountingGuild>>(){}).getType());
         if(guilds == null) {
             guilds = new HashMap<String,CountingGuild>();

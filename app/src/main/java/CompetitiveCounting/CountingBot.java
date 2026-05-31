@@ -11,6 +11,7 @@ import CompetitiveCounting.bank.BankAccount;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.items.CollectionCommandHandler;
 import CompetitiveCounting.items.InventoryCommandHandler;
 import CompetitiveCounting.items.ShopCommandHandler;
 import CompetitiveCounting.storage.Storage;
@@ -134,6 +135,8 @@ public class CountingBot {
                     shopCommandHandler.handleShopCommand(message);
                 } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
                     inventoryCommandHandler.handleInventoryCommand(message, streak);
+                } else if (commandWithoutIndicator.startsWith(CollectionCommandHandler.COMMAND_INDICATOR)) {
+                    CollectionCommandHandler.handleCollectionCommand(message);
                 }
             }
         } catch (Exception e) {
