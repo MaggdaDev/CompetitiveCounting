@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CaptureHandler {
-    private final static long MIN_TIME_BETWEEN_CAPTURES = 0;//420000;
-    private final double CAPTURE_CHANCE = 1.0;//0.05; // todo
+    private final static long MIN_TIME_BETWEEN_CAPTURES = 630000;
+    private final double CAPTURE_CHANCE = 0.05;
     private final EmojiReactHandler emojiReactHandler;
 
     private final List<Capture> captures;
@@ -40,7 +40,7 @@ public class CaptureHandler {
 
     private void doCapture(Message message, int number, String userId, Runnable onCaptureFailed, Runnable onCaptureSucceeded, TrophyHandler trophyHandler) {
         Capture capture;
-        boolean secret = true; //Math.random() < 1.0 / (double)captures.size(); todo
+        boolean secret = Math.random() < 1.0 / (double)captures.size();
         if (secret) {
             capture = Capture.SECRET_CAPTURE;
         } else {
