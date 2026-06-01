@@ -24,6 +24,8 @@ public class EmojiReactionSubscriber extends DialogueElement {
     private Consumer<Message> onReactCallback = null;
     private final Optional<String> counterIdRestriction;
 
+    private Thread waitingThread = null;
+
     public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
                                    Consumer<Message> onReactCallback, Optional<String> counterIdRestriction) {
         this.emoji = emoji;
@@ -50,6 +52,7 @@ public class EmojiReactionSubscriber extends DialogueElement {
                 },
                 emoji.asUnicodeEmoji().get()
         );
+        waitingThread = Thread.currentThread();
         try {
             latch.await();
             onReactCallback.accept(message);
@@ -68,6 +71,10 @@ public class EmojiReactionSubscriber extends DialogueElement {
     public void dispose() {
         if (emojiReactHandler != null && emojiReactHandler.isActive()) {
             emojiReactHandler.disposeSingleUse();
+        }
+
+        if (waitingThread != null) {
+            waitingThread.interrupt();
         }
     }
 

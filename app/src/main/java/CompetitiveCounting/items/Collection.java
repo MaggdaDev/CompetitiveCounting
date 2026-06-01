@@ -1,7 +1,7 @@
 package CompetitiveCounting.items;
 
-import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.items.equippables.Equippable;
+import CompetitiveCounting.items.equippables.Equippables;
 import com.google.common.base.Objects;
 
 import java.util.ArrayList;
@@ -29,8 +29,8 @@ public class Collection {
         return maxSize;
     }
 
-    public double getBonus() {
-        return equippables.size() * BONUS_PER_ITEM;
+    public double getBonusFact() {
+        return 1.0 + equippables.size() * BONUS_PER_ITEM;
     }
 
     public boolean isFull() {
@@ -50,7 +50,7 @@ public class Collection {
     public String toString() {
         if (getEquippables().size() == 0) {
             return "Your collection is empty! You can add up to " + getMaxSize() + " different equippables " +
-                    "to your collection buy calling `~inv use` on them. \nBe ready for a global multiplicative bonus scaling with the amount of unique items in your collection!";
+                    "to your collection by calling `~inv use` on them. \nBe ready for a global multiplicative bonus scaling with the amount of unique items in your collection!";
         }
         StringBuilder sb = new StringBuilder();
         sb.append("Your collection:\n\n");
@@ -68,5 +68,14 @@ public class Collection {
             }
         }
         return sb.toString();
+    }
+
+    public Equippable getEquippable(Equippable eq) {
+        for (Equippable equippable : equippables) {
+            if (Objects.equal(equippable.getName(), eq.getName())) {
+                return equippable;
+            }
+        }
+        throw new IllegalArgumentException("Equippable not found in collection: " + eq.getName());
     }
 }

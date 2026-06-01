@@ -43,6 +43,10 @@ public class Dialogue {
         return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, Optional.empty());
     }
 
+    public Dialogue addWaitForUserAnswer(Function<Message, Boolean> testAnswer) {
+        elements.add(new UserAnswerSubscriber(testAnswer));
+        return this;
+    }
 
 
     public Dialogue addEmojiReaction(ReactionEmoji emoji) {

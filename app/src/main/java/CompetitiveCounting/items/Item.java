@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Item {
-    private final Price price;  // todo nicht serializen
-    private final String name;
-    private final String description;
+    private final transient Price price;
+    private final String name;  // Unique: Used to determine item and class
+    private final transient String description;
 
     public static Item[] ALL_ITEMS;
 

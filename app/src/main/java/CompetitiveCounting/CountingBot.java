@@ -49,6 +49,7 @@ public class CountingBot {
     private final BankTransactionsHandler bankTransitionsHandler;
     private final ShopCommandHandler shopCommandHandler;
     private final InventoryCommandHandler inventoryCommandHandler;
+    private final UserAnswerHandler userAnswerHandler;
 
     private static CountingBot instance;
     private static int currId = 0;
@@ -68,12 +69,14 @@ public class CountingBot {
         bankCommandHandler = new BankCommandHandler(bankTransitionsHandler);
         shopCommandHandler = new ShopCommandHandler(guilds);
         inventoryCommandHandler = new InventoryCommandHandler(guilds);
+        userAnswerHandler = new UserAnswerHandler();
 
         storage.loadStreaksIntoMapIfFilePresent();
     }
 
     public void message(Message message) {
         addGuildOrCounterIfNotYetRegistered(message);
+        userAnswerHandler.handleUserMessage(message);
         checkCommands(message);
         count(message);
 
@@ -867,6 +870,10 @@ public class CountingBot {
         emojiHandler.activateWithSingleUseMode(disposableSubscription);
         TrophyHandler trophyHandler = new TrophyHandler(emojiHandler);
         bankCommandHandler.handBagRefundRequestedViaItemUse(message, trophyHandler);
+    }
+
+    public UserAnswerHandler getUserAnswerHandler() {
+        return userAnswerHandler;
     }
 
     public void subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(EmojiReactHandler handler, String messageId) {

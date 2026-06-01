@@ -447,6 +447,8 @@ public class Counter implements ContractOwner {
         if (item instanceof Equippable) {
             Equippable equippable = (Equippable) item;
             equippable.equip(message, collection);
+            inventory.removeItem(item);
+            CountingBot.getInstance().save();
             return;
         } else if (item == Consumables.FAKE_HAND_BAG || item == Consumables.HAND_BAG) {
             writeUseMessage(Consumables.FAKE_HAND_BAG, message);
@@ -473,7 +475,7 @@ public class Counter implements ContractOwner {
     }
 
     public double getBonusFact(CountingStreak streak) {
-        return getFactFromSysAndPrestiges(streak.getBase()) * streak.getCurrentBonusFactor();
+        return getFactFromSysAndPrestiges(streak.getBase()) * streak.getCurrentBonusFactor() * collection.getBonusFact();
     }
 
     public void notifyWin(int win, int base, Message message) {

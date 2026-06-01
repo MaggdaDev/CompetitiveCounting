@@ -8,15 +8,14 @@ package CompetitiveCounting;
 import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.items.StreakEnders;
 import CompetitiveCounting.rules.*;
+import CompetitiveCounting.vaults.Vault;
+import CompetitiveCounting.vaults.VaultSpawner;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +47,7 @@ public class CountingStreak {
     private transient EmojiReactHandler emojiReactHandler;
     private transient Disposable emojiReactSubscription;
     private transient StreakEnders streakEnders;
+    private transient VaultSpawner vaultSpawner;
 
     private boolean destroyedByWrongCapture = false;
 
@@ -75,6 +75,7 @@ public class CountingStreak {
         captureHandler = new CaptureHandler(emojiReactHandler);
         streakEnders = new StreakEnders(this);
         captureBlockedUsers = new ArrayList<>();
+        vaultSpawner = new VaultSpawner(this);
 
         if (timeLimitRule != null){
             timeLimitRule.initialize(this);
@@ -109,6 +110,7 @@ public class CountingStreak {
 
 
         if (isNumCorrect(number, message) && (!user.getId().equals(lastCounterId))) { // Count is accepted
+            int previousCount = lastCount;
             lastCount = number;
             incrementCounter();
             amountOfCountsPerCounter.replace(user.getId(), amountOfCountsPerCounter.get(user.getId()) + 1);
@@ -143,6 +145,10 @@ public class CountingStreak {
                 timeLimitNewlyAdded = false;
             }
             lastCounterId = user.getId();
+
+            CountingContext context = new CountingContext(user, number, previousCount);
+            Optional<Vault> maybeVault = vaultSpawner.maybeSpawnVault(message, context);
+
             return true;
         } else {
             fail(message, number, user);
@@ -747,6 +753,7 @@ public class CountingStreak {
         }
         streakEnders.dispose();
         emojiReactSubscription.dispose();
+        vaultSpawner.dispose();
     }
 
     public TrophyHandler getTrophyHandler() {
