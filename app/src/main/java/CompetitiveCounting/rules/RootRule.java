@@ -33,17 +33,27 @@ public class RootRule extends NumberRule{
     @Override
     public String toString() {
         String ord = String.valueOf(BaseSystems.decimalToSystem(root, base));
-        if (ord.endsWith("1")) {
+        if (ord.endsWith("1") && !ord.endsWith("11")) {
             ord += "st";
-        } else if (ord.endsWith("2")) {
+        } else if (ord.endsWith("2") && !ord.endsWith("12")) {
             ord += "nd";
-        } else if (ord.endsWith("3")) {
+        } else if (ord.endsWith("3") && !ord.endsWith("13")) {
             ord += "rd";
         } else {
             ord += "th";
         }
         return "Numbers with an integer " + ord +" root must be skipped!";
     }
-    
+
+    @Override
+    public String getRuleTypeString() {
+        return "Numbers must not have a perfect integer root for degree: ";
+    }
+
+    @Override
+    public String getValueInBase() {
+        return BaseSystems.decimalToSystem(root, base);
+    }
+
 }
 
