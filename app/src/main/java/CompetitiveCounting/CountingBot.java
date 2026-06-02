@@ -280,7 +280,7 @@ public class CountingBot {
 
         String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
 
-        String ruleInfo = streak.getRulesRespond();
+        String ruleInfo = streak.getCompactRulesInfo();
         String baseInfo = streak.getBaseInfoRespond(1);
         String factorInfo = "**Everyone**'s score multiplier: " + streakFactor + "x\n" +
                 "**Your** score multiplier: " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x";
@@ -310,6 +310,11 @@ public class CountingBot {
             pendingInfo.append("\n\nParticipants of this streak stand to gain:");
             int position = 1;
             for (PendingPayout p : pendingPayouts) {
+                if (position > 5) {
+                    int remainingAmountCounters = pendingPayouts.size() - 5;
+                    pendingInfo.append("\n... and ").append(remainingAmountCounters).append(" more counters");
+                    break;  // todo test this (don't have 6 accounts)
+                }
                 pendingInfo.append("\n").append(position).append(". ").append(p.counter.getName())
                         .append(": **").append(p.amount).append("** money");
                 position++;
