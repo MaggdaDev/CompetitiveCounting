@@ -528,6 +528,9 @@ public class Counter implements ContractOwner {
     }
 
     public void addBonusScore(int score, Message message) {
+        if (score < 0) {
+            throw new IllegalArgumentException("Cannot add negative bonus score!");
+        }
         this.score += contractHandler.getNetto(score, message);
     }
 

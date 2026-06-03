@@ -12,6 +12,7 @@ import CompetitiveCounting.dialogue.ParallelDialogElementsBuilder;
 import discord4j.core.object.entity.Message;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class BankLoanHandler {
     private final static CountingBot bot = CountingBot.getInstance();
@@ -74,8 +75,8 @@ public class BankLoanHandler {
                     int consultingFee = Math.min(599, initCounter.getScore() / 10);
                     BankCommandHandler.bankWrite(message, "Even though you have decided not to move forward with this transaction, I must inform you that I have meticulously measured the administrative expenses for this consultation you have requested, and you will receive an invoice of " + consultingFee + " money.");
                     initCounter.subtractScore(consultingFee);
-                }, Optional.of(userId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
-                .addWaitForEmojiReaction(CountingEmojis.HANDSHAKE, false, m->{}, Optional.of(userId),
+                }, new AtomicReference<>(userId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
+                .addWaitForEmojiReaction(CountingEmojis.HANDSHAKE, false, m->{}, new AtomicReference<>(userId),
                         ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
                 .finishParallelDialogElementsAndAdd()
                 .addRunnable(m -> {

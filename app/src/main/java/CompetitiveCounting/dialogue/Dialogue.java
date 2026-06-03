@@ -6,6 +6,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -34,13 +35,13 @@ public class Dialogue {
     }
 
     public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
-                                            Consumer<Message> onReactCallback, Optional<String> counterIdRestriction) {
+                                            Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction) {
         elements.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction));
         return this;
     }
 
     public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact) {
-        return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, Optional.empty());
+        return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, new AtomicReference<>());
     }
 
     public Dialogue addWaitForUserAnswer(Function<Message, Boolean> testAnswer) {
@@ -60,12 +61,16 @@ public class Dialogue {
     }
 
     public void play(Message message) {
-        playAtIndex(message, 0);
+        playAtIndex(message, 0, false);
     }
 
-    public void playAtIndex(Message message, int idx) {
+    public void playBlocking(Message message) {
+        playAtIndex(message, 0, true);
+    }
+
+    public void playAtIndex(Message message, int idx, boolean blocking) {
         currentState = idx;
-        thread = new Thread(() -> {
+        Runnable dialogueRunnable = () -> {
             Message currentMessage = message;
             while (currentState < elements.size()) {
                 DialogueElement element = elements.get(currentState);
@@ -81,8 +86,13 @@ public class Dialogue {
             for (Runnable runnable : thenRuns) {
                 runnable.run();
             }
-        });
-        thread.start();
+        };
+        if (blocking) {
+            dialogueRunnable.run();
+        } else {
+            thread = new Thread(dialogueRunnable);
+            thread.start();
+        }
     }
 
     public void stop() {

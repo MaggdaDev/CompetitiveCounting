@@ -10,6 +10,7 @@ import discord4j.core.object.entity.Message;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class StreakEnders {
     private final static double PERC_COUNTERS_NEEDED = 2. / 3.;
@@ -87,13 +88,13 @@ public class StreakEnders {
             for (String contributingId : idsOfCountersNeededToContribute) {
                 builder.addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {
                     // On react up
-                }, Optional.of(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY);
+                }, new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY);
                 builder.addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, true, m -> {
                     // On react down
                     Counter decliner = CountingBot.getCounter(streak.getGuildId(), contributingId);
                     CountingBot.write(message, "The Streak:white_circle:Ender was cancelled by " + decliner.getName() + ".");
                     currentWhiteStreakEnderDialogue = null;
-                }, Optional.of(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT);
+                }, new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT);
             }
             builder.finishParallelDialogElementsAndAdd()
                     .addRunnable((msg) -> {

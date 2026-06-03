@@ -10,6 +10,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -22,12 +23,12 @@ public class EmojiReactionSubscriber extends DialogueElement {
     private boolean shouldCancelRemainingDialogueOnReact = false;
 
     private Consumer<Message> onReactCallback = null;
-    private final Optional<String> counterIdRestriction;
+    private final AtomicReference<String> counterIdRestriction;
 
     private Thread waitingThread = null;
 
     public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
-                                   Consumer<Message> onReactCallback, Optional<String> counterIdRestriction) {
+                                   Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction) {
         this.emoji = emoji;
         this.shouldCancelRemainingDialogueOnReact = shouldCancelRemainingDialogueOnReact;
         this.onReactCallback = onReactCallback;
@@ -42,7 +43,7 @@ public class EmojiReactionSubscriber extends DialogueElement {
         CountingBot.getInstance().subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(emojiReactHandler, messageId);
         emojiReactHandler.addOnEmojiReact(
                 (msg, user) -> {
-                    if (counterIdRestriction.isPresent()) {
+                    if (counterIdRestriction.get() != null) {
                         if (!Objects.equal(counterIdRestriction.get(), user.getId().asString())) {
                             return false;
                         }

@@ -779,4 +779,8 @@ public class CountingStreak {
     public StreakEnders getStreakEnders() {
         return streakEnders;
     }
+
+    public VaultSpawner getVaultSpawner() {
+        return vaultSpawner;
+    }
 }

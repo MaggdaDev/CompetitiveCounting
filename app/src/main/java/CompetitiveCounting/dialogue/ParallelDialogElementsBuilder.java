@@ -6,6 +6,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class ParallelDialogElementsBuilder {
@@ -23,7 +24,7 @@ public class ParallelDialogElementsBuilder {
 
     public ParallelDialogElementsBuilder addWaitForEmojiReaction(ReactionEmoji emoji,
                                                                  boolean cancelRemainingDialogueOnReact,
-                                                                 Consumer<Message> onReactCallback, Optional<String> counterIdRestriction,
+                                                                 Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction,
                                                                  ParallelDialogElementType type) {
         List<DialogueElement> listToAddTo = type == ParallelDialogElementType.SUFFICIENT ? sufficientDialogueElements : necessaryDialogueElements;
         listToAddTo.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction));
@@ -34,7 +35,7 @@ public class ParallelDialogElementsBuilder {
                                                                  boolean cancelRemainingDialogueOnReact,
                                                                  ParallelDialogElementType type) {
         List<DialogueElement> listToAddTo = type == ParallelDialogElementType.SUFFICIENT ? sufficientDialogueElements : necessaryDialogueElements;
-        listToAddTo.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, m -> {}, Optional.empty()));
+        listToAddTo.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, m -> {}, new AtomicReference<>()));
         return this;
     }
 

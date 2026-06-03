@@ -17,6 +17,7 @@ import CompetitiveCounting.items.ShopCommandHandler;
 import CompetitiveCounting.storage.Storage;
 import CompetitiveCounting.tradeoffer.TradeHandler;
 import CompetitiveCounting.tradeoffer.TradeOffer;
+import CompetitiveCounting.vaults.VaultSpawner;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
@@ -141,6 +142,8 @@ public class CountingBot {
                     inventoryCommandHandler.handleInventoryCommand(message, streak);
                 } else if (commandWithoutIndicator.startsWith(CollectionCommandHandler.COMMAND_INDICATOR)) {
                     CollectionCommandHandler.handleCollectionCommand(message);
+                } else if (commandWithoutIndicator.startsWith("vaults")) {
+                    VaultSpawner.vaultInfo(message, streak);
                 }
             }
         } catch (Exception e) {
