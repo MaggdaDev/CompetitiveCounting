@@ -13,10 +13,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -687,11 +684,17 @@ public class CountingStreak {
         }
         StringBuilder builder = new StringBuilder("Active Rules:");
         if (!numberRules.isEmpty()) {
-            Map<String, List<NumberRule>> rulesInAGroup = numberRules.stream().collect(Collectors.groupingBy(NumberRule::getRuleTypeString));
+            Map<String, List<NumberRule>> rulesInAGroup = numberRules.stream().collect(Collectors.groupingBy(NumberRule::getRuleTypeString, TreeMap::new, Collectors.toList()));
 
             for (Map.Entry<String, List<NumberRule>> entry : rulesInAGroup.entrySet()) {
                 builder.append("\n\t\\- ").append(entry.getKey());
-                String values = entry.getValue().stream().map(NumberRule::getValueInBase).collect(Collectors.joining(", "));  // scheis java
+                String values = entry.getValue().stream()
+                        .sorted((a, b) -> Integer.compare(
+                                BaseSystems.toDecimal(a.getValueInBase(), currentBase),
+                                BaseSystems.toDecimal(b.getValueInBase(), currentBase)
+                        ))
+                        .map(NumberRule::getValueInBase)
+                        .collect(Collectors.joining(", "));  // scheis java 2.0
                 builder.append(values);
             }
         }

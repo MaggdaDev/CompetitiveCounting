@@ -57,7 +57,7 @@ public class BankTransactionsHandler {
                     "But don't worry, I have rounded that down for you. Your balance is now " + depositLimit + " money.");
         }
         if (depositAmount + currentlyDepositedAmount > depositLimit) {
-            String startOfSentence = "No? This would increase your balance to " + (depositLimit + currentlyDepositedAmount) +
+            String startOfSentence = "No? This would increase your balance to " + (depositAmount + currentlyDepositedAmount) +
                     ", but your maximum deposit limit is only " + depositLimitUpgrade.getCurrentValueStringPotentiallyIndicatingEmptyValue()
                     + ".\n" + depositLimitUpgrade.getBuyRecommendationStringIfNotMaxedOut();
             throw new BankDepositException(startOfSentence);
