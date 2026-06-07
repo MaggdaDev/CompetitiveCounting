@@ -42,5 +42,15 @@ public class DigSumRule extends NumberRule{
     public String toString() {
         return "Every number with the digsum " + BaseSystems.decimalToSystem(digSum, (int)base) + " has to be skipped!";
     }
-    
+
+    @Override
+    public String getRuleTypeString() {
+        return "Numbers must not have a digsum of: ";
+    }
+
+    @Override
+    public String getValueInBase() {
+        return BaseSystems.decimalToSystem(digSum, (int)base);
+    }
+
 }

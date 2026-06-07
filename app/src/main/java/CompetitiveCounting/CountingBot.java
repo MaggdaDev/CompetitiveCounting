@@ -289,7 +289,7 @@ public class CountingBot {
 
         String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
 
-        String ruleInfo = streak.getRulesRespond();
+        String ruleInfo = streak.getCompactRulesInfo();
         String baseInfo = streak.getBaseInfoRespond(1);
         String factorInfo = "**Everyone**'s score multiplier: " + streakFactor + "x\n" +
                 "**Your** score multiplier: " + Math.round(author.getBonusFact(streak) * 100.0) / 100.0 + "x";
@@ -319,6 +319,11 @@ public class CountingBot {
             pendingInfo.append("\n\nParticipants of this streak stand to gain:");
             int position = 1;
             for (PendingPayout p : pendingPayouts) {
+                if (position > 5) {
+                    int remainingAmountCounters = pendingPayouts.size() - 5;
+                    pendingInfo.append("\n... and ").append(remainingAmountCounters).append(" more counters");
+                    break;  // todo test this (don't have 6 accounts)
+                }
                 pendingInfo.append("\n").append(position).append(". ").append(p.counter.getName())
                         .append(": **").append(p.amount).append("** money");
                 position++;
@@ -628,16 +633,9 @@ public class CountingBot {
         ArrayList<Counter> countersSorted = new ArrayList<>(guilds.get(guildId).getCounters().values());
 
         countersSorted.sort((a, b) -> {
-            int prestigeCompare = Integer.compare(b.getPrestiges(), a.getPrestiges());
-            if (prestigeCompare != 0) {
-                return prestigeCompare;
-            }
-
-            if (mode.equals("networth")) {
-                return Integer.compare(b.getAccWorth(), a.getAccWorth());
-            } else {
-                return Integer.compare(b.getPossibleTotal(), a.getPossibleTotal());
-            }
+            long scoreA = a.getPrestiges() * 1000000L + (mode.equals("networth") ? a.getAccWorth() : a.getPossibleTotal());
+            long scoreB = b.getPrestiges() * 1000000L + (mode.equals("networth") ? b.getAccWorth() : b.getPossibleTotal());
+            return Long.compare(scoreB, scoreA);
         });
         String ret = "Scoreboard: ";
         Bank bank = guilds.get(guildId).getBank();
@@ -650,9 +648,9 @@ public class CountingBot {
                 continue;
             }
 
-            int bankCompareValue = mode.equals("networth") ? counter.getAccWorth() : counter.getPossibleTotal();
+            long bankCompareValue = counter.getPrestiges() * 1_000_000L + (mode.equals("networth") ? counter.getAccWorth() : counter.getPossibleTotal());
 
-            if (!bankDisplayed && (bank.getTotalScore() > bankCompareValue && counter.getPrestiges() == 0)) {
+            if (!bankDisplayed && (bank.getTotalScore() > bankCompareValue)) {
                 ret += "\n" + position + ") " +  bankString;
                 bankDisplayed = true;
                 position += 1;

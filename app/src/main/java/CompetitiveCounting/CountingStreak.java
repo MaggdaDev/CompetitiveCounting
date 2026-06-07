@@ -300,6 +300,11 @@ public class CountingStreak {
             payoutMessage.append("**Streak payouts:**\n");
             int position = 1;
             for (Payout p : sortedPayouts) {
+                if (position > 5) {
+                    int remainingAmountCounters = sortedPayouts.size() - 5;
+                    payoutMessage.append("... and ").append(remainingAmountCounters).append(" more counters\n");
+                    break;
+                }
                 payoutMessage.append("­").append(position).append(". ").append(p.counter.getName())
                         .append(": **").append(p.streakAmount).append("** money");
 
@@ -680,6 +685,35 @@ public class CountingStreak {
             }
             return ret;
         }
+    }
+
+    public String getCompactRulesInfo() {
+        if (numberRules.isEmpty() && timeLimitRule == null && slowModeRule == null) {
+            return "No rules!";
+        }
+        StringBuilder builder = new StringBuilder("Active Rules:");
+        if (!numberRules.isEmpty()) {
+            Map<String, List<NumberRule>> rulesInAGroup = numberRules.stream().collect(Collectors.groupingBy(NumberRule::getRuleTypeString, TreeMap::new, Collectors.toList()));
+
+            for (Map.Entry<String, List<NumberRule>> entry : rulesInAGroup.entrySet()) {
+                builder.append("\n\t\\- ").append(entry.getKey());
+                String values = entry.getValue().stream()
+                        .sorted((a, b) -> Integer.compare(
+                                BaseSystems.toDecimal(a.getValueInBase(), currentBase),
+                                BaseSystems.toDecimal(b.getValueInBase(), currentBase)
+                        ))
+                        .map(NumberRule::getValueInBase)
+                        .collect(Collectors.joining(", "));  // scheis java 2.0
+                builder.append(values);
+            }
+        }
+        if (slowModeRule != null) {
+            builder.append("\n\t\\- ").append(slowModeRule.toString());
+        }
+        if (timeLimitRule != null) {
+            builder.append("\n\t\\- ").append(timeLimitRule.toString());
+        }
+        return builder.toString();
     }
 
     public String getBaseInfoRespond(int mode) {

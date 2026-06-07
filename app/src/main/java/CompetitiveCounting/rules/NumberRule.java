@@ -22,6 +22,10 @@ public abstract class NumberRule implements Rule {
     public abstract boolean numberAccepted(int number);
     
     public abstract String toString();
+
+    public abstract String getRuleTypeString();
+
+    public abstract String getValueInBase();
     
     @Override
     public String getOwnerId() {
