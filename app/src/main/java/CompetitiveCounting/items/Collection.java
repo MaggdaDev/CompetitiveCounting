@@ -6,6 +6,7 @@ import com.google.common.base.Objects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Collection {
     private final static int DEFAULT_MAX_SIZE = 6;
@@ -67,6 +68,7 @@ public class Collection {
                 sb.append(i + 1).append(") ").append("___empty___").append("\n");
             }
         }
+        sb.append("\n-# Hint: Some equippables can be _used_ with `~col use <item number or name>`.");
         return sb.toString();
     }
 
@@ -77,5 +79,22 @@ public class Collection {
             }
         }
         throw new IllegalArgumentException("Equippable not found in collection: " + eq.getName());
+    }
+
+    public Optional<Equippable> getEquippableByNameOrNumber(String itemIdentifier) {
+        try {
+            int index = Integer.parseInt(itemIdentifier) - 1;
+            if (index >= 0 && index < equippables.size()) {
+                return Optional.of(equippables.get(index));
+            }
+        } catch (NumberFormatException e) {
+            // Not a number, try by name
+            for (Equippable equippable : equippables) {
+                if (equippable.getName().equalsIgnoreCase(itemIdentifier)) {
+                    return Optional.of(equippable);
+                }
+            }
+        }
+        return Optional.empty();
     }
 }

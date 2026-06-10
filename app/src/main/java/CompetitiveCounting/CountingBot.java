@@ -141,8 +141,8 @@ public class CountingBot {
                 } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
                     inventoryCommandHandler.handleInventoryCommand(message, streak);
                 } else if (commandWithoutIndicator.startsWith(CollectionCommandHandler.COMMAND_INDICATOR)) {
-                    CollectionCommandHandler.handleCollectionCommand(message);
-                } else if (commandWithoutIndicator.startsWith("vaults")) {
+                    CollectionCommandHandler.handleCollectionCommand(message, streak);
+                } else if (commandWithoutIndicator.startsWith("vault")) {
                     VaultSpawner.vaultInfo(message, streak);
                 }
             }

@@ -73,4 +73,8 @@ public abstract class Vault {
         return requirementsChecker.apply(context);
     }
 
+    public double getSpawnChance() {
+        return spawnChance;
+    }
+
 }

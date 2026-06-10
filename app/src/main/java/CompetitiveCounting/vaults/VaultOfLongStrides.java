@@ -5,6 +5,10 @@ import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingContext;
 import CompetitiveCounting.CountingEmojis;
 import CompetitiveCounting.dialogue.Dialogue;
+import CompetitiveCounting.items.Item;
+import CompetitiveCounting.items.equippables.Equippable;
+import CompetitiveCounting.items.equippables.Equippables;
+import CompetitiveCounting.vaults.vaultDrops.ItemDrop;
 import CompetitiveCounting.vaults.vaultDrops.MoneyDrop;
 import com.google.common.math.IntMath;
 import discord4j.core.object.entity.Message;
@@ -15,14 +19,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class VaultOfLongStrides extends Vault {
-    public static final double SPAWN_CHANCE = 0.5;// 0.05;    // todo
-    private static final int MIN_STRIDE_LENGTH = 10;  // todo
+    public static final double SPAWN_CHANCE = 0.1;
+    private static final int MIN_STRIDE_LENGTH = 8;
     private static final String RIDDLE = "What is the greatest common divisor of {0} and {1}?";
     private final static String NAME = "Vault of Long Strides";
 
     public VaultOfLongStrides() {
         super(SPAWN_CHANCE, (context) -> context.getCurrentNumber() - context.getLastNumber() >= MIN_STRIDE_LENGTH);
-        addLootToLootPool(new MoneyDrop(80));
+        addLootToLootPool(new MoneyDrop(95));
+        addLootToLootPool(new ItemDrop(5, Equippables.POCKET_ABACUS));
     }
 
 

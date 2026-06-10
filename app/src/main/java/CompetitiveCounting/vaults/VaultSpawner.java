@@ -72,9 +72,9 @@ public class VaultSpawner {
     }
 
     private static String getStaticVaultInfo() {
-        String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! Each vault type has their own additional requirements for spawning:\n";
+        String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n";
         for (Vault vault : ALL_VAULTS) {
-            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() + "\n";
+            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() + "(1 in " + Math.round(1 / vault.getSpawnChance()) + ")\n";
         }
         return s;
     }

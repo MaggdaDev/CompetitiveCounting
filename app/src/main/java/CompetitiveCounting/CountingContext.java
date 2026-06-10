@@ -5,11 +5,12 @@ public class CountingContext {
     private final Counter counter;
     private final int currentNumber;
     private final int lastNumber;
-    public CountingContext(Counter counter, int currentNumber, int lastNumber) {
+    private final CountingStreak streak;
+    public CountingContext(Counter counter, int currentNumber, int lastNumber, CountingStreak streak) {
         this.counter = counter;
         this.currentNumber = currentNumber;
         this.lastNumber = lastNumber;
-
+        this.streak = streak;
     }
 
     public Counter getCounter() {
@@ -22,5 +23,9 @@ public class CountingContext {
 
     public int getLastNumber() {
         return lastNumber;
+    }
+
+    public CountingStreak getStreak() {
+        return streak;
     }
 }

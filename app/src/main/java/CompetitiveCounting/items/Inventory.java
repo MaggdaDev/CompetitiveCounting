@@ -21,7 +21,7 @@ public class Inventory {
         isShopUnlocked = shopUnlocked;
     }
 
-    public void buy(Item toBuy) {
+    public void addItem(Item toBuy) {
         if (itemsBoughtAmount.containsKey(toBuy.toString())) {
             itemsBoughtAmount.put(toBuy.toString(), itemsBoughtAmount.get(toBuy.toString()) + 1);
         } else {

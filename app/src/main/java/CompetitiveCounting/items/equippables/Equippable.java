@@ -1,10 +1,13 @@
 package CompetitiveCounting.items.equippables;
 
 import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.CountingContext;
 import CompetitiveCounting.Price;
 import CompetitiveCounting.items.Collection;
 import CompetitiveCounting.items.Item;
 import discord4j.core.object.entity.Message;
+
+import java.util.Optional;
 
 public abstract class Equippable extends Item {
     public Equippable(Price price, String name, String description) {
@@ -26,5 +29,10 @@ public abstract class Equippable extends Item {
         }
         collection.addItem(createObject());
         CountingBot.write(message, "You have equipped a " + getName() + "!");
+    }
+
+    // Override and return true if collection-usable
+    public boolean doCollectionUse(Message message, CountingContext context) {
+        return false;
     }
 }

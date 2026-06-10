@@ -103,7 +103,7 @@ public class ShopCommandHandler {
         if (toBuy == Consumables.HAND_BAG) {
             CountingBot.getInstance().handBagBought(message);
         } else {
-            counter.getInventory().buy(toBuy);
+            counter.getInventory().addItem(toBuy);
             writeItemBoughtMessage(message, toBuy);
             CountingBot.getInstance().save();
         }
@@ -116,7 +116,7 @@ public class ShopCommandHandler {
     public void acquireHandBag(Message message, String guildId, String counterId) {
         CountingGuild guild = guilds.get(guildId);
         Counter counter = guild.getCounter(counterId);
-        counter.getInventory().buy(Consumables.FAKE_HAND_BAG);
+        counter.getInventory().addItem(Consumables.FAKE_HAND_BAG);
         writeItemBoughtMessage(message, Consumables.FAKE_HAND_BAG);
     }
 

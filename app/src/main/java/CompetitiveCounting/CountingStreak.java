@@ -53,6 +53,8 @@ public class CountingStreak {
 
     private HashMap<String, Integer> amountOfCountsPerCounter = new HashMap<>();
 
+    private transient CountingContext lastCountingContext = null;
+
     // Pre-initializing (fully replaced by loading from json!)
     public CountingStreak(String key, int base, String guildId) {
         this.key = key;
@@ -146,8 +148,8 @@ public class CountingStreak {
             }
             lastCounterId = user.getId();
 
-            CountingContext context = new CountingContext(user, number, previousCount);
-            Optional<Vault> maybeVault = vaultSpawner.maybeSpawnVault(message, context);
+            lastCountingContext = new CountingContext(user, number, previousCount, this);
+            Optional<Vault> maybeVault = vaultSpawner.maybeSpawnVault(message, lastCountingContext);
 
             return true;
         } else {
@@ -816,5 +818,14 @@ public class CountingStreak {
 
     public VaultSpawner getVaultSpawner() {
         return vaultSpawner;
+    }
+
+    public CountingContext getLastContext() {
+        return lastCountingContext;
+    }
+
+    public String getNextCorrectNumberInBase() {
+        String num = BaseSystems.decimalToSystem(counter, currentBase);
+        return num + (currentBase == 10 ? "" : " (base " + currentBase + ")");
     }
 }

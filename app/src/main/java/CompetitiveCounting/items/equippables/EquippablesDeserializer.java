@@ -21,6 +21,9 @@ public class EquippablesDeserializer implements JsonDeserializer<Equippable> {
             case VaultLocator.NAME:
                 ret = context.deserialize(obj, VaultLocator.class);
                 break;
+                case PocketAbacus.NAME:
+                ret = context.deserialize(obj, PocketAbacus.class);
+                break;
             default:
                 throw new JsonParseException("Unknown type: " + type);
         };
