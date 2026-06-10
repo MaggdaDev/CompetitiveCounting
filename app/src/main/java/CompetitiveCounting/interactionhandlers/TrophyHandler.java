@@ -1,5 +1,8 @@
-package CompetitiveCounting;
+package CompetitiveCounting.interactionhandlers;
 
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.CountingEmojis;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageEditSpec;

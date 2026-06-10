@@ -11,6 +11,10 @@ import CompetitiveCounting.bank.BankAccount;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.interactionhandlers.EmojiReactHandler;
+import CompetitiveCounting.interactionhandlers.TimeHandler;
+import CompetitiveCounting.interactionhandlers.TrophyHandler;
+import CompetitiveCounting.interactionhandlers.UserAnswerHandler;
 import CompetitiveCounting.items.CollectionCommandHandler;
 import CompetitiveCounting.items.InventoryCommandHandler;
 import CompetitiveCounting.items.ShopCommandHandler;
@@ -50,7 +54,7 @@ public class CountingBot {
     private final BankTransactionsHandler bankTransitionsHandler;
     private final ShopCommandHandler shopCommandHandler;
     private final InventoryCommandHandler inventoryCommandHandler;
-    private final UserAnswerHandler userAnswerHandler;
+    private final UserAnswerHandler userAnswerHandler, userDMHandler;
 
     private static CountingBot instance;
     private static int currId = 0;
@@ -71,7 +75,7 @@ public class CountingBot {
         shopCommandHandler = new ShopCommandHandler(guilds);
         inventoryCommandHandler = new InventoryCommandHandler(guilds);
         userAnswerHandler = new UserAnswerHandler();
-
+        userDMHandler = new UserAnswerHandler();
         storage.loadStreaksIntoMapIfFilePresent();
     }
 
@@ -920,6 +924,9 @@ public class CountingBot {
         return shopCommandHandler;
     }
 
+    public UserAnswerHandler getUserDMHandler() {
+        return userDMHandler;
+    }
 
     public Storage getStorage() {
         return storage;

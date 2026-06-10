@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting;
+package CompetitiveCounting.interactionhandlers;
 
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import reactor.core.publisher.BaseSubscriber;
 

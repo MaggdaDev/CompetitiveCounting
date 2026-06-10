@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class VaultSpawner {
     private final static Vault[] ALL_VAULTS = {
-            new VaultOfLongStrides()
+            new VaultOfLongStrides(),
+            new CommunityVault()
     };
     private final Vault[] vaults;
     private Dialogue activeDialogue = null;

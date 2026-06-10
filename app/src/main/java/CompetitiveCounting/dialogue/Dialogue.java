@@ -49,6 +49,11 @@ public class Dialogue {
         return this;
     }
 
+    public Dialogue addSleep(int timeSeconds) {
+        elements.add(new SleepElement(timeSeconds));
+        return this;
+    }
+
 
     public Dialogue addEmojiReaction(ReactionEmoji emoji) {
         elements.add(new EmojiReaction((emoji)));

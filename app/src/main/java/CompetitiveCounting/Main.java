@@ -6,6 +6,8 @@
 package CompetitiveCounting;
 
 
+import CompetitiveCounting.interactionhandlers.ButtonClickHandler;
+import CompetitiveCounting.interactionhandlers.MessageHandler;
 import CompetitiveCounting.items.Item;
 import CompetitiveCounting.storage.LocalHttpServer;
 import CompetitiveCounting.storage.Storage;

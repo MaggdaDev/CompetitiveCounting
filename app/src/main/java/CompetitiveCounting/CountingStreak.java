@@ -5,7 +5,9 @@
  */
 package CompetitiveCounting;
 
-import CompetitiveCounting.dialogue.Dialogue;
+import CompetitiveCounting.interactionhandlers.CaptureHandler;
+import CompetitiveCounting.interactionhandlers.EmojiReactHandler;
+import CompetitiveCounting.interactionhandlers.TrophyHandler;
 import CompetitiveCounting.items.StreakEnders;
 import CompetitiveCounting.rules.*;
 import CompetitiveCounting.vaults.Vault;
@@ -14,7 +16,6 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 

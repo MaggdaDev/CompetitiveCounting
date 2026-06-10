@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 package CompetitiveCounting.storage;
-import CompetitiveCounting.CaptureHandler;
+import CompetitiveCounting.interactionhandlers.CaptureHandler;
 import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingGuild;
 import CompetitiveCounting.CountingStreak;

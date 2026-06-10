@@ -1,6 +1,7 @@
 package CompetitiveCounting.vaults;
 
 import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingContext;
 import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.vaults.vaultDrops.VaultDrop;
@@ -38,6 +39,10 @@ public abstract class Vault {
     public abstract Counter doRiddleBlockingly(Message message, CountingContext context);
 
     public void loot(Message message, Counter riddleSolver) {
+        if (riddleSolver == null) {
+            CountingBot.write(message, "This vault's key is now lost forever! Continue counting to locate new vaults...");
+            return;
+        }
         Dialogue dialogue = new Dialogue();
         dialogue.addNpcLine(riddleSolver.getName() + " opened a " + getVaultName() + "...", 1000);
         VaultDrop drop = lootPool.drawDrop();
@@ -76,5 +81,13 @@ public abstract class Vault {
     public double getSpawnChance() {
         return spawnChance;
     }
+    static int randomInt(int min, int max) {
+        return min + (int) (Math.random() * (max - min));
+    }
+
+    protected String getRiddleText(String riddle, String author) {
+        return RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
+    }
+
 
 }

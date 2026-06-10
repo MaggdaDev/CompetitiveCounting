@@ -1,11 +1,12 @@
-package CompetitiveCounting;
+package CompetitiveCounting.interactionhandlers;
 
+import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.CountingEmojis;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;

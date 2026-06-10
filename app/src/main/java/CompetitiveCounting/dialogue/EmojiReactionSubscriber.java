@@ -1,18 +1,14 @@
 package CompetitiveCounting.dialogue;
 
 import CompetitiveCounting.CountingBot;
-import CompetitiveCounting.CountingEmojis;
-import CompetitiveCounting.EmojiReactHandler;
+import CompetitiveCounting.interactionhandlers.EmojiReactHandler;
 import com.google.common.base.Objects;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 
-import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class EmojiReactionSubscriber extends DialogueElement {
     private final ReactionEmoji emoji;

@@ -5,9 +5,9 @@ import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ParallelDialogElementsBuilder {
 
@@ -26,17 +26,41 @@ public class ParallelDialogElementsBuilder {
                                                                  boolean cancelRemainingDialogueOnReact,
                                                                  Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction,
                                                                  ParallelDialogElementType type) {
-        List<DialogueElement> listToAddTo = type == ParallelDialogElementType.SUFFICIENT ? sufficientDialogueElements : necessaryDialogueElements;
-        listToAddTo.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction));
+        addToList(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction), type);
         return this;
     }
 
     public ParallelDialogElementsBuilder addWaitForEmojiReaction(ReactionEmoji emoji,
                                                                  boolean cancelRemainingDialogueOnReact,
                                                                  ParallelDialogElementType type) {
-        List<DialogueElement> listToAddTo = type == ParallelDialogElementType.SUFFICIENT ? sufficientDialogueElements : necessaryDialogueElements;
-        listToAddTo.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, m -> {}, new AtomicReference<>()));
+        addToList(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, m -> {}, new AtomicReference<>()), type);
         return this;
+    }
+
+    public ParallelDialogElementsBuilder addRunnable(Consumer<Message> runnable, ParallelDialogElementType type) {
+        addToList(new DialogRunnable(runnable), type);
+        return this;
+    }
+
+    public ParallelDialogElementsBuilder addDMResponseCollector(Function<Message, Boolean> dmAcceptedFilter,
+                                                                int timespan, ParallelDialogElementType type) {
+        addToList(new DMResponseHandlerElement(dmAcceptedFilter, timespan), type);
+        return this;
+    }
+
+    public ParallelDialogElementsBuilder addSleepElement(int timespan, ParallelDialogElementType type) {
+        addToList(new SleepElement(timespan), type);
+        return this;
+    }
+
+    public ParallelDialogElementsBuilder addSubDialogue(Dialogue subDialogue, ParallelDialogElementType type) {
+        addToList(new SubDialogue(subDialogue), type);
+        return this;
+    }
+
+    private void addToList(DialogueElement element, ParallelDialogElementType type) {
+        List<DialogueElement> listToAddTo = type == ParallelDialogElementType.SUFFICIENT ? sufficientDialogueElements : necessaryDialogueElements;
+        listToAddTo.add(element);
     }
 
     public Dialogue finishParallelDialogElementsAndAdd() {
@@ -44,6 +68,7 @@ public class ParallelDialogElementsBuilder {
             necessaryDialogueElements.toArray(new DialogueElement[]{}));
         return dialogue;
     }
+
 
 
 }

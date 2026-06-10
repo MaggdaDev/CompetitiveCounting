@@ -1,4 +1,4 @@
-package CompetitiveCounting;
+package CompetitiveCounting.interactionhandlers;
 
 import discord4j.core.object.entity.Message;
 

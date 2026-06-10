@@ -1,13 +1,12 @@
 package CompetitiveCounting.dialogue;
 
 import CompetitiveCounting.CountingBot;
-import CompetitiveCounting.UserAnswerHandler;
+import CompetitiveCounting.interactionhandlers.UserAnswerHandler;
 import com.google.common.base.Objects;
 import discord4j.core.object.entity.Message;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class UserAnswerSubscriber extends DialogueElement {

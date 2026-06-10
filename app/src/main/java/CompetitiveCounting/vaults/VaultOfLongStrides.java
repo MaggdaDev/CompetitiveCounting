@@ -43,7 +43,7 @@ public class VaultOfLongStrides extends Vault {
         int num2 = randomInt(1, 10)*x;
         int correctAnswer = IntMath.gcd(num1, num2);
         String riddle = RIDDLE.replace("{0}", String.valueOf(num1)).replace("{1}", String.valueOf(num2));
-        String wholeRiddleText = RIDDLE_TEXT.replace("{author}", context.getCounter().getName()).replace("{riddle}", riddle);
+        String wholeRiddleText = getRiddleText(riddle, context.getCounter().getName());
         AtomicReference<String> riddleSolverIdToBeFoundOut = new AtomicReference<>();
         Dialogue riddleDialogue = new Dialogue().addNpcLine(wholeRiddleText, 0)
                 .addWaitForUserAnswer((msg) -> {
@@ -87,7 +87,4 @@ public class VaultOfLongStrides extends Vault {
         return "Spawns on counts which exceed the last count by at least " + MIN_STRIDE_LENGTH + ". ";
     }
 
-    private int randomInt(int min, int max) {
-        return min + (int) (Math.random() * (max - min));
-    }
 }
