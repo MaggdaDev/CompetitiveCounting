@@ -1,5 +1,6 @@
 package CompetitiveCounting.items.equippables;
 
+import CompetitiveCounting.Counter;
 import CompetitiveCounting.Price;
 import CompetitiveCounting.items.Item;
 
@@ -9,8 +10,8 @@ public class VaultLocator extends Equippable {
     public final static String DESCRIPTION = "When equipped, vaults will occasionally spawn on your counts if you meet their respective requirements.";
     public final static String COLLECTION_DESCRIPTION = "You can now locate vaults!\n-# Vaults located: {0}"; // todo: Use ~vaults to see the different types of vauls
     public final static Price PRICE = new Price(1, Price.Unit.PRESTIGE_POINTS);
-    public VaultLocator() {
-        super(PRICE, NAME,DESCRIPTION);
+    public VaultLocator(Counter owner) {
+        super(PRICE, NAME,DESCRIPTION, owner);
     }
 
 
@@ -32,7 +33,7 @@ public class VaultLocator extends Equippable {
     }
 
     @Override
-    public Equippable createObject() {
-        return new VaultLocator();
+    public Equippable createObject(Counter owner) {
+        return new VaultLocator(owner);
     }
 }

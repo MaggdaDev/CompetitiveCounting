@@ -1,8 +1,12 @@
 package CompetitiveCounting.items;
 
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.CountingBot;
+import CompetitiveCounting.CountingStreak;
 import CompetitiveCounting.items.equippables.Equippable;
 import CompetitiveCounting.items.equippables.Equippables;
 import com.google.common.base.Objects;
+import discord4j.core.object.entity.Message;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +17,16 @@ public class Collection {
     private final static double BONUS_PER_ITEM = 0.2;
     private List<Equippable> equippables = new ArrayList<>();
     private int maxSize;
+    private transient Counter owner;
 
-    public Collection() {
+    public Collection(Counter owner) {
         maxSize = DEFAULT_MAX_SIZE;
+        initialize(owner);
+    }
+
+    public void initialize(Counter owner) {
+        this.owner = owner;
+        equippables.forEach(eq -> eq.initialize(owner));
     }
 
     public void addItem(Equippable item) {
@@ -96,5 +107,23 @@ public class Collection {
             }
         }
         return Optional.empty();
+    }
+
+    public void equip(Message message, Equippable equippable) {
+        if (isFull()) {
+            CountingBot.write(message, "Your collection is full!"); // todo: wenn es unquip gibt: "Use unequip to remove"
+            return;
+        }
+        if (containsEquippable(equippable)) {
+            CountingBot.write(message, "You have already equipped a " + equippable.getName() + "!");
+            return;
+        }
+        addItem(equippable.createObject(owner));
+        CountingBot.write(message, "You have equipped a " + equippable.getName() + "!");
+    }
+
+
+    public void streakDisposed(CountingStreak streak) {
+        equippables.forEach(e -> e.streakDisposed(streak));
     }
 }

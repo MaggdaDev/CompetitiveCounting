@@ -6,28 +6,48 @@ import CompetitiveCounting.CountingContext;
 import CompetitiveCounting.CountingEmojis;
 import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.dialogue.ParallelDialogElementsBuilder;
+import CompetitiveCounting.items.equippables.GoodBadUgly;
+import CompetitiveCounting.vaults.vaultDrops.ItemDrop;
 import CompetitiveCounting.vaults.vaultDrops.MoneyDrop;
 import discord4j.core.object.entity.Message;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CommunityVault extends Vault {
-    private final static double SPAWN_CHANCE = 1; // TODO;
+    private final static double SPAWN_CHANCE = 0.03;
     private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. The initial suggestion for the key is {1}, "
             + "but everyone may suggest their own key by sending a DM with the syntax \n> `~[key] {2}`\n> to the counting bot. "
             + "In the end, the vault will be locked using the key that is closest to 2/3 of the average over all the submitted keys and the initially suggested"
             + " key. ";
     private final static int TOTAL_RIDDLE_TIME = 30;
+    private final static long TIME_INTERVAL_COMMUNITY_COUNT = 20;
     private Dialogue currentRiddleDialogue = null;
 
     public CommunityVault() {
         super(SPAWN_CHANCE, context -> {
-            return true;    // TODO
+            long now = Instant.now().getEpochSecond();
+            int differentCountersOtherThanCurrentInLastSeconds = 0;
+            for(Map.Entry<String,Long> entry : context.getStreak().getLastCountingTimesPerCounter().entrySet()) {
+                String counterId = entry.getKey();
+                long lastCountingSecond = entry.getValue();
+                if (counterId.equals(context.getCounter().getId())) {
+                    continue;
+                }
+                if (now - lastCountingSecond <= TIME_INTERVAL_COMMUNITY_COUNT) {
+                    differentCountersOtherThanCurrentInLastSeconds++;
+                }
+                if (differentCountersOtherThanCurrentInLastSeconds >= 2) {
+                    return true;
+                }
+            }
+            return false;
         });
-        super.addLootToLootPool(new MoneyDrop(100));
+        // super.addLootToLootPool(new MoneyDrop(95));  //todo
+        super.addLootToLootPool(new ItemDrop(5, new GoodBadUgly(null)));
     }
 
     @Override
@@ -46,8 +66,8 @@ public class CommunityVault extends Vault {
                         .replace("{2}", vaultId), context.getCounter().getName());
         HashMap<String, Integer> submittedKeysByUserId = new HashMap<>();
         AtomicReference<String> winningUserIdRef = new AtomicReference<>();
-        currentRiddleDialogue = new Dialogue()
-                .addNpcLine(riddleText, 0)
+        currentRiddleDialogue = new Dialogue();
+                currentRiddleDialogue.addNpcLine(riddleText, 0)
                 .initializeParallelDialogElements()
                 .addDMResponseCollector(dmMessage -> {
                     String content = dmMessage.getContent().trim();
@@ -104,16 +124,17 @@ public class CommunityVault extends Vault {
                     String reducedAverage = String.format(Locale.US, "%.2f", average * 2 / 3);
                     String winningUserId = getWinningUserID(average, x, submittedKeysByUserId);
                     winningUserIdRef.set(winningUserId);
-                    String timesUp = "Time's up! ";
                     if (submittedKeysByUserId.isEmpty()) {
-                        CountingBot.write(m, timesUp + "No key suggestions were submitted - this vault will remain locked!");
+                        CountingBot.write(m, "No key suggestions were submitted - this vault will remain locked!");
+                        currentRiddleDialogue.cancelAllRemaining();
                         return;
                     } else if (winningUserId.isEmpty()) {
-                        CountingBot.write(m, timesUp + submittedKeysByUserId.size() + " suggestions were submitted, but the initial suggestion of " + x + " was closest to 2/3 of the average, which is " + reducedAverage + "."
+                        CountingBot.write(m, "Even though " + submittedKeysByUserId.size() + " suggestions were submitted, but the initial suggestion of " + x + " was closest to 2/3 of the average, which is " + reducedAverage + "."
                                 + " Try again with the next " + getVaultName() + "!");
+                        currentRiddleDialogue.cancelAllRemaining();
                         return;
                     }
-                    CountingBot.write(m, timesUp + submittedKeysByUserId.size() + " suggestions were submitted. The vault is now locked "
+                    CountingBot.write(m, "Time's up! " + submittedKeysByUserId.size() + " suggestions were submitted. The vault is now locked "
                             + " with the key that is closest to " + reducedAverage + ". To find out who got the key right, please"
                             + " all write your suggestions into this channel now, using the syntax `~[key]`!");
                 })

@@ -1,5 +1,6 @@
 package CompetitiveCounting.items.equippables;
 
+import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingContext;
 import CompetitiveCounting.Price;
@@ -14,8 +15,8 @@ public class PocketAbacus extends Equippable {
     private int uses = 0;
     private long lastUseSeconds = 0;
     private final static long COOLDOWN_SECONDS = 60;
-    public PocketAbacus() {
-        super(null, NAME, DESCRIPTION);
+    public PocketAbacus(Counter owner) {
+        super(null, NAME, DESCRIPTION, owner);
     }
 
     @Override
@@ -34,8 +35,8 @@ public class PocketAbacus extends Equippable {
     }
 
     @Override
-    public Equippable createObject() {
-        return new PocketAbacus();
+    public Equippable createObject(Counter owner) {
+        return new PocketAbacus(owner);
     }
 
     @Override

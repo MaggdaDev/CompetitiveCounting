@@ -106,6 +106,7 @@ public class VaultSpawner {
                             activeVault = null;
                             activeDialogue = null;
                             riddleSolver = null;
+                            System.out.println("Reset!");
                         });
 
                 activeDialogue.play(message);

@@ -58,7 +58,7 @@ public class Counter implements ContractOwner {
         this.unlockedSystems = new int[]{};
         this.bonusStreaks = new BonusStreak[]{};
         inventory = new Inventory();
-        collection = new Collection();
+        collection = new Collection(this);
         init(guildId);
         contractHandler.initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
@@ -87,9 +87,10 @@ public class Counter implements ContractOwner {
             inventory = new Inventory();
         }
         if (collection == null) {
-            collection = new Collection();
+            collection = new Collection(this);
+        } else {
+            collection.initialize(this);
         }
-
     }
 
 
@@ -421,13 +422,18 @@ public class Counter implements ContractOwner {
         }
     }
 
-    public void notifyCount(int number, CountingStreak streak) {
+    public int notifyCountAndGetScoreAdd(int number, CountingContext countingContext) {
+        CountingStreak streak = countingContext.getStreak();
         int scoreAdd = (int) Math.round(number * getBonusFact(streak) * getTrophyBonus(number));
-//        System.out.println("ScoreAdd: " + scoreAdd + " for number " + number);
-        if (this.currScoreAdds.containsKey(streak.getKey())) {
-            this.currScoreAdds.replace(streak.getKey(), this.currScoreAdds.get(streak.getKey()) + scoreAdd);
+        addScoreAddForStreak(scoreAdd, streak.getKey());
+        return scoreAdd;
+    }
+
+    public void addScoreAddForStreak(int scoreAdd, String streakKey) {
+        if (this.currScoreAdds.containsKey(streakKey)) {
+            this.currScoreAdds.replace(streakKey, this.currScoreAdds.get(streakKey) + scoreAdd);
         } else {
-            this.currScoreAdds.put(streak.getKey(), scoreAdd);
+            this.currScoreAdds.put(streakKey, scoreAdd);
         }
     }
 
@@ -446,7 +452,7 @@ public class Counter implements ContractOwner {
         }
         if (item instanceof Equippable) {
             Equippable equippable = (Equippable) item;
-            equippable.equip(message, collection);
+            collection.equip(message, equippable);
             inventory.removeItem(item);
             CountingBot.getInstance().save();
             return;
@@ -488,7 +494,6 @@ public class Counter implements ContractOwner {
 
     public void succeed(CountingStreak streak, Message message) {
         addBonusScore(this.currScoreAdds.get(streak.getKey()), message);
-        this.currScoreAdds.remove(streak.getKey());
     }
 
     public int getPendingStreakScore(CountingStreak streak) {
@@ -496,6 +501,11 @@ public class Counter implements ContractOwner {
             return this.currScoreAdds.get(streak.getKey());
         }
         return 0;
+    }
+
+    public void streakDisposed(CountingStreak streak) {
+        this.currScoreAdds.remove(streak.getKey());
+        collection.streakDisposed(streak);
     }
 
     public String getId() {
@@ -512,7 +522,6 @@ public class Counter implements ContractOwner {
         currScoreAdd /= 3.0d;
         score = (int) ((2.0d * (double) score / 3.0d));
         addBonusScore(currScoreAdd, message);
-        this.currScoreAdds.remove(streak.getKey());
         return couldHaveBeenPossible - getScore();
     }
 
@@ -671,4 +680,17 @@ public class Counter implements ContractOwner {
     public Collection getCollection() {
         return collection;
     }
+
+    public boolean removeScoreAddForStreak(int scoreRemove, String streakKey) {
+        if (!currScoreAdds.containsKey(streakKey)) {
+            return false;
+        }
+        if (currScoreAdds.get(streakKey) < scoreRemove) {
+            return false;
+        }
+        currScoreAdds.replace(streakKey, currScoreAdds.get(streakKey) - scoreRemove);
+        return true;
+    }
+
+
 }

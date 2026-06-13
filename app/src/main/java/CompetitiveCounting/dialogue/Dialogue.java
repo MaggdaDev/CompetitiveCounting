@@ -17,6 +17,7 @@ public class Dialogue {
     private final ArrayList<Integer> npcMessagesIndices = new ArrayList<>();
     private Thread thread;
     private Function<String, String> npcLineConverter;
+    private boolean cancelAllRemaining = false;
 
     public Dialogue addNpcLine(String text, int readTimeMillis) {
         elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str));
@@ -78,6 +79,9 @@ public class Dialogue {
         Runnable dialogueRunnable = () -> {
             Message currentMessage = message;
             while (currentState < elements.size()) {
+                if (cancelAllRemaining) {
+                    break;
+                }
                 DialogueElement element = elements.get(currentState);
                 element.run(currentMessage);
                 if (element.shouldCancelRemaningElements()) {
@@ -104,8 +108,6 @@ public class Dialogue {
         currentState = elements.size(); // Mark the dialogue as finished
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
-        } else {
-            System.err.println("Trying to stop a dialogue that is not running or has already finished.");
         }
         for (DialogueElement element : elements) {
             element.dispose();
@@ -124,4 +126,8 @@ public class Dialogue {
     public void addParallelWaitingDialogueElement(DialogueElement[] sufficient, DialogueElement[] necessary) {
         elements.add(new ParallelDialogElements(sufficient, necessary));
     }
+    public void cancelAllRemaining() {
+        cancelAllRemaining = true;
+    }
+
 }
