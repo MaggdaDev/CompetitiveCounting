@@ -11,12 +11,17 @@ import CompetitiveCounting.bank.BankAccount;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
+import CompetitiveCounting.interactionhandlers.*;
+import CompetitiveCounting.items.CollectionCommandHandler;
 import CompetitiveCounting.items.InventoryCommandHandler;
+import CompetitiveCounting.items.PrimeCoinSeller;
 import CompetitiveCounting.items.ShopCommandHandler;
 import CompetitiveCounting.storage.Storage;
 import CompetitiveCounting.tradeoffer.TradeHandler;
 import CompetitiveCounting.tradeoffer.TradeOffer;
+import CompetitiveCounting.vaults.VaultSpawner;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
@@ -26,6 +31,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.Disposable;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,12 +54,15 @@ public class CountingBot {
     private final BankTransactionsHandler bankTransitionsHandler;
     private final ShopCommandHandler shopCommandHandler;
     private final InventoryCommandHandler inventoryCommandHandler;
-
+    private final UserAnswerHandler userAnswerHandler, userDMHandler;
+    private final SlashCommandHandler slashCommandHandler;
     private static CountingBot instance;
     private static int currId = 0;
     private static GatewayDiscordClient client;
 
     private final static boolean isDevMode = true;
+
+    private final PrimeCoinSeller primeCoinSeller;
 
     public CountingBot(GatewayDiscordClient client) {
         streaks = new HashMap<>();
@@ -67,12 +76,25 @@ public class CountingBot {
         bankCommandHandler = new BankCommandHandler(bankTransitionsHandler);
         shopCommandHandler = new ShopCommandHandler(guilds);
         inventoryCommandHandler = new InventoryCommandHandler(guilds);
-
+        userAnswerHandler = new UserAnswerHandler();
+        userDMHandler = new UserAnswerHandler();
         storage.loadStreaksIntoMapIfFilePresent();
+
+        slashCommandHandler = new SlashCommandHandler();
+        setupSlashCommandHandler();
+
+        primeCoinSeller = new PrimeCoinSeller();
     }
+
+    private void setupSlashCommandHandler() {
+        slashCommandHandler.register(client);
+        client.on(ChatInputInteractionEvent.class, slashCommandHandler::handleSlashCommand).subscribe();
+    }
+
 
     public void message(Message message) {
         addGuildOrCounterIfNotYetRegistered(message);
+        userAnswerHandler.handleUserMessage(message);
         checkCommands(message);
         count(message);
 
@@ -135,6 +157,10 @@ public class CountingBot {
                     shopCommandHandler.handleShopCommand(message);
                 } else if (commandWithoutIndicator.startsWith("inventory ") || commandWithoutIndicator.startsWith("inv ") || commandWithoutIndicator.equals("inventory") || commandWithoutIndicator.equals("inv")) {
                     inventoryCommandHandler.handleInventoryCommand(message, streak);
+                } else if (commandWithoutIndicator.startsWith(CollectionCommandHandler.COMMAND_INDICATOR)) {
+                    CollectionCommandHandler.handleCollectionCommand(message, streak);
+                } else if (commandWithoutIndicator.startsWith("vault")) {
+                    VaultSpawner.vaultInfo(message, streak);
                 }
             }
         } catch (Exception e) {
@@ -737,6 +763,10 @@ public class CountingBot {
         streaks.remove(streakId);
     }
 
+    public Optional<CountingStreak> getStreak(String channelId) {
+        return Optional.ofNullable(streaks.get(channelId));
+    }
+
     public void save() {
         storage.save();
     }
@@ -757,6 +787,9 @@ public class CountingBot {
     public static void write(Message message, String s) {
         write(message, s, (msg) -> {
         });
+    }
+    public static void respond(Message msg, String s) {
+        msg.getChannel().block().createMessage(s).withMessageReference(msg.getId()).subscribe();
     }
 
     // implement me!
@@ -864,6 +897,10 @@ public class CountingBot {
         bankCommandHandler.handBagRefundRequestedViaItemUse(message, trophyHandler);
     }
 
+    public UserAnswerHandler getUserAnswerHandler() {
+        return userAnswerHandler;
+    }
+
     public void subscribeSingleUseSingleMessageEmojiReactHandlerAndActivate(EmojiReactHandler handler, String messageId) {
         Disposable subscription = client.on(ReactionAddEvent.class)
                 .filter(event -> event.getMessage().block().getId().asString().equals(messageId))
@@ -907,8 +944,19 @@ public class CountingBot {
         return shopCommandHandler;
     }
 
+    public UserAnswerHandler getUserDMHandler() {
+        return userDMHandler;
+    }
 
     public Storage getStorage() {
         return storage;
+    }
+
+    public PrimeCoinSeller getPrimeCoinSeller() {
+        return primeCoinSeller;
+    }
+
+    public SlashCommandHandler getSlashCommandHandler() {
+        return slashCommandHandler;
     }
 }

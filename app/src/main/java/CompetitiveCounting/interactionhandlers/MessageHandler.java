@@ -3,18 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package CompetitiveCounting;
+package CompetitiveCounting.interactionhandlers;
 
+import CompetitiveCounting.CountingBot;
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.core.object.entity.channel.TextChannel;
-import discord4j.core.object.reaction.ReactionEmoji;
-import discord4j.discordjson.json.EmojiData;
-import discord4j.discordjson.json.ReactionData;
+
 import java.util.Optional;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
@@ -54,10 +51,14 @@ public class MessageHandler extends BaseSubscriber<MessageCreateEvent>{
             return;
         }
         MessageChannel messageChannel = message.getChannel().block();
-        if(messageChannel.getType() != Channel.Type.GUILD_TEXT) {
-            return;
+        switch (messageChannel.getType()) {
+            case GUILD_TEXT:
+                countingBot.message(message);
+                break;
+            case DM:
+                countingBot.getUserDMHandler().handleUserMessage(message);
+                break;
+
         }
-        countingBot.message(message);
-        
     }
 }

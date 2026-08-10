@@ -9,10 +9,9 @@ import CompetitiveCounting.bank.Bank;
 import CompetitiveCounting.contracts.Contract;
 import CompetitiveCounting.contracts.ContractHandler;
 import CompetitiveCounting.contracts.ContractOwner;
-import CompetitiveCounting.items.Inventory;
-import CompetitiveCounting.items.Purchasable;
-import CompetitiveCounting.items.ShopCommandHandler;
-import CompetitiveCounting.items.StreakEnders;
+import CompetitiveCounting.items.*;
+import CompetitiveCounting.items.Collection;
+import CompetitiveCounting.items.equippables.Equippable;
 import CompetitiveCounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
@@ -46,6 +45,7 @@ public class Counter implements ContractOwner {
 
     private transient String guildId;   // Will be set in initContracts method
     private Inventory inventory;
+    private Collection collection;
 
     public Counter(String guildId, String key, String name) {
         this.key = key;
@@ -58,6 +58,7 @@ public class Counter implements ContractOwner {
         this.unlockedSystems = new int[]{};
         this.bonusStreaks = new BonusStreak[]{};
         inventory = new Inventory();
+        collection = new Collection(this);
         init(guildId);
         contractHandler.initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
     }
@@ -85,9 +86,12 @@ public class Counter implements ContractOwner {
         if (inventory == null) {
             inventory = new Inventory();
         }
-
+        if (collection == null) {
+            collection = new Collection(this);
+        } else {
+            collection.initialize(this);
+        }
     }
-
 
 
     public void unlock(Unlockable unlockable, Message message) {
@@ -154,6 +158,7 @@ public class Counter implements ContractOwner {
         }
 
     }
+
     public int getOwedToBank() {
         int total = 0;
         for (Contract curr : contracts) {
@@ -417,13 +422,18 @@ public class Counter implements ContractOwner {
         }
     }
 
-    public void notifyCount(int number, CountingStreak streak) {
+    public int notifyCountAndGetScoreAdd(int number, CountingContext countingContext) {
+        CountingStreak streak = countingContext.getStreak();
         int scoreAdd = (int) Math.round(number * getBonusFact(streak) * getTrophyBonus(number));
-//        System.out.println("ScoreAdd: " + scoreAdd + " for number " + number);
-        if (this.currScoreAdds.containsKey(streak.getKey())) {
-            this.currScoreAdds.replace(streak.getKey(), this.currScoreAdds.get(streak.getKey()) + scoreAdd);
+        addScoreAddForStreak(scoreAdd, streak.getKey());
+        return scoreAdd;
+    }
+
+    public void addScoreAddForStreak(int scoreAdd, String streakKey) {
+        if (this.currScoreAdds.containsKey(streakKey)) {
+            this.currScoreAdds.replace(streakKey, this.currScoreAdds.get(streakKey) + scoreAdd);
         } else {
-            this.currScoreAdds.put(streak.getKey(), scoreAdd);
+            this.currScoreAdds.put(streakKey, scoreAdd);
         }
     }
 
@@ -434,32 +444,37 @@ public class Counter implements ContractOwner {
         return 1.0;
     }
 
-    public void use(Purchasable item, Message message, Optional<CountingStreak> optionalStreak) {
+    public void use(Item item, Message message, Optional<CountingStreak> optionalStreak) {
         if (optionalStreak.isPresent()) {
-            if (!currScoreAdds.containsKey(optionalStreak.get().getKey())){
+            if (!currScoreAdds.containsKey(optionalStreak.get().getKey())) {
                 optionalStreak.get().addCounter(this, message);
             }
         }
-        switch (item) {
-            case FAKE_HAND_BAG: case HAND_BAG:
-                writeUseMessage(Purchasable.FAKE_HAND_BAG, message);
-                CountingBot.getInstance().requestHandBagRefundViaItem(message);
-                inventory.removeItem(item);
-                break;
-            case WHITE_STREAK_ENDER:
-                if (optionalStreak.isEmpty()) {
-                    CountingBot.write(message, "You can only use streak-enders in an active streak!");
-                    return;
-                }
-                optionalStreak.get().getStreakEnders().whiteUsed(message, this);
-                break;
-            default:
-                throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
+        if (item instanceof Equippable) {
+            Equippable equippable = (Equippable) item;
+            collection.equip(message, equippable);
+            inventory.removeItem(item);
+            CountingBot.getInstance().save();
+            return;
+        } else if (item == Consumables.FAKE_HAND_BAG || item == Consumables.HAND_BAG) {
+            writeUseMessage(Consumables.FAKE_HAND_BAG, message);
+            CountingBot.getInstance().requestHandBagRefundViaItem(message);
+            inventory.removeItem(item);
+        } else if (item == Consumables.WHITE_STREAK_ENDER) {
+            if (optionalStreak.isEmpty()) {
+                CountingBot.write(message, "You can only use streak-enders in an active streak!");
+                return;
+            }
+            optionalStreak.get().getStreakEnders().whiteUsed(message, this);
+        } else if (item == Consumables.PRIME_COIN) {
+            CountingBot.getInstance().getPrimeCoinSeller().sellRequested(message, this);
+        } else {
+            throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
         }
         CountingBot.getInstance().save();
     }
 
-    private void writeUseMessage(Purchasable item, Message message) {
+    private void writeUseMessage(Item item, Message message) {
         CountingBot.write(message, "You used a " + item.getName() + "...");
     }
 
@@ -468,7 +483,7 @@ public class Counter implements ContractOwner {
     }
 
     public double getBonusFact(CountingStreak streak) {
-        return getFactFromSysAndPrestiges(streak.getBase()) * streak.getCurrentBonusFactor();
+        return getFactFromSysAndPrestiges(streak.getBase()) * streak.getCurrentBonusFactor() * collection.getBonusFact();
     }
 
     public void notifyWin(int win, int base, Message message) {
@@ -481,7 +496,6 @@ public class Counter implements ContractOwner {
 
     public void succeed(CountingStreak streak, Message message) {
         addBonusScore(this.currScoreAdds.get(streak.getKey()), message);
-        this.currScoreAdds.remove(streak.getKey());
     }
 
     public int getPendingStreakScore(CountingStreak streak) {
@@ -489,6 +503,11 @@ public class Counter implements ContractOwner {
             return this.currScoreAdds.get(streak.getKey());
         }
         return 0;
+    }
+
+    public void streakDisposed(CountingStreak streak) {
+        this.currScoreAdds.remove(streak.getKey());
+        collection.streakDisposed(streak);
     }
 
     public String getId() {
@@ -505,7 +524,6 @@ public class Counter implements ContractOwner {
         currScoreAdd /= 3.0d;
         score = (int) ((2.0d * (double) score / 3.0d));
         addBonusScore(currScoreAdd, message);
-        this.currScoreAdds.remove(streak.getKey());
         return couldHaveBeenPossible - getScore();
     }
 
@@ -521,6 +539,9 @@ public class Counter implements ContractOwner {
     }
 
     public void addBonusScore(int score, Message message) {
+        if (score < 0) {
+            throw new IllegalArgumentException("Cannot add negative bonus score!");
+        }
         this.score += contractHandler.getNetto(score, message);
     }
 
@@ -541,12 +562,21 @@ public class Counter implements ContractOwner {
         return price <= score;
     }
 
+    public boolean canAfford(Price price) {
+        switch (price.getUnit()) {
+            case MONEY: return price.getPrice() <= score;
+            case PRESTIGE_POINTS: return price.getPrice() <= prestigePoints;
+            default: throw new UnsupportedOperationException("Unknown price unit: " + price.getUnit());
+        }
+
+    }
+
     public int getPossibleTotalInStreak(CountingStreak streak) {
         return score + getStreakScoreAdd(streak);
     }
 
     private int getStreakScoreAdd(CountingStreak streak) {
-        if (! this.currScoreAdds.containsKey(streak.getKey())) {
+        if (!this.currScoreAdds.containsKey(streak.getKey())) {
             System.err.println("Trying to calculate streak score add for a streak which thinks I am in the streak, but I dont know this streak from currScoreAdds!");
             return 0;
         }
@@ -569,6 +599,14 @@ public class Counter implements ContractOwner {
 
     public void subtractScore(int sub) {
         score -= sub;
+    }
+
+    public void subtractScore(Price price) {
+        switch (price.getUnit()) {
+            case MONEY: score -= price.getPrice(); break;
+            case PRESTIGE_POINTS: prestigePoints -= price.getPrice(); break;
+            default: throw new UnsupportedOperationException("Unknown price unit: " + price.getUnit());
+        }
     }
 
     public boolean isBaseUnlocked(int base) {
@@ -641,6 +679,20 @@ public class Counter implements ContractOwner {
     }
 
 
+    public Collection getCollection() {
+        return collection;
+    }
+
+    public boolean removeScoreAddForStreak(int scoreRemove, String streakKey) {
+        if (!currScoreAdds.containsKey(streakKey)) {
+            return false;
+        }
+        if (currScoreAdds.get(streakKey) < scoreRemove) {
+            return false;
+        }
+        currScoreAdds.replace(streakKey, currScoreAdds.get(streakKey) - scoreRemove);
+        return true;
+    }
 
 
 }

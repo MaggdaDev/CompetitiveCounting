@@ -4,13 +4,13 @@ import CompetitiveCounting.Counter;
 import CompetitiveCounting.CountingBot;
 import CompetitiveCounting.CountingEmojis;
 import CompetitiveCounting.CountingStreak;
-import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.dialogue.ParallelDialogElementsBuilder;
 import discord4j.core.object.entity.Message;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class StreakEnders {
     private final static double PERC_COUNTERS_NEEDED = 2. / 3.;
@@ -88,24 +88,24 @@ public class StreakEnders {
             for (String contributingId : idsOfCountersNeededToContribute) {
                 builder.addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {
                     // On react up
-                }, Optional.of(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY);
+                }, new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY);
                 builder.addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, true, m -> {
                     // On react down
                     Counter decliner = CountingBot.getCounter(streak.getGuildId(), contributingId);
                     CountingBot.write(message, "The Streak:white_circle:Ender was cancelled by " + decliner.getName() + ".");
                     currentWhiteStreakEnderDialogue = null;
-                }, Optional.of(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT);
+                }, new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT);
             }
             builder.finishParallelDialogElementsAndAdd()
                     .addRunnable((msg) -> {
                         // All agreed
-                        if (itemUser.getInventory().getAmountOfItem(Purchasable.WHITE_STREAK_ENDER) <= 0) {
+                        if (itemUser.getInventory().getAmountOfItem(Consumables.WHITE_STREAK_ENDER) <= 0) {
                             CountingBot.write(message, "Oops, " + itemUser.getName() + "' Streak:white_circle:Ender has already been used somewhere else in the mean time!");
                             currentWhiteStreakEnderDialogue = null;
                             return;
                         }
-                        itemUser.getInventory().removeItem(Purchasable.WHITE_STREAK_ENDER);
-                        CountingBot.write(message, itemUser.getName() + " used a " + Purchasable.WHITE_STREAK_ENDER.getName() + "...");
+                        itemUser.getInventory().removeItem(Consumables.WHITE_STREAK_ENDER);
+                        CountingBot.write(message, itemUser.getName() + " used a " + Consumables.WHITE_STREAK_ENDER.getName() + "...");
                         streak.streakPayout(message, "", 0, null, 0, null);
                         currentWhiteStreakEnderDialogue = null;
                         CountingBot.getInstance().disposeStreak(streak.getKey());
@@ -114,12 +114,12 @@ public class StreakEnders {
         } else {
             CountingBot.write(message, "As you have contributed more than " + Math.round(PERC_COUNTERS_NEEDED * 100)
                     + "% of the counts in the current streak, you need not ask anyone for permission to end this streak!");
-            if (itemUser.getInventory().getAmountOfItem(Purchasable.WHITE_STREAK_ENDER) <= 0) {
+            if (itemUser.getInventory().getAmountOfItem(Consumables.WHITE_STREAK_ENDER) <= 0) {
                 CountingBot.write(message, "Oops, you no longer own a Streak:white_circle:Ender.");
                 return;
             }
-            CountingBot.write(message, "You used a " + Purchasable.WHITE_STREAK_ENDER.getName() + "...");
-            itemUser.getInventory().removeItem(Purchasable.WHITE_STREAK_ENDER);
+            CountingBot.write(message, "You used a " + Consumables.WHITE_STREAK_ENDER.getName() + "...");
+            itemUser.getInventory().removeItem(Consumables.WHITE_STREAK_ENDER);
             streak.streakPayout(message, null, 0, null, 0, null); // todo testen ob man da irgendwas schreiben muss so "a streak ender was used heureker jeder kriegt geld" oder soos
             CountingBot.getInstance().disposeStreak(streak.getKey());
         }

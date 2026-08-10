@@ -5,9 +5,13 @@
  */
 package CompetitiveCounting;
 
-import CompetitiveCounting.dialogue.Dialogue;
+import CompetitiveCounting.interactionhandlers.CaptureHandler;
+import CompetitiveCounting.interactionhandlers.EmojiReactHandler;
+import CompetitiveCounting.interactionhandlers.TrophyHandler;
 import CompetitiveCounting.items.StreakEnders;
 import CompetitiveCounting.rules.*;
+import CompetitiveCounting.vaults.Vault;
+import CompetitiveCounting.vaults.VaultSpawner;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
@@ -23,7 +27,7 @@ public class CountingStreak {
 
     private final String key;
     private final String guildId;
-    private int counter, lastCount;
+    private int counter, lastCount, lastScoreAdd;
     private String lastCounterId;
     private ArrayList<String> counterIds;
 
@@ -45,10 +49,14 @@ public class CountingStreak {
     private transient EmojiReactHandler emojiReactHandler;
     private transient Disposable emojiReactSubscription;
     private transient StreakEnders streakEnders;
+    private transient VaultSpawner vaultSpawner;
 
     private boolean destroyedByWrongCapture = false;
 
     private HashMap<String, Integer> amountOfCountsPerCounter = new HashMap<>();
+    private HashMap<String, Long> lastCountingTimesPerCounter = new HashMap<>();
+
+    private transient CountingContext lastCountingContext = null;
 
     // Pre-initializing (fully replaced by loading from json!)
     public CountingStreak(String key, int base, String guildId) {
@@ -72,6 +80,7 @@ public class CountingStreak {
         captureHandler = new CaptureHandler(emojiReactHandler);
         streakEnders = new StreakEnders(this);
         captureBlockedUsers = new ArrayList<>();
+        vaultSpawner = new VaultSpawner(this);
 
         if (timeLimitRule != null){
             timeLimitRule.initialize(this);
@@ -106,11 +115,15 @@ public class CountingStreak {
 
 
         if (isNumCorrect(number, message) && (!user.getId().equals(lastCounterId))) { // Count is accepted
+            lastCountingContext = new CountingContext(user, number, lastCount, this, lastScoreAdd, lastCounterId);
             lastCount = number;
             incrementCounter();
             amountOfCountsPerCounter.replace(user.getId(), amountOfCountsPerCounter.get(user.getId()) + 1);
-            user.notifyCount(number, this);
-
+            lastCountingTimesPerCounter.put(user.getId(), Instant.now().getEpochSecond());
+            int currScoreAdd = user.notifyCountAndGetScoreAdd(number, lastCountingContext);
+            counterIds.stream()
+                    .flatMap(id -> CountingBot.getCounter(guildId, id).getCollection().getEquippables().stream())
+                    .forEach(eq -> eq.performPassiveAfterCounterReceivesMoney(message, lastCountingContext, currScoreAdd));
             if(captureHandler.raisedCapture(message, number, user.getId(), lastCaptureTimes, () -> {    // onCaptureFailed
                 destroyedByWrongCapture = true;
                 fail(message, number, user);
@@ -140,6 +153,9 @@ public class CountingStreak {
                 timeLimitNewlyAdded = false;
             }
             lastCounterId = user.getId();
+
+            Optional<Vault> maybeVault = vaultSpawner.maybeSpawnVault(message, lastCountingContext);
+            lastScoreAdd = currScoreAdd;
             return true;
         } else {
             fail(message, number, user);
@@ -164,7 +180,7 @@ public class CountingStreak {
     }
 
     private void fail(Message message, int number, Counter user) {
-        message.addReaction(ReactionEmoji.unicode("\u274C")).subscribe();
+        message.addReaction(CountingEmojis.X).subscribe();
 
         int pendingFailScore = user.getPendingStreakScore(this);
         int cuckPayout = 0;
@@ -778,6 +794,8 @@ public class CountingStreak {
         }
         streakEnders.dispose();
         emojiReactSubscription.dispose();
+        vaultSpawner.dispose();
+        counterIds.stream().map(id -> CountingBot.getCounter(guildId, id)).forEach(c->c.streakDisposed(this));
     }
 
     public TrophyHandler getTrophyHandler() {
@@ -803,4 +821,23 @@ public class CountingStreak {
     public StreakEnders getStreakEnders() {
         return streakEnders;
     }
+
+    public VaultSpawner getVaultSpawner() {
+        return vaultSpawner;
+    }
+
+    public CountingContext getLastContext() {
+        return lastCountingContext;
+    }
+
+    public String getNextCorrectNumberInBase() {
+        String num = BaseSystems.decimalToSystem(counter, currentBase);
+        return num + (currentBase == 10 ? "" : " (base " + currentBase + ")");
+    }
+
+    public HashMap<String, Long> getLastCountingTimesPerCounter() {
+        return lastCountingTimesPerCounter;
+    }
+
+
 }

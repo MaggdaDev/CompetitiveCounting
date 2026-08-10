@@ -4,8 +4,8 @@ import CompetitiveCounting.*;
 import CompetitiveCounting.bank.bankupgrades.BankUpgrade;
 import CompetitiveCounting.bank.exceptions.*;
 import CompetitiveCounting.dialogue.Dialogue;
+import CompetitiveCounting.interactionhandlers.TrophyHandler;
 import discord4j.core.object.entity.Message;
-import reactor.core.Disposable;
 
 import java.util.*;
 

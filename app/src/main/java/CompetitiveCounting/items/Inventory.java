@@ -21,7 +21,7 @@ public class Inventory {
         isShopUnlocked = shopUnlocked;
     }
 
-    public void buy(Purchasable toBuy) {
+    public void addItem(Item toBuy) {
         if (itemsBoughtAmount.containsKey(toBuy.toString())) {
             itemsBoughtAmount.put(toBuy.toString(), itemsBoughtAmount.get(toBuy.toString()) + 1);
         } else {
@@ -29,21 +29,22 @@ public class Inventory {
         }
     }
 
-    public Purchasable[] getBoughtItemTypes() {
-        List<Purchasable> list = new ArrayList<>();
-        for (Purchasable purchasable : Purchasable.values()) {
-            if (getAmountOfItem(purchasable) > 0) {
-                list.add(purchasable);
+    public Item[] getBoughtItemTypes() {
+        List<Item> list = new ArrayList<>();
+        for (Item item : Item.ALL_ITEMS) {
+            System.out.println("Checking item " + item );
+            if (getAmountOfItem(item) > 0) {
+                list.add(item);
             }
         }
-        return list.toArray(new Purchasable[0]);
+        return list.toArray(new Item[0]);
     }
 
-    public int getAmountOfItem(Purchasable purchasable) {
-        return itemsBoughtAmount.getOrDefault(purchasable.toString(), 0);
+    public int getAmountOfItem(Item item) {
+        return itemsBoughtAmount.getOrDefault(item.toString(), 0);
     }
 
-    public void removeItem(Purchasable item) {
+    public void removeItem(Item item) {
         String itemId = item.toString();
         itemsBoughtAmount.put(itemId, getAmountOfItem(item) - 1);
     }
@@ -53,7 +54,7 @@ public class Inventory {
      * @param itemNumber beginning with 1!!!
      * @return
      */
-    public Purchasable getItemByItemNumber(int itemNumber) {
+    public Item getItemByItemNumber(int itemNumber) {
         return getBoughtItemTypes()[itemNumber - 1];
     }
 }

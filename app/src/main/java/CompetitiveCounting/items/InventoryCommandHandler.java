@@ -43,14 +43,14 @@ public class InventoryCommandHandler {
                 } catch (NumberFormatException e) {
                     // continue
                 }
-                Purchasable item;
+                Item item;
                 if (itemNumber == -1) {
                     // Not a number, maybe a name?
-                    if (!Purchasable.isValidPurchasable(itemName)) {
+                    if (!Purchasables.isValidPurchasable(itemName)) {
                         CountingBot.write(message, "Invalid item name: " + itemName);
                         return;
                     }
-                    item = Purchasable.getPurchasableByString(itemName.toLowerCase());
+                    item = Purchasables.getPurchasableByNameOrNumber(itemName.toLowerCase());
                 } else {
                     if (itemNumber <= 0) {
                         CountingBot.write(message, "Item number must be greater than or equal to 1, but is " + itemNumber +
@@ -87,7 +87,7 @@ public class InventoryCommandHandler {
         }
         StringBuilder stringBuilder = new StringBuilder("Your inventory:\n\n");
         for(int i = 1; i <= counter.getInventory().getBoughtItemTypes().length; i++) {
-            Purchasable item = counter.getInventory().getItemByItemNumber(i);
+            Item item = counter.getInventory().getItemByItemNumber(i);
             int amount = counter.getInventory().getAmountOfItem(item);
             stringBuilder.append(i)
                     .append(") ").append(amount)

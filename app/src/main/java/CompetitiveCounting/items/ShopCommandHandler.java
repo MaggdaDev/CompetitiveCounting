@@ -78,11 +78,10 @@ public class ShopCommandHandler {
         StringBuilder sb = new StringBuilder();
         sb.append("Welcome to the shop! The items you can find here are: \n\n");
         int itemCounter = 1;
-        for (Purchasable item : Purchasable.BUYABLES) {
+        for (Item item : Purchasables.PURCHASABLE_ITEMS) {
             sb.append(itemCounter + ") " + item.getName())
                     .append(" - ")
                     .append(item.getPrice())
-                    .append(" money")
                     .append("\n");
             itemCounter += 1;
         }
@@ -91,34 +90,34 @@ public class ShopCommandHandler {
     }
 
     public void buy(Message message, String itemToBuy, Counter counter) {
-        if (!Purchasable.isValidPurchasable(itemToBuy)) {
+        if (!Purchasables.isValidPurchasable(itemToBuy)) {
             CountingBot.write(message, "This item doesn't exist! Please try again.");
             return;
         }
-        Purchasable toBuy = Purchasable.getPurchasableByString(itemToBuy);
+        Item toBuy = Purchasables.getPurchasableByNameOrNumber(itemToBuy);
         if (!counter.canAfford(toBuy.getPrice())) {
             CountingBot.write(message, "This item is too expensive for you! You only have " + counter.getScore() + " out of the needed " + toBuy.getPrice() + " money.");
             return;
         }
         counter.subtractScore(toBuy.getPrice());
-        if (toBuy == Purchasable.HAND_BAG) {
+        if (toBuy == Consumables.HAND_BAG) {
             CountingBot.getInstance().handBagBought(message);
         } else {
-            counter.getInventory().buy(toBuy);
+            counter.getInventory().addItem(toBuy);
             writeItemBoughtMessage(message, toBuy);
             CountingBot.getInstance().save();
         }
     }
 
-    private void writeItemBoughtMessage(Message message, Purchasable item) {
-        CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + " money. Use `" + "~inv" + "` to check out your inventory!");
+    private void writeItemBoughtMessage(Message message, Item item) {
+        CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + ". Use `" + "~inv" + "` to check out your inventory!");
     }
 
     public void acquireHandBag(Message message, String guildId, String counterId) {
         CountingGuild guild = guilds.get(guildId);
         Counter counter = guild.getCounter(counterId);
-        counter.getInventory().buy(Purchasable.FAKE_HAND_BAG);
-        writeItemBoughtMessage(message, Purchasable.FAKE_HAND_BAG);
+        counter.getInventory().addItem(Consumables.FAKE_HAND_BAG);
+        writeItemBoughtMessage(message, Consumables.FAKE_HAND_BAG);
     }
 
     private void shopNotUnlocked(Message message) {
