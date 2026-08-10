@@ -1,14 +1,19 @@
 package CompetitiveCounting.dialogue;
 
+import CompetitiveCounting.Counter;
+import CompetitiveCounting.interactionhandlers.SlashCommandHandler;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Dialogue {
     private int currentState = 0;
@@ -37,12 +42,20 @@ public class Dialogue {
 
     public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
                                             Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction) {
-        elements.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction));
+        elements.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, (msg, user) -> {
+            onReactCallback.accept(msg);
+            return true;
+        }, counterIdRestriction));
         return this;
     }
 
     public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact) {
         return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, new AtomicReference<>());
+    }
+
+    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, BiFunction<Message, Counter,  Boolean> onReactCallback) {
+        elements.add(new EmojiReactionSubscriber(emoji, false, onReactCallback, new AtomicReference<>()));
+        return this;
     }
 
     public Dialogue addWaitForUserAnswer(Function<Message, Boolean> testAnswer) {
@@ -63,6 +76,12 @@ public class Dialogue {
 
     public Dialogue addForAfterDialogue(Runnable runnable) {
         thenRuns.add(runnable);
+        return this;
+    }
+
+    public Dialogue addKeySubmissionAwaiter(SlashCommandHandler.KeySubmissionListener listener, CountDownLatch finishedAtZeroLatch,
+                                            Supplier<Boolean> shouldCancelOnTimeout, int timeoutSeconds) {
+        elements.add(new KeySubmissionAwaiter(listener, finishedAtZeroLatch, shouldCancelOnTimeout, timeoutSeconds));
         return this;
     }
 

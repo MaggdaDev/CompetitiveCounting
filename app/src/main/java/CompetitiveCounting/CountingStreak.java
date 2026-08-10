@@ -180,7 +180,7 @@ public class CountingStreak {
     }
 
     private void fail(Message message, int number, Counter user) {
-        message.addReaction(ReactionEmoji.unicode("\u274C")).subscribe();
+        message.addReaction(CountingEmojis.X).subscribe();
 
         int pendingFailScore = user.getPendingStreakScore(this);
         int cuckPayout = 0;

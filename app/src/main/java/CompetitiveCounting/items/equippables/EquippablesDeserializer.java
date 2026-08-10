@@ -27,6 +27,9 @@ public class EquippablesDeserializer implements JsonDeserializer<Equippable> {
                 case GoodBadUgly.NAME:
                 ret = context.deserialize(obj, GoodBadUgly.class);
                 break;
+            case CoinMiner.NAME:
+                ret = context.deserialize(obj, CoinMiner.class);
+                break;
             default:
                 throw new JsonParseException("Unknown type: " + type);
         };

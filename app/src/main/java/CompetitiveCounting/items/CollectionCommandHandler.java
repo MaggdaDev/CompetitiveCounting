@@ -33,7 +33,7 @@ public class CollectionCommandHandler {
                 String itemIdentifier = content.substring(content.indexOf("use") + 4);
                 counter.getCollection().getEquippableByNameOrNumber(itemIdentifier).ifPresentOrElse((eq) -> {
                     if (streak.isEmpty()) {
-                        CountingBot.write(message, "You can only use items during a counting streak!");
+                        CountingBot.write(message, "You can only use items form your collection during a counting streak!");
                         return;
                     }
                     if (!eq.doCollectionUse(message, streak.get().getLastContext())) {

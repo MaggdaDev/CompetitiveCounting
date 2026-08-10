@@ -26,14 +26,17 @@ public class ParallelDialogElementsBuilder {
                                                                  boolean cancelRemainingDialogueOnReact,
                                                                  Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction,
                                                                  ParallelDialogElementType type) {
-        addToList(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction), type);
+        addToList(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, (msg, counter) -> {
+            onReactCallback.accept(msg);
+            return true;
+        }, counterIdRestriction), type);
         return this;
     }
 
     public ParallelDialogElementsBuilder addWaitForEmojiReaction(ReactionEmoji emoji,
                                                                  boolean cancelRemainingDialogueOnReact,
                                                                  ParallelDialogElementType type) {
-        addToList(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, m -> {}, new AtomicReference<>()), type);
+        addToList(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, (m, c) -> true, new AtomicReference<>()), type);
         return this;
     }
 

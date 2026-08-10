@@ -84,7 +84,7 @@ public class VaultOfLongStrides extends Vault {
 
     @Override
     public String getSpawnConditionsDescription() {
-        return "Spawns on counts which exceed the last count by at least " + MIN_STRIDE_LENGTH + ". ";
+        return "Spawns on counts which exceed the last count by at least " + MIN_STRIDE_LENGTH + ".";
     }
 
 }

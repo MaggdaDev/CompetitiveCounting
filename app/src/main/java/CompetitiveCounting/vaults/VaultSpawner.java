@@ -14,7 +14,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class VaultSpawner {
     private final static Vault[] ALL_VAULTS = {
             new VaultOfLongStrides(),
-            new CommunityVault()
+            new CommunityVault(),
+            new PrimeVault()
     };
     private final Vault[] vaults;
     private Dialogue activeDialogue = null;
@@ -75,7 +76,7 @@ public class VaultSpawner {
     private static String getStaticVaultInfo() {
         String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n";
         for (Vault vault : ALL_VAULTS) {
-            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() + "(1 in " + Math.round(1 / vault.getSpawnChance()) + ")\n";
+            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() + " (1 in " + Math.round(1 / vault.getSpawnChance()) + ")\n";
         }
         return s;
     }
@@ -114,6 +115,10 @@ public class VaultSpawner {
             }
         }
         return Optional.ofNullable(activeVault);
+    }
+
+    public Vault getActiveVault() {
+        return activeVault;
     }
 
     public void dispose() {

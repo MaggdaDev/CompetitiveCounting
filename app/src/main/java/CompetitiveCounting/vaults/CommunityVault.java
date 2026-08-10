@@ -6,21 +6,24 @@ import CompetitiveCounting.CountingContext;
 import CompetitiveCounting.CountingEmojis;
 import CompetitiveCounting.dialogue.Dialogue;
 import CompetitiveCounting.dialogue.ParallelDialogElementsBuilder;
+import CompetitiveCounting.interactionhandlers.SlashCommandHandler;
 import CompetitiveCounting.items.equippables.GoodBadUgly;
 import CompetitiveCounting.vaults.vaultDrops.ItemDrop;
 import CompetitiveCounting.vaults.vaultDrops.MoneyDrop;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CommunityVault extends Vault {
     private final static double SPAWN_CHANCE = 0.03;
     private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. The initial suggestion for the key is {1}, "
-            + "but everyone may suggest their own key by sending a DM with the syntax \n> `~[key] {2}`\n> to the counting bot. "
+            + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND +  "`. "
             + "In the end, the vault will be locked using the key that is closest to 2/3 of the average over all the submitted keys and the initially suggested"
             + " key. ";
     private final static int TOTAL_RIDDLE_TIME = 30;
@@ -46,7 +49,7 @@ public class CommunityVault extends Vault {
             }
             return false;
         });
-        // super.addLootToLootPool(new MoneyDrop(95));  //todo
+        super.addLootToLootPool(new MoneyDrop(95));
         super.addLootToLootPool(new ItemDrop(5, new GoodBadUgly(null)));
     }
 
@@ -68,53 +71,24 @@ public class CommunityVault extends Vault {
         AtomicReference<String> winningUserIdRef = new AtomicReference<>();
         currentRiddleDialogue = new Dialogue();
                 currentRiddleDialogue.addNpcLine(riddleText, 0)
-                .initializeParallelDialogElements()
-                .addDMResponseCollector(dmMessage -> {
-                    String content = dmMessage.getContent().trim();
-                    if (content.startsWith("~")) {
-                        if (!content.contains(" ") || content.split(" ").length != 2) {
-                            sendNotUnderstoodMessage(dmMessage);
-                            return false;
-                        }
-                        String submittedVauldId = content.split(" ")[1];
-                        if (!submittedVauldId.equals(vaultId)) {
-                            return false;
-                        }
-                        String submittedKeyStr = content.substring(1, content.indexOf(" "));
-                        int submittedKey;
-                        try {
-                            submittedKey = Integer.parseInt(submittedKeyStr);
-                        } catch (NumberFormatException e) {
-                            sendNotUnderstoodMessage(dmMessage);
-                            return false;
-                        }
-                        if (submittedKey < 0) {
-                            CountingBot.write(dmMessage, "Please submit a non-negative integer as key suggestion!");
-                            return false;
-                        }
-                        if (submittedKey > Integer.MAX_VALUE / 100) {
-                            CountingBot.write(dmMessage, "Please do not submit a suggestion near the integer limit!");
-                            return false;
-                        }
-                        String authorId = dmMessage.getAuthor().get().getId().asString();
-                        if (submittedKeysByUserId.containsKey(authorId)) {
-                            CountingBot.write(dmMessage, "You have already submitted a key suggestion for this vault!");
-                            return false;
-                        }
-                        submittedKeysByUserId.put(authorId, submittedKey);
-                        dmMessage.addReaction(CountingEmojis.KEKMARK).block();
-                        return false;
-                    }
-                    return false;
-                }, TOTAL_RIDDLE_TIME, ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
-                .addSubDialogue(new Dialogue()
-                        .addSleep(TOTAL_RIDDLE_TIME - 6)
-                        .addEmojiReaction(CountingEmojis.THREE)
-                        .addSleep(2)
-                        .addEmojiReaction(CountingEmojis.TWO)
-                        .addSleep(2)
-                        .addEmojiReaction(CountingEmojis.ONE), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
-                .finishParallelDialogElementsAndAdd()
+                        .addKeySubmissionAwaiter((userId, key) -> {
+                            InteractionApplicationCommandCallbackSpec.Builder specBuilder = InteractionApplicationCommandCallbackSpec.builder()
+                                    .ephemeral(true);
+                            if (key < 0) {
+                                specBuilder.content("Please submit a non-negative integer as key suggestion!");
+                            } else if (key > Integer.MAX_VALUE / 100) {
+                                specBuilder.content("Please do not submit a suggestion near the integer limit!");
+                            } else {
+                                int keyInt = (int) key;
+                                if (submittedKeysByUserId.containsKey(userId)) {
+                                    specBuilder.content("You have already submitted a key suggestion for this vault!");
+                                } else {
+                                    submittedKeysByUserId.put(userId, keyInt);
+                                    specBuilder.content("You have submitted the key " + keyInt + ".");
+                                }
+                            }
+                            return specBuilder.build();
+                        }, new CountDownLatch(1), () -> false,TOTAL_RIDDLE_TIME)
                 .addRunnable(m -> {
                     double totalSum = x;
                     for (int submittedKey : submittedKeysByUserId.values()) {
@@ -157,7 +131,7 @@ public class CommunityVault extends Vault {
                         return false;
                     }
                     if (submittedKeysByUserId.get(authorId) != answer) {
-                        CountingBot.write(msg, "This is not the key you submitted in the DM, " + counter.getName() + "!");
+                        CountingBot.write(msg, "This is not the key you submitted, " + counter.getName() + "!");
                         return false;
                     }
                     return authorId.equals(winningUserIdRef.get());

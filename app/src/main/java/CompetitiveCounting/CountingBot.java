@@ -11,18 +11,17 @@ import CompetitiveCounting.bank.BankAccount;
 import CompetitiveCounting.bank.BankCommandHandler;
 import CompetitiveCounting.bank.BankTransactionsHandler;
 import CompetitiveCounting.contracts.Contract;
-import CompetitiveCounting.interactionhandlers.EmojiReactHandler;
-import CompetitiveCounting.interactionhandlers.TimeHandler;
-import CompetitiveCounting.interactionhandlers.TrophyHandler;
-import CompetitiveCounting.interactionhandlers.UserAnswerHandler;
+import CompetitiveCounting.interactionhandlers.*;
 import CompetitiveCounting.items.CollectionCommandHandler;
 import CompetitiveCounting.items.InventoryCommandHandler;
+import CompetitiveCounting.items.PrimeCoinSeller;
 import CompetitiveCounting.items.ShopCommandHandler;
 import CompetitiveCounting.storage.Storage;
 import CompetitiveCounting.tradeoffer.TradeHandler;
 import CompetitiveCounting.tradeoffer.TradeOffer;
 import CompetitiveCounting.vaults.VaultSpawner;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
@@ -32,6 +31,7 @@ import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.Disposable;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,12 +55,14 @@ public class CountingBot {
     private final ShopCommandHandler shopCommandHandler;
     private final InventoryCommandHandler inventoryCommandHandler;
     private final UserAnswerHandler userAnswerHandler, userDMHandler;
-
+    private final SlashCommandHandler slashCommandHandler;
     private static CountingBot instance;
     private static int currId = 0;
     private static GatewayDiscordClient client;
 
     private final static boolean isDevMode = true;
+
+    private final PrimeCoinSeller primeCoinSeller;
 
     public CountingBot(GatewayDiscordClient client) {
         streaks = new HashMap<>();
@@ -77,7 +79,18 @@ public class CountingBot {
         userAnswerHandler = new UserAnswerHandler();
         userDMHandler = new UserAnswerHandler();
         storage.loadStreaksIntoMapIfFilePresent();
+
+        slashCommandHandler = new SlashCommandHandler();
+        setupSlashCommandHandler();
+
+        primeCoinSeller = new PrimeCoinSeller();
     }
+
+    private void setupSlashCommandHandler() {
+        slashCommandHandler.register(client);
+        client.on(ChatInputInteractionEvent.class, slashCommandHandler::handleSlashCommand).subscribe();
+    }
+
 
     public void message(Message message) {
         addGuildOrCounterIfNotYetRegistered(message);
@@ -750,6 +763,10 @@ public class CountingBot {
         streaks.remove(streakId);
     }
 
+    public Optional<CountingStreak> getStreak(String channelId) {
+        return Optional.ofNullable(streaks.get(channelId));
+    }
+
     public void save() {
         storage.save();
     }
@@ -770,6 +787,9 @@ public class CountingBot {
     public static void write(Message message, String s) {
         write(message, s, (msg) -> {
         });
+    }
+    public static void respond(Message msg, String s) {
+        msg.getChannel().block().createMessage(s).withMessageReference(msg.getId()).subscribe();
     }
 
     // implement me!
@@ -930,5 +950,13 @@ public class CountingBot {
 
     public Storage getStorage() {
         return storage;
+    }
+
+    public PrimeCoinSeller getPrimeCoinSeller() {
+        return primeCoinSeller;
+    }
+
+    public SlashCommandHandler getSlashCommandHandler() {
+        return slashCommandHandler;
     }
 }

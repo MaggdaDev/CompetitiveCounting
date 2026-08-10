@@ -466,6 +466,8 @@ public class Counter implements ContractOwner {
                 return;
             }
             optionalStreak.get().getStreakEnders().whiteUsed(message, this);
+        } else if (item == Consumables.PRIME_COIN) {
+            CountingBot.getInstance().getPrimeCoinSeller().sellRequested(message, this);
         } else {
             throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
         }
