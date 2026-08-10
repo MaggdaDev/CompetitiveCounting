@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 public class PrimeVault extends Vault {
     private final static String GREEN = ":green_square:", YELLOW = ":yellow_square:", WHITE = ":white_large_square:";
-    private final static double SPAWN_CHANCE = 1; // TODO 0.02;
+    private final static double SPAWN_CHANCE = 0.02;
     private final static String RIDDLE = "Guess the correct 4-digit prime number! For each guess, you will be told which digit is " +
             "at the correct spot (" + GREEN + "), at the wrong spot (" + YELLOW + ") or wrong (" + WHITE + "). Only 4-digit primes will be accepted as guesses.";
 
