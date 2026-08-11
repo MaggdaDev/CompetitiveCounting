@@ -98,7 +98,7 @@ public class BonusStreak {
     }
 
     public static enum BonusCountType {
-        DAILY(100);
+        DAILY(500);
         public final int multiplier;
 
         BonusCountType(int multiplier) {
