@@ -31,7 +31,9 @@ dependencies {
     antlr "org.antlr:antlr4:4.10.1"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
-
+test {
+    useJUnitPlatform()
+}
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()

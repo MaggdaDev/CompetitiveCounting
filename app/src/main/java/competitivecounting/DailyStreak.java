@@ -1,0 +1,101 @@
+package competitivecounting;
+
+import discord4j.core.object.entity.Message;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+
+public class DailyStreak {
+    private int currentCount;
+    private long lastDaySinceEpochCounted;
+    private final static ZoneId TIMEZONE = ZoneId.of("Europe/Berlin");
+
+    private final static int BONUS_PER_DAY = 500;
+
+    public DailyStreak() {
+        currentCount = 0;
+        lastDaySinceEpochCounted = 0;
+    }
+
+    public int increment() {
+        currentCount++;
+        lastDaySinceEpochCounted = getCurrentDaySinceEpoch();
+        return currentCount * BONUS_PER_DAY;
+    }
+
+    public boolean canIncrement() {
+        return lastDaySinceEpochCounted < getCurrentDaySinceEpoch();
+    }
+
+    private long getCurrentDaySinceEpoch() {
+        return LocalDate.now(TIMEZONE).toEpochDay();
+    }
+
+    public int getCurrentCount() {
+        return currentCount;
+    }
+
+    public void setCountedTodayWithoutIncrementing() {
+        lastDaySinceEpochCounted = getCurrentDaySinceEpoch();
+    }
+
+    public int getDailyScoreAdd(Message message, double streakIndependentBonusMult) {
+        int count;
+        try {
+            count = getCountFromDailyMessage(message);
+        } catch (NumberFormatException e) {
+            if (getCurrentCount() == 0) {
+                CountingBot.write(message, "Start a daily streak using `~daily 1`!");
+            } else {
+                if (canIncrement()) {
+                    CountingBot.write(message, "Your daily streak is at " + getCurrentCount() + " and ready for the next count. Use `~daily <count>`!");
+                } else {
+                    alreadyCountedTodayMessage(message);
+                }
+            }
+            return 0;
+        }
+
+        if (canIncrement()) {
+            if (count != getCurrentCount() + 1) {
+                CountingBot.write(message, "Wrong count! The last count was " + getCurrentCount() + ". Try again tomorrow!");
+                setCountedTodayWithoutIncrementing();
+                return 0;
+            }
+            int daysSkipped = (int)(getCurrentDaySinceEpoch() - lastDaySinceEpochCounted - 1);
+            int baseScoreAdd =  increment();
+            int scoreAddWithBonus = (int) (streakIndependentBonusMult * baseScoreAdd);
+
+            String scoreAddedMsg;
+            if (daysSkipped == 0) {
+                scoreAddedMsg = "Good job, you received {0} money from your daily streak without missing a day. Come back tomorrow for the next reward!";
+            } else if (getCurrentCount() == 1) {
+                scoreAddedMsg = "You started a daily streak and received {0} money. Come back tomorrow for the next reward!";
+            }else {
+                scoreAddedMsg = "You received {0} money from your daily streak after " + daysSkipped + " inactive day" + (daysSkipped>1? "s":"") + ". Come back tomorrow for the next reward!";
+            }
+            CountingBot.writeBlocking(message, scoreAddedMsg.replace("{0}", Util.valueAndValueWithBoniToString(baseScoreAdd, scoreAddWithBonus) ));
+            return scoreAddWithBonus;
+
+        } else {
+            alreadyCountedTodayMessage(message);
+        }
+        return 0;
+    }
+
+    private void alreadyCountedTodayMessage(Message message) {
+        CountingBot.write(message, "You have already counted in your daily streak today. Come back tomorrow!");
+    }
+
+    private int getCountFromDailyMessage(Message message) throws NumberFormatException {
+        String content = message.getContent();
+        if (!content.contains(" ")) {
+            throw new NumberFormatException();
+        }
+        String[] parts = content.split(" ");
+        if (parts.length != 2) {
+            throw new NumberFormatException();
+        }
+        return Integer.parseInt(parts[1]);
+    }
+}

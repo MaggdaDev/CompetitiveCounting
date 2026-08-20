@@ -1,0 +1,38 @@
+package competitivecounting.items.equippables;
+
+import competitivecounting.Counter;
+import competitivecounting.Price;
+
+public class VaultLocator extends Equippable {
+    private int locatedVaults = 0;
+    public final static String NAME = "Vault:satellite:Locator";
+    public final static String DESCRIPTION = "When equipped, vaults will occasionally spawn on your counts if you meet their respective requirements.";
+    public final static String COLLECTION_DESCRIPTION = "You can now locate vaults (~vaults for more info). \n-# Vaults located: {0}";
+    public final static Price PRICE = new Price(1, Price.Unit.PRESTIGE_POINTS);
+    public VaultLocator(Counter owner) {
+        super(PRICE, NAME,DESCRIPTION, owner);
+    }
+
+
+    public void incrementLocatedVaults() {
+        locatedVaults++;
+    }
+
+    public int getLocatedVaults() {
+        return locatedVaults;
+    }
+
+    public void setLocatedVaults(int locatedVaults) {
+        this.locatedVaults = locatedVaults;
+    }
+
+    @Override
+    public String getCollectionDescription() {
+        return COLLECTION_DESCRIPTION.replace("{0}", String.valueOf(locatedVaults));
+    }
+
+    @Override
+    public Equippable createObject(Counter owner) {
+        return new VaultLocator(owner);
+    }
+}

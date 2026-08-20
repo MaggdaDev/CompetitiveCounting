@@ -1,4 +1,4 @@
-# CompetitiveCounting
+# competitivecounting
 
 Counting bot that aims to be competitive and encourage thinking
 
