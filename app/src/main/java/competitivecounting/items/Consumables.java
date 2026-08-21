@@ -11,5 +11,8 @@ public class Consumables {
     WHITE_STREAK_ENDER = new Item(new Price(20000), "Streak⚪Ender",
                                "If the majority of contributing counters agrees, this item is consumed, the streak ends and everyone gets their payout."),
     PRIME_COIN = new Item(null, "Prime:coin:Coin",
-            "When consumed, you obtain money equal to the current worth of one bit coin in US dollars.");
+            "When consumed, you obtain money equal to the current worth of one bit coin in US dollars."),
+
+    COUNTING_BOOSTER = new Item(null, "Counting:arrow_double_up:Booster",
+            "Consume to gain a bonus multiplier on money income, as well as increased spawn rate for trophies and vaults.");
 }

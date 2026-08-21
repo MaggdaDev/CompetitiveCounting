@@ -38,7 +38,7 @@ public class TrophyHandler {
     }
 
     public void considerSpawningTrophy(int number, Message message, Counter user) {
-        if (randBool(trophyChanceFromNumber(number))) {
+        if (randBool(user.getCountingBoosterManager().modifyTrophyRate(trophyChanceFromNumber(number)))) {
             spawnTrophy(message, number);
         }
     }
@@ -120,7 +120,8 @@ public class TrophyHandler {
     }
 
     private boolean randBool(double prop) {
-        return Math.random() < prop;
+        double rng = Math.random();
+        return rng < prop;
     }
 
 

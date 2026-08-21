@@ -1,5 +1,7 @@
 package competitivecounting;
 
+import competitivecounting.items.Consumables;
+import competitivecounting.items.Item;
 import discord4j.core.object.entity.Message;
 
 import java.time.LocalDate;
@@ -39,7 +41,7 @@ public class DailyStreak {
         lastDaySinceEpochCounted = getCurrentDaySinceEpoch();
     }
 
-    public int getDailyScoreAdd(Message message, double streakIndependentBonusMult) {
+    public void addDailyScoreAndGift(Message message,Counter counter) {
         int count;
         try {
             count = getCountFromDailyMessage(message);
@@ -53,34 +55,43 @@ public class DailyStreak {
                     alreadyCountedTodayMessage(message);
                 }
             }
-            return 0;
+            return;
         }
 
         if (canIncrement()) {
             if (count != getCurrentCount() + 1) {
                 CountingBot.write(message, "Wrong count! The last count was " + getCurrentCount() + ". Try again tomorrow!");
                 setCountedTodayWithoutIncrementing();
-                return 0;
+                return;
             }
             int daysSkipped = (int)(getCurrentDaySinceEpoch() - lastDaySinceEpochCounted - 1);
             int baseScoreAdd =  increment();
-            int scoreAddWithBonus = (int) (streakIndependentBonusMult * baseScoreAdd);
+            int scoreAddWithBonus = (int) (counter.getStreakIndependentBonusFact() * baseScoreAdd);
+
+            Item item = getDailyGiftItem();
 
             String scoreAddedMsg;
+            String loot = "{0} money" + (item != null ? " and a " + item.getName() : "");
             if (daysSkipped == 0) {
-                scoreAddedMsg = "Good job, you received {0} money from your daily streak without missing a day. Come back tomorrow for the next reward!";
+                scoreAddedMsg = "Good job, you received " + loot + " from your daily streak without missing a day. Come back tomorrow for the next reward!";
             } else if (getCurrentCount() == 1) {
-                scoreAddedMsg = "You started a daily streak and received {0} money. Come back tomorrow for the next reward!";
+                scoreAddedMsg = "You started a daily streak and received " + loot + ". Come back tomorrow for the next reward!";
             }else {
-                scoreAddedMsg = "You received {0} money from your daily streak after " + daysSkipped + " inactive day" + (daysSkipped>1? "s":"") + ". Come back tomorrow for the next reward!";
+                scoreAddedMsg = "You received " + loot + " from your daily streak after " + daysSkipped + " inactive day" + (daysSkipped>1? "s":"") + ". Come back tomorrow for the next reward!";
             }
             CountingBot.writeBlocking(message, scoreAddedMsg.replace("{0}", Util.valueAndValueWithBoniToString(baseScoreAdd, scoreAddWithBonus) ));
-            return scoreAddWithBonus;
+            counter.addBonusScore(scoreAddWithBonus, message);
+            if (item != null) {
+                counter.getInventory().addItem(item);
+            }
 
         } else {
             alreadyCountedTodayMessage(message);
         }
-        return 0;
+    }
+
+    public Item getDailyGiftItem() {
+        return Consumables.COUNTING_BOOSTER;
     }
 
     private void alreadyCountedTodayMessage(Message message) {

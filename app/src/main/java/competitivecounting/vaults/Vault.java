@@ -4,6 +4,7 @@ import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.CountingContext;
 import competitivecounting.dialogue.Dialogue;
+import competitivecounting.items.CountingBoosterManager;
 import competitivecounting.vaults.vaultDrops.VaultDrop;
 import competitivecounting.vaults.vaultDrops.VaultLootPool;
 import discord4j.core.object.entity.Message;
@@ -53,7 +54,8 @@ public abstract class Vault {
 
     public boolean maybeSpawn(CountingContext context) {
         double rand = Math.random();
-        boolean spawn = (requirementsChecker.apply(context) && rand < spawnChance);
+        CountingBoosterManager countingBoosterManager = context.getCounter().getCountingBoosterManager();
+        boolean spawn = (requirementsChecker.apply(context) && rand < countingBoosterManager.modifyVaultRate(spawnChance));
         if (spawn) {
             spawn();
         }

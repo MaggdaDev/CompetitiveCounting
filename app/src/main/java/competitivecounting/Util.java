@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package competitivecounting;
+
 import java.util.regex.Pattern;
 
 /**
@@ -13,20 +14,20 @@ import java.util.regex.Pattern;
 public class Util {
     public static boolean isNumber(String in) {
         Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
-        if(in == null) {
+        if (in == null) {
             return false;
         }
         return pattern.matcher(in).matches();
     }
-    
+
     public static String[] splitAtFirst(String str, String splitter) {
         String[] splitted = str.split(splitter);
-        if(splitted.length <= 1) {
+        if (splitted.length <= 1) {
             return splitted;
         } else {
             String snd = "";
-            for(int i = 1; i < splitted.length; i++) {
-                if(i > 1) {
+            for (int i = 1; i < splitted.length; i++) {
+                if (i > 1) {
                     snd += splitter;
                 }
                 snd += splitted[i];
@@ -44,10 +45,14 @@ public class Util {
     }
 
     public static String valueAndValueWithBoniToString(int value, int valueWithBoni) {
-        if(value == valueWithBoni) {
+        if (value == valueWithBoni) {
             return String.valueOf(value);
         } else {
             return "~~" + value + "~~ " + valueWithBoni;
         }
+    }
+
+    public static String bonusMultToAddPercString(double bonusMultiplier) {
+        return "+" + Math.round((bonusMultiplier - 1.0d) * 100.0d) + "%";
     }
 }

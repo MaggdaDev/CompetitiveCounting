@@ -43,24 +43,29 @@ public class SlashCommandHandler {
     }
 
     public void register(GatewayDiscordClient client) {
-        long applicationId = client.getRestClient().getApplicationId().block();
-        ApplicationCommandRequest vaultKeyRequest = ApplicationCommandRequest.builder()
-                .name(SUBMIT_KEY_COMMAND)
-                .description(SUBMIT_KEY_COMMAND_DESC)
-                .addOption(ApplicationCommandOptionData.builder()
-                        .name(SUBMIT_KEY_COMMAND_KEY_ARG_NAME)
-                        .description(SUBMIT_KEY_COMMAND_KEY_ARG_DESC)
-                        .type(ApplicationCommandOption.Type.INTEGER.getValue())
-                        .required(true)
-                        .build()
-                ).build();
-        client.getRestClient().getApplicationService()
-                .createGlobalApplicationCommand(applicationId, vaultKeyRequest)
-                .subscribe();
-        client.getRestClient().getApplicationService()
-                .createGuildApplicationCommand(applicationId, COUNT_TESTING_ID, vaultKeyRequest)
-                .subscribe();
-        System.out.println("Registered global slash commands!");
+        try {
+            long applicationId = client.getRestClient().getApplicationId().block();
+            ApplicationCommandRequest vaultKeyRequest = ApplicationCommandRequest.builder()
+                    .name(SUBMIT_KEY_COMMAND)
+                    .description(SUBMIT_KEY_COMMAND_DESC)
+                    .addOption(ApplicationCommandOptionData.builder()
+                            .name(SUBMIT_KEY_COMMAND_KEY_ARG_NAME)
+                            .description(SUBMIT_KEY_COMMAND_KEY_ARG_DESC)
+                            .type(ApplicationCommandOption.Type.INTEGER.getValue())
+                            .required(true)
+                            .build()
+                    ).build();
+            client.getRestClient().getApplicationService()
+                    .createGlobalApplicationCommand(applicationId, vaultKeyRequest)
+                    .subscribe();
+            client.getRestClient().getApplicationService()
+                    .createGuildApplicationCommand(applicationId, COUNT_TESTING_ID, vaultKeyRequest)
+                    .subscribe();
+            System.out.println("Registered global slash commands!");
+        } catch (Exception e) {
+            System.err.println("Failed to register global slash commands: " + e.getMessage());
+            System.out.println("Continuing without slash commands. ");
+        }
     }
 
     public Publisher handleSlashCommand(ChatInputInteractionEvent event) {

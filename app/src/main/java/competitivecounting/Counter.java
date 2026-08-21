@@ -46,6 +46,7 @@ public class Counter implements ContractOwner {
     private transient String guildId;   // Will be set in initContracts method
     private Inventory inventory;
     private Collection collection;
+    private transient CountingBoosterManager countingBoosterManager;
 
     public Counter(String guildId, String key, String name) {
         this.key = key;
@@ -61,6 +62,7 @@ public class Counter implements ContractOwner {
         collection = new Collection(this);
         init(guildId);
         contractHandler.initIncomingContracts(CountingBot.getInstance().getGuilds().get(guildId));
+        countingBoosterManager = new CountingBoosterManager(this);
     }
 
     public void init(String guildId) {
@@ -93,6 +95,9 @@ public class Counter implements ContractOwner {
         }
         if (dailyStreak == null) {
             dailyStreak = new DailyStreak();
+        }
+        if (countingBoosterManager == null) {
+            countingBoosterManager = new CountingBoosterManager(this);
         }
     }
 
@@ -206,11 +211,7 @@ public class Counter implements ContractOwner {
     }
 
     public void daily(Message message) {
-        int scoreAdd = dailyStreak.getDailyScoreAdd(message, getStreakIndependentBonusFact());
-        if (scoreAdd <= 0) {
-            return;
-        }
-        addBonusScore(scoreAdd, message);
+        dailyStreak.addDailyScoreAndGift(message, this);
         CountingBot.getInstance().save();
     }
 
@@ -446,6 +447,13 @@ public class Counter implements ContractOwner {
             optionalStreak.get().getStreakEnders().whiteUsed(message, this);
         } else if (item == Consumables.PRIME_COIN) {
             CountingBot.getInstance().getPrimeCoinSeller().sellRequested(message, this);
+        } else if (item == Consumables.COUNTING_BOOSTER) {
+            if (countingBoosterManager.isCountingBoostActive()) {
+                CountingBot.write(message, "You already have an active " + Consumables.COUNTING_BOOSTER.getName() + ". Time remaining: " + countingBoosterManager.getTimeUntilBoostExpires());
+                return;
+            }
+            countingBoosterManager.activateCountingBoost(message);
+            inventory.removeItem(item);
         } else {
             throw new UnsupportedOperationException("Using item " + item.getName() + " is not implemented yet!");
         }
@@ -461,10 +469,10 @@ public class Counter implements ContractOwner {
     }
 
     public double getBonusFact(CountingStreak streak) {
-        return getSystemBonusFact(streak.getBase()) * streak.getTimeRulesBonusFact() * getStreakIndependentBonusFact();
+        return getSystemBonusFact(streak.getBase()) * streak.getTimeRulesBonusFact() * getStreakIndependentBonusFact() * countingBoosterManager.getCurrentIncomeFact();
     }
 
-    private double getStreakIndependentBonusFact() {
+    public double getStreakIndependentBonusFact() {
         return (1.0 + prestiges * MULT_PLUS_PER_PRESTIGE) * collection.getBonusFact();
     }
 
@@ -688,5 +696,7 @@ public class Counter implements ContractOwner {
         return true;
     }
 
-
+    public CountingBoosterManager getCountingBoosterManager() {
+        return countingBoosterManager;
+    }
 }
