@@ -159,7 +159,7 @@ public class CountingBot {
                 } else if (commandWithoutIndicator.startsWith(CollectionCommandHandler.COMMAND_INDICATOR)) {
                     CollectionCommandHandler.handleCollectionCommand(message, streak);
                 } else if (commandWithoutIndicator.startsWith("vault")) {
-                    VaultSpawner.vaultInfo(message, streak);
+                    VaultSpawner.vaultInfo(message, streak, getCounterFromMessage(message));
                 }
             }
         } catch (Exception e) {

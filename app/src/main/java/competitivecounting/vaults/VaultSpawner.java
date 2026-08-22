@@ -36,13 +36,13 @@ public class VaultSpawner {
         }
     }
 
-    public static void vaultInfo(Message message, Optional<CountingStreak> streak) {
-        String s = streak.isEmpty() ? getStaticVaultInfo() : streak.get().getVaultSpawner().getStreakVaultInfo();
+    public static void vaultInfo(Message message, Optional<CountingStreak> streak, Counter counter) {
+        String s = streak.isEmpty() ? getStaticVaultInfo(counter) : streak.get().getVaultSpawner().getStreakVaultInfo(counter);
         CountingBot.write(message, s);
     }
 
-    private String getStreakVaultInfo() {
-        String ret = getStaticVaultInfo();
+    private String getStreakVaultInfo(Counter counter) {
+        String ret = getStaticVaultInfo(counter);
         if (previousContext == null) {
             return ret;
         }
@@ -73,10 +73,13 @@ public class VaultSpawner {
 
     }
 
-    private static String getStaticVaultInfo() {
+    private static String getStaticVaultInfo(Counter counter) {
         String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n";
         for (Vault vault : ALL_VAULTS) {
-            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() + " (1 in " + Math.round(1 / vault.getSpawnChance()) + ")\n";
+            int odds = (int)Math.round(1. / vault.getSpawnChance());
+            int oddsWithBoni = (int)Math.round(1. / counter.getCountingBoosterManager().modifyVaultRate(vault.getSpawnChance()));
+            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() +
+                    " (1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n";
         }
         return s;
     }
