@@ -12,3 +12,6 @@ build/
 # database stuff
 src/data/
 /app/src/main/resources/
+/app/src/data/captures.json
+/app/src/data/config.txt
+/app/src/data/counters.json

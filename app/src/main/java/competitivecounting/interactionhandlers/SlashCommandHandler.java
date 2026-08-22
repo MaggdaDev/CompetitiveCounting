@@ -58,9 +58,10 @@ public class SlashCommandHandler {
             client.getRestClient().getApplicationService()
                     .createGlobalApplicationCommand(applicationId, vaultKeyRequest)
                     .subscribe();
+            /*
             client.getRestClient().getApplicationService()
                     .createGuildApplicationCommand(applicationId, COUNT_TESTING_ID, vaultKeyRequest)
-                    .subscribe();
+                    .subscribe();   */ // For testing
             System.out.println("Registered global slash commands!");
         } catch (Exception e) {
             System.err.println("Failed to register global slash commands: " + e.getMessage());
