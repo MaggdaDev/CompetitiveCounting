@@ -14,5 +14,5 @@ public class Consumables {
             "When consumed, you obtain money equal to the current worth of one bit coin in US dollars."),
 
     COUNTING_BOOSTER = new Item(null, "Counting:arrow_double_up:Booster",
-            "Consume to gain a boost on money income, trophy spawn rate and vault spawn rate for  + " + CountingBoosterManager.DURATION_MINUTES + " minutes.");
+            "Consume to gain a boost on money income, trophy spawn rate and vault spawn rate for " + CountingBoosterManager.DURATION_MINUTES + " minutes.");
 }
