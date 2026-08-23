@@ -10,7 +10,7 @@ public class CoinMiner extends Equippable {
     public static final String NAME = "Coin:pick:Miner";
     public static final String DESCRIPTION = "Equip to gain a small chance to mine a " + Consumables.PRIME_COIN.getName() + " while counting primes.";
     private int coinsMined = 0;
-    private final static double spawnChance = 0.01;
+    private final static double spawnChance = 0.005;
     public static final String EQUIPPED_DESCRIPTION = "On each prime number that you count, a " + Consumables.PRIME_COIN.getName() +
             " may spawn with a small probability. Anyone with a " + NAME +
             " equipped may claim it.\n-# " + Consumables.PRIME_COIN.getName() + "s spawned: {0}";

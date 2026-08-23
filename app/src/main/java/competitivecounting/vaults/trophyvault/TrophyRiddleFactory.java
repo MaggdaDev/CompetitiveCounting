@@ -19,8 +19,8 @@ public class TrophyRiddleFactory {
             List<String> words = section.getWords();
             for (int j = 0; j < words.size(); j++) {
                 String word = words.get(j);
-                int idxLeadingIndex = section.getWordStartIndices()[j] - 1;
-                char leadingChar = idxLeadingIndex >= 0 ? section.getContent().charAt(idxLeadingIndex) : ' ';
+                int idxLeadingLetter = section.getWordStartIndices()[j] - 1;
+                char leadingChar = idxLeadingLetter >= 0 ? section.getContent().charAt(idxLeadingLetter) : ' ';
                 if (acceptAsNumber(word, leadingChar)) {
                     sectionIdxCandidates.add(i);
                     wordIdxCandidates.add(j);

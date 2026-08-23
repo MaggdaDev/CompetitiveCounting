@@ -168,7 +168,6 @@ public final class SectionObjectFactory {
                                     wordEnd
                             )
                     );
-
                     startIndices.add(wordStart);
                     endIndices.add(wordEnd);
 
@@ -180,31 +179,19 @@ public final class SectionObjectFactory {
                             sentenceIndex
                     );
                 }
-
                 sentenceIndex++;
             }
-
             sentenceStart = sentenceEnd;
-
             sentenceEnd =
                     sentenceIterator.next();
         }
-
-        int[] starts =
-                new int[startIndices.size()];
-
-        int[] ends =
-                new int[endIndices.size()];
-
-        int[] sentenceIndices =
-                new int[wordSentenceIndices.size()];
-
+        int[] starts = new int[startIndices.size()];
+        int[] ends = new int[endIndices.size()];
+        int[] sentenceIndices = new int[wordSentenceIndices.size()];
         for (int i = 0; i < starts.length; i++) {
             starts[i] = startIndices.get(i);
             ends[i] = endIndices.get(i);
-
-            sentenceIndices[i] =
-                    wordSentenceIndices.get(i);
+            sentenceIndices[i] = wordSentenceIndices.get(i);
         }
 
         return new SectionObject(
