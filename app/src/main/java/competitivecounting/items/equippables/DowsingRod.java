@@ -10,7 +10,7 @@ import discord4j.core.object.entity.Message;
 import java.util.Objects;
 
 public class DowsingRod extends Equippable {
-    public final static String NAME = "Dowsing:magic_wand:Rod";
+    public final static String NAME = "Wünschel:magic_wand:Rute";
     public final static double WISH_MULTIPLIER = 10.;
     public final static String COLLECTION_DESCRIPTION_EMPTY = "_Use_ to wish for a trophy that gains x" + (int)WISH_MULTIPLIER + " spawn-probability!\n-# Successful wishes: {0}";
     public final static String COLLECTION_DESCRIPTION_WISHED = "Currently wishing for the #{0} trophy (x" + (int)WISH_MULTIPLIER + " spawn rate). _Use_ to change wish!\n-# Successful wishes: {1}";
