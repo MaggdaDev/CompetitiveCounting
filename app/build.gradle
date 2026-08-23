@@ -43,9 +43,9 @@ tasks.named('test') {
 
 task fatJar(type: Jar) {
     manifest {
-        attributes 'Main-Class': 'CompetitiveCounting.Main'
+        attributes 'Main-Class': 'competitivecounting.Main'
     }
-    archiveBaseName.set('CompetitiveCounting')
+    archiveBaseName.set('competitivecounting')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
