@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class TrophyVault extends Vault {
     public static final double SPAWN_CHANCE = 0.1;
     private final static String NAME = "Vault of Trophies";
-    private final static String SPAWN_CONDITIONS_DESCRIPTION = "Spawns on counts with a :goldenkekmark:.";
+    private final static String SPAWN_CONDITIONS_DESCRIPTION = "Spawns on counts whose trophy you own.";
 
     private final TrophyVaultWikipedia wiki;
 
