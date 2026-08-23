@@ -1,8 +1,11 @@
 package competitivecounting.interactionhandlers;
 
+import com.google.common.base.Objects;
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.CountingEmojis;
+import competitivecounting.items.equippables.DowsingRod;
+import competitivecounting.items.equippables.Equippables;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageEditSpec;
@@ -38,13 +41,20 @@ public class TrophyHandler {
     }
 
     public void considerSpawningTrophy(int number, Message message, Counter user) {
-        if (randBool(user.getCountingBoosterManager().modifyTrophyRate(trophyChanceFromNumber(number)))) {
+        double trophyChance = trophyChanceFromNumber(number);
+        trophyChance = user.getCountingBoosterManager().modifyTrophyRate(trophyChance); // Counting Boost
+        trophyChance = user.getCollection().modifyTrophyRateFromEquippables(trophyChance, number);  // Passive items (dowsing rod)
+        if (randBool(trophyChance)) {
             spawnTrophy(message, number);
         }
     }
 
     private void spawnTrophy(Message message, int number) {
         message.addReaction(CountingEmojis.TROPHY).subscribe();
+        Counter spawnerCounter = CountingBot.getCounter(message.getGuildId().get().asString(), message.getAuthor().get().getId().asString());
+        spawnerCounter.getCollection().getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName()).ifPresent(eq -> {
+                ((DowsingRod) eq).trophySpawned(message, number);
+        });
         reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
             if (messageReactedTo.getId().equals(message.getId())) {
                 String reactingUserId = reactingUser.getId().asString();
@@ -54,6 +64,11 @@ public class TrophyHandler {
                 }
                 String guildId = messageReactedTo.getGuildId().get().asString();
                 Counter reactingCounter = CountingBot.getInstance().getCounter(guildId, reactingUserId);
+                reactingCounter.getCollection().getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName()).ifPresent(rod -> {
+                    if (Objects.equal(reactingCounter.getId(), spawnerCounter.getId())) {
+                        ((DowsingRod) rod).ownSpawnedTrophyClaimed(number);   // TODO test logic spawner claims, non-spawner claims etc
+                    }
+                });
                 if (reactingCounter.hasTrophy(number)) {
                     if (number > 0) {
                         reactingCounter.addTrophyShard();

@@ -55,4 +55,8 @@ public class Util {
     public static String bonusMultToAddPercString(double bonusMultiplier) {
         return "+" + Math.round((bonusMultiplier - 1.0d) * 100.0d) + "%";
     }
+
+    public static double multiplyProbabilityThreshold(double threshold, double multiplier) {
+        return 1. - Math.pow(1. - threshold, multiplier);
+    }
 }

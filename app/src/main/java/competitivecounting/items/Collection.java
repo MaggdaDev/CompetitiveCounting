@@ -3,8 +3,10 @@ package competitivecounting.items;
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.CountingStreak;
+import competitivecounting.items.equippables.DowsingRod;
 import competitivecounting.items.equippables.Equippable;
 import com.google.common.base.Objects;
+import competitivecounting.items.equippables.Equippables;
 import discord4j.core.object.entity.Message;
 
 import java.util.ArrayList;
@@ -124,5 +126,15 @@ public class Collection {
 
     public void streakDisposed(CountingStreak streak) {
         equippables.forEach(e -> e.streakDisposed(streak));
+    }
+
+    public double modifyTrophyRateFromEquippables(double trophyChance, int number) {
+        // Dowsing Rod
+        Optional<Equippable> maybeDowsingRod = getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName());
+        if (maybeDowsingRod.isPresent()) {
+            trophyChance = ((DowsingRod) maybeDowsingRod.get()).modifyTrophyRate(trophyChance, number);
+        }
+
+        return trophyChance;
     }
 }

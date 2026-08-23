@@ -5,8 +5,10 @@ import competitivecounting.CountingBot;
 import competitivecounting.CountingContext;
 import competitivecounting.CountingEmojis;
 import competitivecounting.dialogue.Dialogue;
+import competitivecounting.items.equippables.Equippables;
 import competitivecounting.vaults.Riddle;
 import competitivecounting.vaults.Vault;
+import competitivecounting.vaults.vaultDrops.ItemDrop;
 import competitivecounting.vaults.vaultDrops.MoneyDrop;
 import discord4j.core.object.entity.Message;
 
@@ -16,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TrophyVault extends Vault {
-    public static final double SPAWN_CHANCE = 1.0; // TODO 0.1;
+    public static final double SPAWN_CHANCE = 0.1;
     private final static String NAME = "Vault of Trophies";
     private final static String SPAWN_CONDITIONS_DESCRIPTION = "Spawns on counts with a :goldenkekmark:.";
 
@@ -30,7 +32,8 @@ public class TrophyVault extends Vault {
         });
         wiki = new TrophyVaultWikipedia();
 
-        addLootToLootPool(new MoneyDrop(100));
+        addLootToLootPool(new MoneyDrop(95));
+        addLootToLootPool(new ItemDrop(5, Equippables.DOWSING_ROD));
     }
 
     @Override

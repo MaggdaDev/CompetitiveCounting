@@ -1,5 +1,7 @@
 package competitivecounting.items;
 
+import competitivecounting.items.equippables.Equippables;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -57,4 +59,5 @@ public class Inventory {
     public Item getItemByItemNumber(int itemNumber) {
         return getBoughtItemTypes()[itemNumber - 1];
     }
+
 }

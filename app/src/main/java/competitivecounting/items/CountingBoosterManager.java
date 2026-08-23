@@ -71,14 +71,12 @@ public class CountingBoosterManager {
     }
 
     public double modifyTrophyRate(double spawnThreshold) {
-        return multiplyThreshold(spawnThreshold, isCountingBoostActive? TROPHY_SPAWN_RATE_MULTIPLIER : 1.);
+        return Util.multiplyProbabilityThreshold(spawnThreshold, isCountingBoostActive? TROPHY_SPAWN_RATE_MULTIPLIER : 1.);
     }
 
     public double modifyVaultRate(double spawnThreshold) {
-        return multiplyThreshold(spawnThreshold, isCountingBoostActive? VAULT_SPAWN_RATE_MULTIPLIER : 1.);
+        return Util.multiplyProbabilityThreshold(spawnThreshold, isCountingBoostActive? VAULT_SPAWN_RATE_MULTIPLIER : 1.);
     }
 
-    private double multiplyThreshold(double threshold, double multiplier) {
-        return 1. - Math.pow(1. - threshold, multiplier);
-    }
+
 }
