@@ -24,7 +24,13 @@ public class Dialogue {
     private boolean cancelAllRemaining = false;
 
     public Dialogue addNpcLine(String text, int readTimeMillis) {
-        elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str));
+        elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str, true));
+        npcMessagesIndices.add(elements.size() - 1);
+        return this;
+    }
+
+    public Dialogue addNpcLineButKeepOldMessage(String text, int readTimeMillis) {
+        elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str, false));
         npcMessagesIndices.add(elements.size() - 1);
         return this;
     }
@@ -147,5 +153,6 @@ public class Dialogue {
     public void cancelAllRemaining() {
         cancelAllRemaining = true;
     }
+
 
 }

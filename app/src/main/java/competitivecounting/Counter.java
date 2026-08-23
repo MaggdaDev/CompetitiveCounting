@@ -464,8 +464,8 @@ public class Counter implements ContractOwner {
         CountingBot.write(message, "You used a " + item.getName() + "...");
     }
 
-    public Integer[] getOwnedTrophies() {
-        return ownedTrophies.toArray(new Integer[0]);
+    public List<Integer> getOwnedTrophies() {
+        return ownedTrophies;
     }
 
     public double getBonusFact(CountingStreak streak) {

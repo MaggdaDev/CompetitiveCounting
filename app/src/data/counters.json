@@ -1,0 +1,479 @@
+{
+  "805791923821608970": {
+    "counters": {
+      "468786219258740756": {
+        "key": "468786219258740756",
+        "name": "maggda420",
+        "score": 99960000,
+        "prestiges": 0,
+        "prestigePoints": 9,
+        "currScoreAdds": {
+          "805791923821608973": 2
+        },
+        "unlocked": [
+          0,
+          11
+        ],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": true,
+          "itemsBoughtAmount": {
+            "Vault:satellite:Locator": 0
+          }
+        },
+        "collection": {
+          "equippables": [
+            {
+              "locatedVaults": 1,
+              "name": "Vault:satellite:Locator"
+            }
+          ],
+          "maxSize": 6
+        }
+      },
+      "1508407549559308378": {
+        "key": "1508407549559308378",
+        "name": "maggdatum",
+        "score": 999960000,
+        "prestiges": 10,
+        "prestigePoints": 0,
+        "currScoreAdds": {},
+        "unlocked": [
+          0,
+          11
+        ],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": true,
+          "itemsBoughtAmount": {}
+        },
+        "collection": {
+          "equippables": [],
+          "maxSize": 6
+        }
+      }
+    },
+    "bank": {
+      "isUnlocked": false,
+      "guildId": "805791923821608970",
+      "totalScore": 1050505,
+      "accounts": {},
+      "contracts": []
+    },
+    "guildId": "805791923821608970"
+  },
+  "testGuild": {
+    "counters": {},
+    "bank": {
+      "isUnlocked": false,
+      "guildId": "testGuild",
+      "totalScore": 1050505,
+      "accounts": {},
+      "contracts": []
+    },
+    "guildId": "testGuild"
+  },
+  "1050060357613400144": {
+    "counters": {
+      "995658223434604669": {
+        "key": "995658223434604669",
+        "name": "maggdadev",
+        "score": 702,
+        "prestiges": 0,
+        "prestigePoints": 0,
+        "currScoreAdds": {
+          "1372886589088469033": 1,
+          "1050060358288674859": 2
+        },
+        "unlocked": [],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 1,
+          "lastDaySinceEpochCounted": 20685
+        },
+        "contracts": [],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": false,
+          "itemsBoughtAmount": {}
+        },
+        "collection": {
+          "equippables": [],
+          "maxSize": 6
+        }
+      },
+      "649457215564152852": {
+        "key": "649457215564152852",
+        "name": "alvideiectiones",
+        "score": 4,
+        "prestiges": 0,
+        "prestigePoints": 0,
+        "currScoreAdds": {},
+        "unlocked": [],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": false,
+          "itemsBoughtAmount": {}
+        },
+        "collection": {
+          "equippables": [],
+          "maxSize": 6
+        }
+      },
+      "935653364488871966": {
+        "key": "935653364488871966",
+        "name": "2891he189n98",
+        "score": 5,
+        "prestiges": 0,
+        "prestigePoints": 0,
+        "currScoreAdds": {},
+        "unlocked": [],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": false,
+          "itemsBoughtAmount": {}
+        },
+        "collection": {
+          "equippables": [],
+          "maxSize": 6
+        }
+      },
+      "422800248935546880": {
+        "key": "422800248935546880",
+        "name": "hyperlexus",
+        "score": 3984577,
+        "prestiges": 101,
+        "prestigePoints": 11,
+        "currScoreAdds": {
+          "1372886589088469033": 89,
+          "1050060358288674859": 127
+        },
+        "unlocked": [],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [
+          {
+            "paidBack": 3623,
+            "percentage": 3,
+            "limit": 145500,
+            "toId": "-1",
+            "contractId": ""
+          },
+          {
+            "paidBack": 3275,
+            "percentage": 15,
+            "limit": 153000,
+            "toId": "-1",
+            "contractId": ""
+          }
+        ],
+        "ownedTrophies": [
+          -1050505,
+          -2019
+        ],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": true,
+          "itemsBoughtAmount": {
+            "Vault:satellite:Locator": 0,
+            "Pocket:abacus:Abacus": 0,
+            "WHITE_STREAK_ENDER": 2
+          }
+        },
+        "collection": {
+          "equippables": [
+            {
+              "locatedVaults": 3,
+              "name": "Vault:satellite:Locator"
+            },
+            {
+              "uses": 0,
+              "lastUseSeconds": 0,
+              "name": "Pocket:abacus:Abacus"
+            }
+          ],
+          "maxSize": 6
+        }
+      },
+      "640985620948189186": {
+        "key": "640985620948189186",
+        "name": "ad.infernum",
+        "score": 0,
+        "prestiges": 0,
+        "prestigePoints": 0,
+        "currScoreAdds": {},
+        "unlocked": [],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": false,
+          "itemsBoughtAmount": {}
+        },
+        "collection": {
+          "equippables": [],
+          "maxSize": 6
+        }
+      },
+      "468786219258740756": {
+        "key": "468786219258740756",
+        "name": "maggda420",
+        "score": 57229,
+        "prestiges": 3,
+        "prestigePoints": 6,
+        "currScoreAdds": {
+          "1373934366861819935": 2,
+          "1372886589088469033": 3,
+          "1050060358288674859": 17
+        },
+        "unlocked": [
+          0,
+          11,
+          1,
+          5,
+          4,
+          3
+        ],
+        "unlockedSystems": [
+          2
+        ],
+        "dailyStreak": {
+          "currentCount": 8,
+          "lastDaySinceEpochCounted": 20686
+        },
+        "contracts": [
+          {
+            "paidBack": 12597,
+            "percentage": 3,
+            "limit": 136000,
+            "toId": "-1",
+            "contractId": ""
+          },
+          {
+            "paidBack": 10827,
+            "percentage": 3,
+            "limit": 172200,
+            "toId": "-1",
+            "contractId": ""
+          }
+        ],
+        "ownedTrophies": [
+          -2019
+        ],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": true,
+          "itemsBoughtAmount": {
+            "Vault:satellite:Locator": 2,
+            "Pocket:abacus:Abacus": 0,
+            "The😇Good, The😈Bad and The👹Ugly": 0,
+            "Coin:pick:Miner": 0,
+            "Counting:arrow_double_up:Booster": 99,
+            "WHITE_STREAK_ENDER": 1,
+            "aaaa": 1,
+            "Prime:coin:Coin": 1,
+            "FAKE_HAND_BAG": 1
+          }
+        },
+        "collection": {
+          "equippables": [
+            {
+              "locatedVaults": 26,
+              "name": "Vault:satellite:Locator"
+            },
+            {
+              "uses": 0,
+              "lastUseSeconds": 0,
+              "name": "Pocket:abacus:Abacus"
+            },
+            {
+              "state": 1,
+              "statsTracker": [
+                0,
+                41,
+                0
+              ],
+              "name": "The😇Good, The😈Bad and The👹Ugly"
+            },
+            {
+              "coinsMined": 0,
+              "name": "Coin:pick:Miner"
+            }
+          ],
+          "maxSize": 6
+        }
+      },
+      "1508407549559308378": {
+        "key": "1508407549559308378",
+        "name": "maggdatum",
+        "score": 2961,
+        "prestiges": 0,
+        "prestigePoints": 4,
+        "currScoreAdds": {
+          "1372886589088469033": 3,
+          "1050060358288674859": 6
+        },
+        "unlocked": [
+          0,
+          11
+        ],
+        "unlockedSystems": [],
+        "dailyStreak": {
+          "currentCount": 0,
+          "lastDaySinceEpochCounted": 0
+        },
+        "contracts": [
+          {
+            "paidBack": 1778,
+            "percentage": 3,
+            "limit": 145500,
+            "toId": "-1",
+            "contractId": ""
+          },
+          {
+            "paidBack": 8,
+            "percentage": 3,
+            "limit": 184800,
+            "toId": "-1",
+            "contractId": ""
+          }
+        ],
+        "ownedTrophies": [],
+        "trophyShards": 0,
+        "inventory": {
+          "isShopUnlocked": true,
+          "itemsBoughtAmount": {
+            "Vault:satellite:Locator": 0,
+            "Pocket:abacus:Abacus": 0
+          }
+        },
+        "collection": {
+          "equippables": [
+            {
+              "locatedVaults": 11,
+              "name": "Vault:satellite:Locator"
+            },
+            {
+              "uses": 0,
+              "lastUseSeconds": 0,
+              "name": "Pocket:abacus:Abacus"
+            }
+          ],
+          "maxSize": 6
+        }
+      }
+    },
+    "bank": {
+      "isUnlocked": true,
+      "guildId": "1050060357613400144",
+      "totalScore": 9223985,
+      "accounts": {
+        "422800248935546880": {
+          "ownerId": "422800248935546880",
+          "balance": 0,
+          "bankUpgrades": {
+            "depositLimitUpgrade": {
+              "upgradeId": "DEPOSIT_LIMIT",
+              "currentLvl": 0
+            },
+            "loanRateUpgrade": {
+              "upgradeId": "LOAN_RATE",
+              "currentLvl": 0
+            },
+            "loanLimitUpgrade": {
+              "upgradeId": "LOAN_LIMIT",
+              "currentLvl": 1
+            },
+            "debtLimitUpgrade": {
+              "upgradeId": "DEBT_LIMIT",
+              "currentLvl": 1
+            }
+          }
+        },
+        "468786219258740756": {
+          "ownerId": "468786219258740756",
+          "balance": 49001,
+          "bankUpgrades": {
+            "depositLimitUpgrade": {
+              "upgradeId": "DEPOSIT_LIMIT",
+              "currentLvl": 1
+            },
+            "loanRateUpgrade": {
+              "upgradeId": "LOAN_RATE",
+              "currentLvl": 1
+            },
+            "loanLimitUpgrade": {
+              "upgradeId": "LOAN_LIMIT",
+              "currentLvl": 1
+            },
+            "debtLimitUpgrade": {
+              "upgradeId": "DEBT_LIMIT",
+              "currentLvl": 1
+            }
+          }
+        },
+        "1508407549559308378": {
+          "ownerId": "1508407549559308378",
+          "balance": 0,
+          "bankUpgrades": {
+            "depositLimitUpgrade": {
+              "upgradeId": "DEPOSIT_LIMIT",
+              "currentLvl": 0
+            },
+            "loanRateUpgrade": {
+              "upgradeId": "LOAN_RATE",
+              "currentLvl": 0
+            },
+            "loanLimitUpgrade": {
+              "upgradeId": "LOAN_LIMIT",
+              "currentLvl": 0
+            },
+            "debtLimitUpgrade": {
+              "upgradeId": "DEBT_LIMIT",
+              "currentLvl": 1
+            }
+          }
+        }
+      },
+      "contracts": []
+    },
+    "guildId": "1050060357613400144"
+  }
+}

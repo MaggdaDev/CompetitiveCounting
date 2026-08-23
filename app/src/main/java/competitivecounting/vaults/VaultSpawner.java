@@ -4,6 +4,7 @@ import competitivecounting.*;
 import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.equippables.Equippables;
 import competitivecounting.items.equippables.VaultLocator;
+import competitivecounting.vaults.trophyvault.TrophyVault;
 import discord4j.core.object.entity.Message;
 
 import java.util.ArrayList;
@@ -15,7 +16,8 @@ public class VaultSpawner {
     private final static Vault[] ALL_VAULTS = {
             new VaultOfLongStrides(),
             new CommunityVault(),
-            new PrimeVault()
+            new PrimeVault(),
+            new TrophyVault()
     };
     private final Vault[] vaults;
     private Dialogue activeDialogue = null;
@@ -85,13 +87,13 @@ public class VaultSpawner {
     }
 
     public Optional<Vault> maybeSpawnVault(Message message, CountingContext context) {
+        previousContext = context;
         if (!context.getCounter().getCollection().containsEquippable(Equippables.VAULT_LOCATOR)) {
             return Optional.empty();
         }
         if (activeVault != null) {
             return Optional.empty();
         }
-        previousContext = context;
         for (Vault vault : vaults) {
             if (vault.maybeSpawn(context)) {
                 activeVault = vault;

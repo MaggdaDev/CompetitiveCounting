@@ -12,11 +12,12 @@ public class NpcLine extends DialogueElement{
 
     private Message sentMessage;
     private final Function<String, String> npcLineConverter;
-
-    public NpcLine(String text, int readTimeMillis, Function<String, String> npcLineConverter) {
+    private boolean useMessageAsCurrentMessage;
+    public NpcLine(String text, int readTimeMillis, Function<String, String> npcLineConverter, boolean useMessageAsCurrentMessage) {
         this.text = text;
         this.sleepDuration = readTimeMillis;
         this.npcLineConverter = npcLineConverter;
+        this.useMessageAsCurrentMessage = useMessageAsCurrentMessage;
     }
 
     @Override
@@ -31,7 +32,7 @@ public class NpcLine extends DialogueElement{
 
     @Override
     public Optional<Message> getNewMessage() {
-        return Optional.of(sentMessage);
+        return useMessageAsCurrentMessage?Optional.of(sentMessage):Optional.empty();
     }
 
     public String getSentMessageId() {

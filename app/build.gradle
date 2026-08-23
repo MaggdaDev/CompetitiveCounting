@@ -28,6 +28,7 @@ dependencies {
     implementation "com.discord4j:discord4j-core:3.2.6"
     implementation 'com.google.code.gson:gson:2.8.9'
 
+    implementation("org.jsoup:jsoup:1.21.2")
     antlr "org.antlr:antlr4:4.10.1"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation 'org.mockito:mockito-core:5.20.0'

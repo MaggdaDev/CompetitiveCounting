@@ -19,7 +19,9 @@ public interface CountingEmojis {
             VAULT_LOCATOR_ICON = ReactionEmoji.unicode("\uD83D\uDCE1"),
             KEY = ReactionEmoji.unicode("\uD83D\uDD11"),
             X = ReactionEmoji.unicode("\u274C"),
-            COIN = ReactionEmoji.unicode("\uD83E\uDE99");
+            COIN = ReactionEmoji.unicode("\uD83E\uDE99"),
+            ARROW_UP = ReactionEmoji.unicode("\u2B06"),
+            ARROW_DOWN = ReactionEmoji.unicode("\u2B07");
 
     ReactionEmoji[] ALL_NUMBER_EMOJIS = {
             ReactionEmoji.unicode("\u0030\u20E3"),
