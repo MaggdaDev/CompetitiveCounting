@@ -480,11 +480,11 @@ public class CountingBot {
         if (author.prestige(message)) {
             if (author.getPrestiges() < 2) {
                 CountingBot.write(message, "GG WP, you just prestiged! You get:\n "
-                        + "- 1 prestige point for buying new bases (purchasable with the other ~unlock unlocks!)\n "
+                        + "- 1 prestige point for buying new bases (purchasable with the other ~unlock unlocks) and items in the shop!\n "
                         + "- a global boost of " + Math.round(Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% for counting");
             } else {
                 CountingBot.write(message, "GG WP, you prestiged again! You get:\n "
-                        + "- 1 additional prestige point for buying new bases\n "
+                        + "- 1 additional prestige point\n "
                         + "- an upgrade to your global boost (" + Math.round((author.getPrestiges() - 1) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% => " + Math.round((author.getPrestiges()) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "%)");
             }
 

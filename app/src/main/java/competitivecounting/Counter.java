@@ -352,7 +352,7 @@ public class Counter implements ContractOwner {
             CountingBot.getInstance().save();
             return true;
         } else {
-            CountingBot.write(message, "Reset all your progress with ~prestige and acquire a global boost of 25%, as well as 1 prestige point. \n Your net worth (wallet + unlocks) has to be " + PRESTIGE_WORTH + " or more before you can do this. You are still missing " + (PRESTIGE_WORTH - getAccWorth()) + " money.");
+            CountingBot.write(message, "Reset all your progress with ~prestige and acquire a global boost of " + MULT_PLUS_PER_PRESTIGE * 100.0d + "%, as well as 1 prestige point. \nYour net worth (wallet + unlocks) has to be " + PRESTIGE_WORTH + " or more before you can do this. You are still missing " + (PRESTIGE_WORTH - getAccWorth()) + " money.");
             return false;
         }
     }
