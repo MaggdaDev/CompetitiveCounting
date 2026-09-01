@@ -34,4 +34,5 @@ public abstract class Equippable extends Item {
     public void streakDisposed(CountingStreak streak) {
         // Empty
     }
+
 }
