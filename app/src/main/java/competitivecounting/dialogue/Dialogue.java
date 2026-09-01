@@ -1,6 +1,7 @@
 package competitivecounting.dialogue;
 
 import competitivecounting.Counter;
+import competitivecounting.CountingEmojis;
 import competitivecounting.interactionhandlers.SlashCommandHandler;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -22,6 +23,16 @@ public class Dialogue {
     private Thread thread;
     private Function<String, String> npcLineConverter;
     private boolean cancelAllRemaining = false;
+
+    public static class DialogStatusInfo {
+        public WaitingStatus waitingStatus;
+        public DialogStatusInfo(WaitingStatus waitingStatus) {
+            this.waitingStatus = waitingStatus;
+        }
+    }
+    public enum WaitingStatus {
+        CREATED, WAITING, FINISHED, TIMED_OUT
+    }
 
     public Dialogue addNpcLine(String text, int readTimeMillis) {
         elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str, true));
@@ -46,20 +57,26 @@ public class Dialogue {
     }
 
     public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
-                                            Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction) {
+                                            Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction,
+                                            long timeoutSeconds, Function<Message, Boolean> onTimeout) {
         elements.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, (msg, user) -> {
             onReactCallback.accept(msg);
             return true;
-        }, counterIdRestriction));
+        }, counterIdRestriction, timeoutSeconds, onTimeout));
         return this;
     }
 
-    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact) {
-        return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {}, new AtomicReference<>());
+    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
+                                            long timeoutSeconds, Function<Message, Boolean> onTimeout) {
+        return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {
+                }, new AtomicReference<>(),
+                timeoutSeconds, onTimeout);
     }
 
-    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, BiFunction<Message, Counter,  Boolean> onReactCallback) {
-        elements.add(new EmojiReactionSubscriber(emoji, false, onReactCallback, new AtomicReference<>()));
+    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, BiFunction<Message, Counter, Boolean> onReactCallback,
+                                            long timeoutSeconds, Function<Message, Boolean> onTimeout) {
+        elements.add(new EmojiReactionSubscriber(emoji, false, onReactCallback, new AtomicReference<>(),
+                timeoutSeconds, onTimeout));
         return this;
     }
 
@@ -150,9 +167,28 @@ public class Dialogue {
     public void addParallelWaitingDialogueElement(DialogueElement[] sufficient, DialogueElement[] necessary) {
         elements.add(new ParallelDialogElements(sufficient, necessary));
     }
+
     public void cancelAllRemaining() {
         cancelAllRemaining = true;
     }
 
 
+    public Dialogue addMaybeCancelRest(Function<Message, Boolean> shouldCancelCallback) {
+        elements.add(new MaybeCancelRestOfDialog(shouldCancelCallback));
+        return this;
+    }
+
+    public Dialogue addSinglePersonThumbsUpDownConfirmation(Consumer<Message> onConfirm, Consumer<Message> onCancel,
+                                                            boolean cancelRemainingDialogOnThumbsDown,
+                                                            AtomicReference<String> counterIdRestriction,
+                                                            long timeoutSeconds, Function<Message, Boolean> onTimeout) {
+        addEmojiReaction(CountingEmojis.THUMBS_UP);
+        addEmojiReaction(CountingEmojis.THUMBS_DOWN);
+        return initializeParallelDialogElements()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, onConfirm, counterIdRestriction,
+                        ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, cancelRemainingDialogOnThumbsDown, onCancel, counterIdRestriction,
+                        ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
+                .finishParallelDialogElementsAndAdd(timeoutSeconds, onTimeout);
+    }
 }

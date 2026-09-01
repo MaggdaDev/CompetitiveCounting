@@ -25,6 +25,7 @@ public class VaultSpawner {
     private Vault activeVault = null;
     private Counter riddleSolver = null;
     private CountingContext previousContext;
+    private final static long VAULT_CLAIM_TIMEOUT_SECONDS = 30;
 
     public VaultSpawner(CountingStreak streak) {
         this.streak = streak;
@@ -102,10 +103,27 @@ public class VaultSpawner {
                         .addWaitForEmojiReaction(CountingEmojis.VAULT_LOCATOR_ICON, false, (reactionMessage) -> {
                             if (activeVault != vault) {
                                 System.err.println("No/different active vault when user reacted vault locator icon?");
-                                return;
                             }
+                        }, new AtomicReference<>(context.getCounter().getId()),
+                                VAULT_CLAIM_TIMEOUT_SECONDS, currMsg -> {
+                                    currMsg.removeReactions(CountingEmojis.VAULT_LOCATOR_ICON).subscribe();
+                                    activeVault = null;
+                                    CountingBot.write(currMsg, "The " + vault.getVaultName() + " on number " + context.getCurrentNumber()
+                                            + " disappeared as it was not activated within " + VAULT_CLAIM_TIMEOUT_SECONDS + " seconds.");
+                                    return true;
+                                })
+                        .addRunnable((m) -> {
                             riddleSolver = activeVault.doRiddleBlockingly(message, context);
-                        }, new AtomicReference<>(context.getCounter().getId()))
+                        })
+                        .addMaybeCancelRest(m -> {
+                            boolean shouldCancel = activeVault == null || riddleSolver == null;
+                            if(shouldCancel) {  // TODO Dialogue.addFinally() for cleanup
+                                activeVault = null;
+                                activeDialogue = null;
+                                riddleSolver = null;
+                            }
+                            return shouldCancel;
+                        })
                         .addRunnable((m) -> activeVault.loot(m, riddleSolver))
                         .addRunnable((m) -> {
                             activeVault.reset();

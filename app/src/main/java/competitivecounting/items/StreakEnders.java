@@ -19,6 +19,7 @@ public class StreakEnders {
     private Dialogue currentWhiteStreakEnderDialogue;
     private long epochSecondAtLastWhiteStreakEnderRequested = 0;
     private final static long WHITE_STREAK_ENDER_REQUEST_TIMEOUT_SECONDS = 60 * 60 * 3;    // 3 hours
+
     public StreakEnders(CountingStreak streak) {
         this.streak = streak;
     }
@@ -27,10 +28,11 @@ public class StreakEnders {
         return Instant.now().getEpochSecond();
     }
 
+
     public void whiteUsed(Message message, Counter itemUser) {
         //
-        if(currentWhiteStreakEnderDialogue != null) {
-            if(now() - epochSecondAtLastWhiteStreakEnderRequested < WHITE_STREAK_ENDER_REQUEST_TIMEOUT_SECONDS) {
+        if (currentWhiteStreakEnderDialogue != null) {
+            if (now() - epochSecondAtLastWhiteStreakEnderRequested < WHITE_STREAK_ENDER_REQUEST_TIMEOUT_SECONDS) {
                 CountingBot.write(message, "A Streak:white_circle:Ender in this streak is still waiting for reactions! If no one reacts, it will timeout " + (WHITE_STREAK_ENDER_REQUEST_TIMEOUT_SECONDS / 3600) + " hours after it has been requested. ");
                 return;
             } else {
@@ -84,11 +86,12 @@ public class StreakEnders {
                             "For that, " + countersPings + " to react to this message with " + CountingEmojis.THUMBS_UP.asUnicodeEmoji().get().getRaw() + "!", 0)
                     .addEmojiReaction(CountingEmojis.THUMBS_UP)
                     .addEmojiReaction(CountingEmojis.THUMBS_DOWN)
-                    .initializeParallelDialogElements();    // Todo
+                    .initializeParallelDialogElements();
+            AtomicReference<Boolean> timeoutMessageSent = new AtomicReference<>(false);
             for (String contributingId : idsOfCountersNeededToContribute) {
                 builder.addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {
-                    // On react up
-                }, new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY);
+                        },
+                        new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY);
                 builder.addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, true, m -> {
                     // On react down
                     Counter decliner = CountingBot.getCounter(streak.getGuildId(), contributingId);
@@ -96,7 +99,12 @@ public class StreakEnders {
                     currentWhiteStreakEnderDialogue = null;
                 }, new AtomicReference<>(contributingId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT);
             }
-            builder.finishParallelDialogElementsAndAdd()
+            builder.finishParallelDialogElementsAndAdd(WHITE_STREAK_ENDER_REQUEST_TIMEOUT_SECONDS, m -> {
+                // On timeout
+                                CountingBot.write(m, "The Streak:white_circle:Ender was cancelled due to timeout.");
+                                currentWhiteStreakEnderDialogue = null;
+                                return true;
+                            })
                     .addRunnable((msg) -> {
                         // All agreed
                         if (itemUser.getInventory().getAmountOfItem(Consumables.WHITE_STREAK_ENDER) <= 0) {
@@ -120,14 +128,14 @@ public class StreakEnders {
             }
             CountingBot.write(message, "You used a " + Consumables.WHITE_STREAK_ENDER.getName() + "...");
             itemUser.getInventory().removeItem(Consumables.WHITE_STREAK_ENDER);
-            streak.streakPayout(message, null, 0, null, 0, null); // todo testen ob man da irgendwas schreiben muss so "a streak ender was used heureker jeder kriegt geld" oder soos
+            streak.streakPayout(message, null, 0, null, 0, null);
             CountingBot.getInstance().disposeStreak(streak.getKey());
         }
     }
 
     public void dispose() {
         if (currentWhiteStreakEnderDialogue != null) {
-            System.out.println("Stopping streak ender dialogue...");    // todo does not work
+            System.out.println("Stopping streak ender dialogue...");
             currentWhiteStreakEnderDialogue.stop();
         }
     }

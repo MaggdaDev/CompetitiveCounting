@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class BankLoanHandler {
     private final static CountingBot bot = CountingBot.getInstance();
+    private final static long LOAN_CONFIRMATION_TIMEOUT_SECONDS = 30;
 
     public static void giveLoan(String guildId, String userId, int loanAmount, int percentOfIncomeRepay, Message message) throws BankLoanException {
         Counter initCounter = bot.getCounter(guildId, userId);
@@ -72,12 +73,21 @@ public class BankLoanHandler {
                 .initializeParallelDialogElements()
                 .addWaitForEmojiReaction(CountingEmojis.GOBLIN, true, m-> {
                     int consultingFee = Math.min(599, initCounter.getScore() / 10);
-                    BankCommandHandler.bankWrite(message, "Even though you have decided not to move forward with this transaction, I must inform you that I have meticulously measured the administrative expenses for this consultation you have requested, and you will receive an invoice of " + consultingFee + " money.");
+                    BankCommandHandler.bankWrite(message, "Even though you have decided not to move forward with this transaction, " +
+                            "I must inform you that I have meticulously measured the administrative expenses for this consultation you have requested, "+
+                                    "and you will receive an invoice of " + consultingFee + " money.");
                     initCounter.subtractScore(consultingFee);
                 }, new AtomicReference<>(userId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
                 .addWaitForEmojiReaction(CountingEmojis.HANDSHAKE, false, m->{}, new AtomicReference<>(userId),
                         ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
-                .finishParallelDialogElementsAndAdd()
+                .finishParallelDialogElementsAndAdd(
+                        LOAN_CONFIRMATION_TIMEOUT_SECONDS, m -> {
+                            int consultingFee = Math.min(999, initCounter.getScore() / 5);
+                            BankCommandHandler.bankWrite(message, "Thank you for choosing the CrocBank Inc.'s financial consulting service. "
+                            + "Your loan request has timed out, but you were charged " + consultingFee + " money.");
+                            initCounter.subtractScore(consultingFee);
+                            return true;
+                        })
                 .addRunnable(m -> {
                     // Do Contract
                     bank.removeMoney(loanAmount - crocLoanFee);

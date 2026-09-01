@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CommunityVault extends Vault {
     private final static double SPAWN_CHANCE = 0.03;
     private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. The initial suggestion for the key is {1}, "
-            + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND +  "`. "
+            + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND + "`. "
             + "In the end, the vault will be locked using the key that is closest to 2/3 of the average over all the submitted keys and the initially suggested"
             + " key. ";
     private final static int TOTAL_RIDDLE_TIME = 30;
@@ -33,7 +33,7 @@ public class CommunityVault extends Vault {
         super(SPAWN_CHANCE, context -> {
             long now = Instant.now().getEpochSecond();
             int differentCountersOtherThanCurrentInLastSeconds = 0;
-            for(Map.Entry<String,Long> entry : context.getStreak().getLastCountingTimesPerCounter().entrySet()) {
+            for (Map.Entry<String, Long> entry : context.getStreak().getLastCountingTimesPerCounter().entrySet()) {
                 String counterId = entry.getKey();
                 long lastCountingSecond = entry.getValue();
                 if (counterId.equals(context.getCounter().getId())) {
@@ -69,25 +69,25 @@ public class CommunityVault extends Vault {
         HashMap<String, Integer> submittedKeysByUserId = new HashMap<>();
         AtomicReference<String> winningUserIdRef = new AtomicReference<>();
         currentRiddleDialogue = new Dialogue();
-                currentRiddleDialogue.addNpcLine(riddleText, 0)
-                        .addKeySubmissionAwaiter((userId, key) -> {
-                            InteractionApplicationCommandCallbackSpec.Builder specBuilder = InteractionApplicationCommandCallbackSpec.builder()
-                                    .ephemeral(true);
-                            if (key < 0) {
-                                specBuilder.content("Please submit a non-negative integer as key suggestion!");
-                            } else if (key > Integer.MAX_VALUE / 100) {
-                                specBuilder.content("Please do not submit a suggestion near the integer limit!");
-                            } else {
-                                int keyInt = (int) key;
-                                if (submittedKeysByUserId.containsKey(userId)) {
-                                    specBuilder.content("You have already submitted a key suggestion for this vault!");
-                                } else {
-                                    submittedKeysByUserId.put(userId, keyInt);
-                                    specBuilder.content("You have submitted the key " + keyInt + ".");
-                                }
-                            }
-                            return specBuilder.build();
-                        }, new CountDownLatch(1), () -> false,TOTAL_RIDDLE_TIME)
+        currentRiddleDialogue.addNpcLine(riddleText, 0)
+                .addKeySubmissionAwaiter((userId, key) -> {
+                    InteractionApplicationCommandCallbackSpec.Builder specBuilder = InteractionApplicationCommandCallbackSpec.builder()
+                            .ephemeral(true);
+                    if (key < 0) {
+                        specBuilder.content("Please submit a non-negative integer as key suggestion!");
+                    } else if (key > Integer.MAX_VALUE / 100) {
+                        specBuilder.content("Please do not submit a suggestion near the integer limit!");
+                    } else {
+                        int keyInt = (int) key;
+                        if (submittedKeysByUserId.containsKey(userId)) {
+                            specBuilder.content("You have already submitted a key suggestion for this vault!");
+                        } else {
+                            submittedKeysByUserId.put(userId, keyInt);
+                            specBuilder.content("You have submitted the key " + keyInt + ".");
+                        }
+                    }
+                    return specBuilder.build();
+                }, new CountDownLatch(1), () -> false, TOTAL_RIDDLE_TIME)
                 .addRunnable(m -> {
                     double totalSum = x;
                     for (int submittedKey : submittedKeysByUserId.values()) {
@@ -138,11 +138,17 @@ public class CommunityVault extends Vault {
                 .addEmojiReaction(CountingEmojis.KEY)
                 .addWaitForEmojiReaction(CountingEmojis.KEY, false,
                         m -> {
-                        }, winningUserIdRef);
-        ;
+                        }, winningUserIdRef, RIDDLE_KEY_TIMEOUT_SECONDS, m -> {
+                            m.removeReactions(CountingEmojis.KEY).subscribe();
+                            CountingBot.write(m, getCounterFromIdRef(message, winningUserIdRef).getName() + ", your vault key timed out! The vault will remain locked forever.");
+                            winningUserIdRef.set(null);
+                            return true;
+                        });
         currentRiddleDialogue.playBlocking(message);
-        return CountingBot.getCounter(message.getGuildId().get().asString(), winningUserIdRef.get());
+        return getCounterFromIdRef(message, winningUserIdRef);
     }
+
+
 
     /**
      *
@@ -189,6 +195,7 @@ public class CommunityVault extends Vault {
     public String getSpawnConditionsDescription() {
         return "Spawns if at least two counters other than you have counted recently.";
     }
+
     @Override
     protected String getRiddleText(String riddle, String author) {
         String text = RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);

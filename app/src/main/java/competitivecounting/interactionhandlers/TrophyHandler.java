@@ -49,7 +49,7 @@ public class TrophyHandler {
         }
     }
 
-    private void spawnTrophy(Message message, int number) {
+    public void spawnTrophy(Message message, int number) {
         message.addReaction(CountingEmojis.TROPHY).subscribe();
         Counter spawnerCounter = CountingBot.getCounter(message.getGuildId().get().asString(), message.getAuthor().get().getId().asString());
         spawnerCounter.getCollection().getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName()).ifPresent(eq -> {
@@ -124,6 +124,8 @@ public class TrophyHandler {
                 return startText + "_Moose_";
             case -1050505:
                 return startText + "_Gucci Fendi & Prada Collector_";
+            case -4:
+                return "Trophy of the Fourth Virtue: _Tropaeum Temperantiae_";
             default:
                 return startText;
         }

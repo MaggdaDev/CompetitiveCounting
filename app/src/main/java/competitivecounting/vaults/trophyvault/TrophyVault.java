@@ -63,7 +63,12 @@ public class TrophyVault extends Vault {
                 .addEmojiReaction(CountingEmojis.KEY)
                 .addNpcLineButKeepOldMessage(riddle.getSolutionExplanation(), 0)
                 .addWaitForEmojiReaction(CountingEmojis.KEY, false,
-                        m -> {}, riddleSolverIdToBeFoundOut);
+                        m -> {}, riddleSolverIdToBeFoundOut, RIDDLE_KEY_TIMEOUT_SECONDS, m -> {
+                            m.removeReactions(CountingEmojis.KEY).subscribe();
+                            CountingBot.write(m, getCounterFromIdRef(message, riddleSolverIdToBeFoundOut).getName() + ", your vault key timed out! The vault will remain locked forever.");
+                            riddleSolverIdToBeFoundOut.set(null);
+                            return true;
+                        });
         setCurrentRiddleDialogue(riddleDialogue);
         riddleDialogue.playBlocking(message);
         return CountingBot.getCounter(message.getGuildId().get().asString(), riddleSolverIdToBeFoundOut.get());

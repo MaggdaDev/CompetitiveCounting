@@ -20,6 +20,7 @@ public class PrimeCoinSeller {
     private int currentBitCoinPrice = -1;
     private long lastPriceUpdateMillis = 0;
     private long priceRefreshCooldownMillis = 60 * 1000;
+    private final static long SELLING_TIMEOUT_SECONDS = 30;
 
     public PrimeCoinSeller() {
         client = HttpClient.newHttpClient();
@@ -45,14 +46,13 @@ public class PrimeCoinSeller {
         new Dialogue().addNpcLine("Do you want to sell one " + Consumables.PRIME_COIN.getName() + " for " + localCurrentBitCoinPrice + " money?", 0)
                 .addEmojiReaction(CountingEmojis.THUMBS_UP)
                 .addEmojiReaction(CountingEmojis.THUMBS_DOWN)
-                .initializeParallelDialogElements()
-                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {}, new AtomicReference<>(counter.getId()),
-                        ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
-                .addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, true, m -> {
-                    CountingBot.write(message, Consumables.PRIME_COIN.getName() + " selling cancelled.");
-                        }, new AtomicReference<>(counter.getId()),
-                        ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
-                .finishParallelDialogElementsAndAdd()
+                .addSinglePersonThumbsUpDownConfirmation(m -> {},
+                        m -> CountingBot.write(message, Consumables.PRIME_COIN.getName() + " selling cancelled."),
+                        true, new AtomicReference<>(counter.getId()), SELLING_TIMEOUT_SECONDS,
+                        m -> {
+                    CountingBot.write(message, "Selling your " + Consumables.PRIME_COIN.getName() + " timed out.");
+                    return true;
+                })
                 .addRunnable(m -> {
                     if (counter.getInventory().getAmountOfItem(Consumables.PRIME_COIN) < 1) {
                         CountingBot.write(m, "Can't sell " + Consumables.PRIME_COIN.getName() + ", as you know longer own one.");

@@ -9,6 +9,7 @@ import competitivecounting.vaults.vaultDrops.VaultDrop;
 import competitivecounting.vaults.vaultDrops.VaultLootPool;
 import discord4j.core.object.entity.Message;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public abstract class Vault {
@@ -18,6 +19,8 @@ public abstract class Vault {
     private final VaultLootPool lootPool;
     protected final static String RIDDLE_TEXT = "{author} has located a locked vault :satellite:! To find the key, solve the following riddle:\n"
         + "> {riddle}\n-# To submit the key, use `~<key>`(e.g. `~42`).";
+
+    protected final static long RIDDLE_KEY_TIMEOUT_SECONDS = 30;
     public Vault(double spawnChance, Function<CountingContext, Boolean> requirementsChecker) {
         this.spawnChance = spawnChance;
         this.requirementsChecker = requirementsChecker;
@@ -91,6 +94,13 @@ public abstract class Vault {
 
     protected String getRiddleText(String riddle, String author) {
         return RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
+    }
+
+    protected Counter getCounterFromIdRef(Message msg, AtomicReference<String> ref) {
+        if (ref.get() == null) {
+            return null;
+        }
+        return CountingBot.getCounter(msg.getGuildId().get().asString(), ref.get());
     }
 
 

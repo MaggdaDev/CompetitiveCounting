@@ -28,42 +28,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class CountingBoosterManagerTest {
+class CountingBoosterManagerTest extends CountingTest {
 
-    private Counter counter;
-    private CountingContext context;
-    private Message message;
-
-    @BeforeEach
-    void setUp() {
-        GatewayDiscordClient mockedClient = Mockito.mock(GatewayDiscordClient.class);
-        when(mockedClient.on(any(Class.class), any(Function.class)))
-                .thenReturn(Flux.empty());
-        when(mockedClient.on(any(Class.class)))
-                .thenReturn(Flux.empty());
-        CountingBot bot = new CountingBot(mockedClient);
-        String guildId = "testGuild";
-        CountingGuild guild = new CountingGuild(guildId);
-        CountingBot.getInstance().getGuilds().put(guildId, guild);
-        counter = new Counter(guildId, "", "");
-        CountingStreak streak = new CountingStreak("", 10, "");
-        context = new CountingContext(counter, 0, 1, streak, 0, "");
-
-        // Message
-        List<String> output = new ArrayList<>();
-        message = mock(Message.class);
-        MessageChannel channel = mock(MessageChannel.class);
-        when(message.getChannel()).thenReturn(Mono.just(channel));
-
-        when(channel.createMessage(anyString()))
-                .thenAnswer(invocation -> {
-                    String s = invocation.getArgument(0);
-                    output.add(s);
-                    return MessageCreateMono.of(channel);
-                });
-        when(channel.createMessage(any(MessageCreateSpec.class)))
-                .thenReturn(Mono.empty());
-    }
 
     @Test
     void testCountingBoosterIncomeMultiplier() {

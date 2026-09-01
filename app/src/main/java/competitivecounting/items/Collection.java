@@ -3,15 +3,18 @@ package competitivecounting.items;
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.CountingStreak;
+import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.equippables.DowsingRod;
 import competitivecounting.items.equippables.Equippable;
 import com.google.common.base.Objects;
 import competitivecounting.items.equippables.Equippables;
 import discord4j.core.object.entity.Message;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Collection {
     private final static int DEFAULT_MAX_SIZE = 6;
@@ -51,7 +54,7 @@ public class Collection {
     }
 
     public boolean containsEquippable(Equippable equippable) {
-        for (Item item: equippables) {
+        for (Item item : equippables) {
             if (Objects.equal(item.getName(), equippable.getName())) {
                 return true;
             }
@@ -110,17 +113,48 @@ public class Collection {
         return Optional.empty();
     }
 
-    public void equip(Message message, Equippable equippable) {
+    public Mono<Boolean> equipAsync(Message message, Equippable equippable) {
+        if (!checkEquipability(message, equippable)) {
+            return Mono.just(false);
+        }
+        new Dialogue()
+                .addNpcLine("New item! Do you want to extend your collection with a " + equippable.getName()
+                        + "? This action cannot be reverted.", 0)
+                .addSinglePersonThumbsUpDownConfirmation(
+                        m -> {},
+                        m -> CountingBot.write(message, "You have declined to equip the " + equippable.getName() + "."),
+                        true, new AtomicReference<>(message.getAuthor().get().getId().asString()),
+                        30,
+                        m2 -> {
+                            CountingBot.write(message, "Equipping the " + equippable.getName() + " timed out.");
+                            return true;
+                        })
+                .addRunnable(m -> {
+                    if(checkEquipability(message, equippable)) {
+                        addItem(equippable.createObject(owner));
+                        owner.getInventory().removeItem(equippable);
+                        CountingBot.write(message, "You have equipped a " + equippable.getName() + "!");
+                        CountingBot.getInstance().save();
+                    }
+                })
+                .play(message);
+        return null;
+    }
+
+    private boolean checkEquipability(Message message, Equippable equippable) {
         if (isFull()) {
-            CountingBot.write(message, "Your collection is full!"); // todo: wenn es unquip gibt: "Use unequip to remove"
-            return;
+            CountingBot.write(message, "Your collection is full!");
+            return false;
         }
         if (containsEquippable(equippable)) {
             CountingBot.write(message, "You have already equipped a " + equippable.getName() + "!");
-            return;
+            return false;
         }
-        addItem(equippable.createObject(owner));
-        CountingBot.write(message, "You have equipped a " + equippable.getName() + "!");
+        if (owner.getInventory().getAmountOfItem(equippable) <= 0) {
+            CountingBot.write(message, "You don't own a " + equippable.getName() + "!");
+            return false;
+        }
+        return true;
     }
 
 

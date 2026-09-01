@@ -14,6 +14,8 @@ public class CoinMiner extends Equippable {
     public static final String EQUIPPED_DESCRIPTION = "On each prime number that you count, a " + Consumables.PRIME_COIN.getName() +
             " may spawn with a small probability. Anyone with a " + NAME +
             " equipped may claim it.\n-# " + Consumables.PRIME_COIN.getName() + "s spawned: {0}";
+    public static final long COIN_CLAIM_TIMEOUT_SECONDS = 20;
+
     public CoinMiner(Counter owner) {
         super(null, NAME, DESCRIPTION, owner);
     }
@@ -35,18 +37,26 @@ public class CoinMiner extends Equippable {
         }
         if (PrimeVault.isPrime(context.getCurrentNumber())) {
             double rand = Math.random();
-            if(rand <= spawnChance ) {
+            if (rand <= spawnChance) {
                 // Spawn
                 new Dialogue()
                         .addEmojiReaction(CountingEmojis.COIN)
                         .addWaitForEmojiReaction(CountingEmojis.COIN, (msg, emojiReactor) -> {
-                             if (emojiReactor.getCollection().containsEquippable(Equippables.COIN_MINER)) {
-                                 emojiReactor.getInventory().addItem(Consumables.PRIME_COIN);
-                                 CountingBot.write(msg, "Congratulations, you mined a " + Consumables.PRIME_COIN.getName() + ", " + emojiReactor.getName() + "!");
-                                 return true;
-                             }
-                             CountingBot.write(msg, "You need to equip a " + CoinMiner.NAME + " to mine " + Consumables.PRIME_COIN.getName() + "s, " + emojiReactor.getName() + "!");
-                             return false;
+                            if (emojiReactor.getCollection().containsEquippable(Equippables.COIN_MINER)) {
+                                emojiReactor.getInventory().addItem(Consumables.PRIME_COIN);
+                                CountingBot.write(msg, "Congratulations, you mined a " + Consumables.PRIME_COIN.getName() + ", " + emojiReactor.getName() + "!");
+                                return true;
+                            }
+                            CountingBot.write(msg, "You need to equip a " + CoinMiner.NAME + " to mine " + Consumables.PRIME_COIN.getName() + "s, " + emojiReactor.getName() + "!");
+                            return false;
+                        }, COIN_CLAIM_TIMEOUT_SECONDS, m -> {
+                            message.removeReactions(CountingEmojis.COIN).subscribe();
+                            new Dialogue()
+                                    .addNpcLine("You have forsaken the wealth of a real " + Consumables.PRIME_COIN.getName() + "...", 2000)
+                                    .addNpcLine("Your temperance is beyond compare.", 2000)
+                                    .addRunnable(currMsg -> context.getStreak().getTrophyHandler().spawnTrophy(message, -4))
+                                    .play(message);
+                            return true;
                         })
                         .play(message);
             }

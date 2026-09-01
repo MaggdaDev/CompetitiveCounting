@@ -431,9 +431,7 @@ public class Counter implements ContractOwner {
         }
         if (item instanceof Equippable) {
             Equippable equippable = (Equippable) item;
-            collection.equip(message, equippable);
-            inventory.removeItem(item);
-            CountingBot.getInstance().save();
+            collection.equipAsync(message, equippable);
             return;
         } else if (item == Consumables.FAKE_HAND_BAG || item == Consumables.HAND_BAG) {
             writeUseMessage(Consumables.FAKE_HAND_BAG, message);
