@@ -46,6 +46,14 @@ public class BankUpgrades {
         return counter;
     }
 
+    public int getTotalSpentOnUpgrades() {
+        int totalSpent = 0;
+        for (BankUpgrade upgrade : getAllUpgrades()) {
+            totalSpent += upgrade.amountSpentOnThisUpgrade();
+        }
+        return totalSpent;
+    }
+
     public LoanRateUpgrade getLoanRateUpgrade() {
         return loanRateUpgrade;
     }

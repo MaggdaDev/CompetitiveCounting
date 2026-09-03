@@ -33,7 +33,6 @@ public class PrimeVault extends Vault {
                 counter++;
             }
         }
-        System.out.println(Arrays.toString(primes));
     }
 
     public PrimeVault() {

@@ -352,7 +352,7 @@ public class Counter implements ContractOwner {
             CountingBot.getInstance().save();
             return true;
         } else {
-            CountingBot.write(message, "Reset all your progress with ~prestige and acquire a global boost of " + MULT_PLUS_PER_PRESTIGE * 100.0d + "%, as well as 1 prestige point. \nYour net worth (wallet + unlocks) has to be " + PRESTIGE_WORTH + " or more before you can do this. You are still missing " + (PRESTIGE_WORTH - getAccWorth()) + " money.");
+            CountingBot.write(message, "Reset all your progress with ~prestige and acquire a global boost of " + (int) (MULT_PLUS_PER_PRESTIGE * 100.0d) + "%, as well as 1 prestige point. \nYour net worth (wallet + unlocks) has to be " + PRESTIGE_WORTH + " or more before you can do this. You are still missing " + (PRESTIGE_WORTH - getAccWorth()) + " money.");
             return false;
         }
     }
@@ -362,26 +362,54 @@ public class Counter implements ContractOwner {
     }
 
     public void contractInfo(Message message) {
-        String mess = "**Your contracts:**\n\n";
-        if (contracts.size() == 0 && incomingContracts.size() == 0) {
+        StringBuilder mess = new StringBuilder("**Your contracts:**");
+        if (contracts.isEmpty() && incomingContracts.isEmpty()) {
             CountingBot.write(message, "You don't have any active contracts!");
             return;
         }
-        if (contracts.size() == 1) {
-            mess += "Outgoing:\n" + contracts.get(0).toString();
-        } else if (contracts.size() > 1) {
-            mess += "You pay " + contractHandler.getCurrentTotalPerc() + "% of your income to";
+        if (!contracts.isEmpty()) {
+            int totalContractOutgoingAmount = 0;
+            int totalContractPerc = 0;
             for (Contract curr : contracts) {
-                mess += "\n" + curr.toString();
+                if (curr.limit != -1) totalContractOutgoingAmount += curr.limit;
+                totalContractPerc += curr.percentage;
+            }
+
+            if (totalContractOutgoingAmount > 0) {
+                mess.append("\n\nOutgoing (").append(totalContractOutgoingAmount)
+                        .append(" money using ").append(totalContractPerc).append("% of your income):");
+            } else {
+                mess.append("\n\nOutgoing (limitless contracts using ").append(totalContractPerc).append("% of your income):");
+            }
+
+            for (Contract curr : contracts) {
+                mess.append("\n").append(curr.toString());
             }
         }
-        if (incomingContracts.size() > 0) {
-            mess += "\n\nIncoming:";
+        if (!incomingContracts.isEmpty()) {
+            int totalContractIncomingAmount = 0;
+            int totalLimitlessContractIncomingAmount = 0;
             for (Contract curr : incomingContracts) {
-                mess += "\n" + curr;
+                if (curr.limit != -1) totalContractIncomingAmount += curr.limit;
+                if (curr.limit == -1) {
+                    totalLimitlessContractIncomingAmount += curr.paidBack;
+                }
+            }
+
+            if (totalContractIncomingAmount > 0) {
+                mess.append("\n\nIncoming (").append(totalContractIncomingAmount).append(" money):");
+            } else {
+                mess.append("\n\nIncoming (limitless contracts):");
+            }
+
+            for (Contract curr : incomingContracts) {
+                mess.append("\n").append(curr.toString());
+            }
+            if (totalLimitlessContractIncomingAmount > 0) {
+                mess.append("\n\nTotal earned from limitless contracts: ").append(totalLimitlessContractIncomingAmount).append(" money");
             }
         }
-        CountingBot.write(message, mess);
+        CountingBot.write(message, mess.toString());
     }
 
     public void cancelContractsTo(Counter to) {

@@ -59,8 +59,6 @@ public abstract class Vault {
         double rand = Math.random();
         CountingBoosterManager countingBoosterManager = context.getCounter().getCountingBoosterManager();
         double spawnThreshold = countingBoosterManager.modifyVaultRate(spawnChance);
-        System.out.println("Vault " + getVaultName() + " spawn chance: " + spawnChance + ", modified by counting booster: " + spawnThreshold);
-        System.out.println("Requirements met: " + requirementsChecker.apply(context) + ", random number: " + rand);
         boolean spawn = (requirementsChecker.apply(context) && rand < spawnThreshold);
         if (spawn) {
             spawn();

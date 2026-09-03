@@ -50,6 +50,10 @@ public class BankAccount {
         return bankUpgrades.toString();
     }
 
+    public int getTotalSpentOnUpgrades() {
+        return bankUpgrades.getTotalSpentOnUpgrades();
+    }
+
     public String getUpgradesBuyableString() {
         return bankUpgrades.getBuyablesString();
     }

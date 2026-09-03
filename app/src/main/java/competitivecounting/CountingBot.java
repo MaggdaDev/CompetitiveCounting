@@ -10,6 +10,7 @@ import competitivecounting.bank.Bank;
 import competitivecounting.bank.BankAccount;
 import competitivecounting.bank.BankCommandHandler;
 import competitivecounting.bank.BankTransactionsHandler;
+import competitivecounting.bank.exceptions.BankTransactionException;
 import competitivecounting.contracts.Contract;
 import competitivecounting.interactionhandlers.*;
 import competitivecounting.items.CollectionCommandHandler;
@@ -29,6 +30,7 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateSpec;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.Disposable;
 
 import java.util.ArrayList;
@@ -487,9 +489,6 @@ public class CountingBot {
                         + "- 1 additional prestige point\n "
                         + "- an upgrade to your global boost (" + Math.round((author.getPrestiges() - 1) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "% => " + Math.round((author.getPrestiges()) * Counter.MULT_PLUS_PER_PRESTIGE * 100.0d) + "%)");
             }
-
-        } else {
-            return;
         }
     }
 
@@ -773,13 +772,27 @@ public class CountingBot {
         CountingBot.write(message, msg);
     }
 
-    private void netWorthInfo(Message message) {
+    private void netWorthInfo(Message message) throws BankTransactionException {
         Counter counter = getCounterFromMessage(message);
+        String counterId = counter.getId();
+        String guildId = message.getGuildId().get().asString();
+        Bank bank = guilds.get(guildId).getBank();
         int netWorth = counter.getAccWorth();
         String netWorthOutput = "Your account's total net worth, including your score and all upgrades bought:\n";
 
+        String formatting = getString(netWorth);
+        netWorthOutput += formatting.replace("{0}", String.valueOf(netWorth));
+        netWorthOutput += "\nThis is made up of " + counter.getScore() + " money in your purse and " + (netWorth - counter.getScore()) + " value from upgrades.";
+        if (counter.getPrestiges() > 0) netWorthOutput += "\n\nAdditionally, you have " + counter.getPrestigePoints() + " prestige points.";
+        if (bank.isUnlocked() && bank.alreadyRegistered(counterId)) {
+            netWorthOutput += "\n\nYou have " + bank.getBalance(counterId) + " money in your CrocBank:tm: account, and you spent " + bank.getAccount(counterId).getTotalSpentOnUpgrades() + " money on bank upgrades.";
+        }
+        CountingBot.write(message, netWorthOutput);
+    }
+
+    @NotNull
+    private static String getString(int netWorth) {
         int digits = (netWorth == 0) ? 0 : (int) Math.log10(netWorth) + 1;
-        System.out.println(digits);
         String formatting;
         switch(digits) {
             case 0:
@@ -802,9 +815,7 @@ public class CountingBot {
                 break;
         }
         if (digits > 7) { formatting = "# {0}"; }
-        netWorthOutput += formatting.replace("{0}", String.valueOf(netWorth));
-        netWorthOutput += "\nThis is made up of " + counter.getScore() + " money in your purse and " + (netWorth - counter.getScore()) + " value from upgrades.";
-        CountingBot.write(message, netWorthOutput);
+        return formatting;
     }
 
     public boolean isCounter(String guildId, String counterId) {

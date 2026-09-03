@@ -67,6 +67,15 @@ public abstract class BankUpgrade {
         return getPrices()[currentLvl+1];
     }
 
+    public int amountSpentOnThisUpgrade() {
+        if (currentLvl == 0) return 0;
+        int amountSpent = 0;
+        for (int i = 1; i <= getCurrentLvl(); i++) {
+            amountSpent += getPrices()[i];
+        }
+        return amountSpent;
+    }
+
     public int getCurrentLvl() {
         return currentLvl;
     }
