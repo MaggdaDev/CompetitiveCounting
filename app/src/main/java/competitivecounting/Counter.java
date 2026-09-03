@@ -390,14 +390,14 @@ public class Counter implements ContractOwner {
             int totalContractIncomingAmount = 0;
             int totalLimitlessContractIncomingAmount = 0;
             for (Contract curr : incomingContracts) {
-                if (curr.limit != -1) totalContractIncomingAmount += curr.limit;
+                if (curr.limit != -1) totalContractIncomingAmount += curr.limit - curr.paidBack;
                 if (curr.limit == -1) {
                     totalLimitlessContractIncomingAmount += curr.paidBack;
                 }
             }
 
             if (totalContractIncomingAmount > 0) {
-                mess.append("\n\nIncoming (").append(totalContractIncomingAmount).append(" money):");
+                mess.append("\n\nIncoming (").append(totalContractIncomingAmount).append(" total money):");
             } else {
                 mess.append("\n\nIncoming (limitless contracts):");
             }
