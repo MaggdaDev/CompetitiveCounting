@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 public class CommunityVault extends Vault {
-    private final static double SPAWN_CHANCE = 0.03;
+    private final static double SPAWN_CHANCE = 1. / 40.;
     private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. The initial suggestion for the key is {1}, "
             + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND + "`. "
             + "In the end, the vault will be locked using the key that is closest to 2/3 of the average over all the submitted keys and the initially suggested"

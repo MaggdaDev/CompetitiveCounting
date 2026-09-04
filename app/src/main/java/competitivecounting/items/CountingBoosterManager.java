@@ -18,7 +18,7 @@ public class CountingBoosterManager {
 
     public final static int DURATION_MINUTES = 10;
 
-    public final static double EXTRA_INCOME_MULTIPLIER = 1.5, TROPHY_SPAWN_RATE_MULTIPLIER = 2., VAULT_SPAWN_RATE_MULTIPLIER = 2.;
+    public final static double EXTRA_INCOME_MULTIPLIER = 1.5, TROPHY_SPAWN_RATE_MULTIPLIER = 1.5, VAULT_SPAWN_RATE_MULTIPLIER = 1.5;
 
     private long epochSecondsAtActivation = 0;
 
