@@ -1,10 +1,13 @@
 package competitivecounting;
 
+import competitivecounting.interactionhandlers.MessageHandler;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateMono;
@@ -16,6 +19,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,19 +34,26 @@ import static org.mockito.Mockito.when;
 public class CountingTest {
 
     protected Counter counter;
+    protected Counter otherCounter;
     protected CountingContext context;
     protected Message message;
 
     private final Sinks.Many<ReactionAddEvent> reactionEvents =
             Sinks.many().multicast().onBackpressureBuffer();
+
+    private final Sinks.Many<MessageCreateEvent> messageEvents =
+            Sinks.many().multicast().onBackpressureBuffer();
+
+
     private GatewayDiscordClient mockedClient;
     private final HashMap<String, User> mockedUsers = new HashMap<>();
     protected final static String CHANNEL_ID = "28754";
     protected final static String MESSAGE_ID = "184723984";
     protected final static String COUNTER_ID = "23582734", OTHER_COUNTER_ID = "92848378";
     protected final static String GUILD_ID = "3847201";
+    private final static Snowflake ChannelIdSnowflake = Snowflake.of(CHANNEL_ID);
     protected List<String> output;
-    private Counter otherCounter;
+    private MessageChannel channel;
 
     @BeforeEach
     protected void setUp() {
@@ -53,6 +64,8 @@ public class CountingTest {
             Class<?> eventType = invocation.getArgument(0);
             if (eventType == ReactionAddEvent.class) {
                 return reactionEvents.asFlux().publishOn(Schedulers.boundedElastic());
+            } else if (eventType == MessageCreateEvent.class) {
+                return messageEvents.asFlux().publishOn(Schedulers.boundedElastic());
             }
             return Flux.empty();
         });
@@ -76,24 +89,23 @@ public class CountingTest {
         when(mockedUsers.get(OTHER_COUNTER_ID).getId()).thenReturn(Snowflake.of(OTHER_COUNTER_ID));
 
         CountingBot bot = new CountingBot(mockedClient);
+        MessageHandler messageHandler = new MessageHandler(bot);
+        bot.registerMessageHandler(messageHandler);
         CountingGuild guild = new CountingGuild(GUILD_ID);
         CountingBot.getInstance().getGuilds().put(GUILD_ID, guild);
         counter = new Counter(GUILD_ID, COUNTER_ID, "user1");
         otherCounter = new Counter(GUILD_ID, OTHER_COUNTER_ID, "user2");
-        guild.addNewCounter(COUNTER_ID, counter.getName());
-        guild.addNewCounter(OTHER_COUNTER_ID, otherCounter.getName());
-        CountingStreak streak = new CountingStreak(CHANNEL_ID, 10, "");
+        guild.getCounters().put(COUNTER_ID, counter);
+        guild.getCounters().put(OTHER_COUNTER_ID, otherCounter);
+        CountingStreak streak = new CountingStreak(CHANNEL_ID, 10, GUILD_ID);
         context = new CountingContext(counter, 0, 1, streak, 0, "");
 
         // Message
         output = new ArrayList<>();
-        message = mock(Message.class);
-        when(message.addReaction(any())).thenReturn(Mono.empty());
-        MessageChannel channel = mock(MessageChannel.class);
-        when(message.getChannel()).thenReturn(Mono.just(channel));
-        when(message.getChannelId()).thenReturn(Snowflake.of(CHANNEL_ID));
-        when(message.getId()).thenReturn(Snowflake.of(MESSAGE_ID));
-        when(message.getGuildId()).thenReturn(Optional.of(Snowflake.of(GUILD_ID)));
+        channel = mock(MessageChannel.class);
+        when(channel.getType()).thenReturn(Channel.Type.GUILD_TEXT);
+        when(channel.getId()).thenReturn(Snowflake.of(CHANNEL_ID));
+        message = mockMessage(channel, mockedUsers.get(COUNTER_ID), "", MESSAGE_ID);
 
         MessageCreateMono messageCreateMono = mock(MessageCreateMono.class);
         when(messageCreateMono.block())
@@ -122,4 +134,36 @@ public class CountingTest {
         reactionEvents.tryEmitNext(event);
         Thread.sleep(100);
     }
+
+    public void simulateMessageCreation(
+            String content,
+            String messageId,
+            User author
+    ) {
+        Message mockedMessage = mockMessage(channel, author, content,messageId);
+        MessageCreateEvent event = mock(MessageCreateEvent.class);
+
+        when(event.getMessage()).thenReturn(mockedMessage);
+        when(event.getGuildId()).thenReturn(Optional.of(Snowflake.of(GUILD_ID)));
+
+        messageEvents.tryEmitNext(event);
+    }
+
+    public Message mockMessage(MessageChannel channel, User author, String content,String messageId) {
+        Message message = mock(Message.class);
+        when(message.addReaction(any())).thenReturn(Mono.empty());
+        when(message.getContent()).thenReturn(content);
+        when(message.getAuthor()).thenReturn(Optional.of(author));
+        Snowflake channelId = channel.getId();
+        when(message.getChannelId()).thenReturn(channelId);
+        when(message.getId()).thenReturn(Snowflake.of(messageId));
+        when(message.getChannel()).thenReturn(Mono.just(channel));
+        when(message.getGuildId()).thenReturn(Optional.of(Snowflake.of(GUILD_ID)));
+        return message;
+    }
+
+    public User getMockedUser(String userId) {
+        return mockedUsers.get(userId);
+    }
+
 }

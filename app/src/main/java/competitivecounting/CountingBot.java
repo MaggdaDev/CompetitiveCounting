@@ -23,6 +23,7 @@ import competitivecounting.tradeoffer.TradeOffer;
 import competitivecounting.vaults.VaultSpawner;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
@@ -921,5 +922,9 @@ public class CountingBot {
 
     public SlashCommandHandler getSlashCommandHandler() {
         return slashCommandHandler;
+    }
+
+    public void registerMessageHandler(MessageHandler messageHandler) {
+        client.on(MessageCreateEvent.class).subscribe(messageHandler);
     }
 }

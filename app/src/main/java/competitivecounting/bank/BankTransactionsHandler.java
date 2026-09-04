@@ -79,6 +79,6 @@ public class BankTransactionsHandler {
             throw new NotEnoughMoneyException(withdrawAmount, bank.getTotalScore(), NotEnoughMoneyException.MoneyOwner.BANK);
         }
         bank.withdraw(counterId, withdrawAmount);
-        counter.addBonusScore(withdrawAmount, message);
+        counter.addScoreWithoutPayingContracts(withdrawAmount);
     }
 }

@@ -64,7 +64,7 @@ public class Main {
         bot = new CountingBot(client);
         httpServer.setSaveStreaksRunnable(bot::saveCountersAndStreaks);
         MessageHandler messageHandler = new MessageHandler(bot);
-        client.getEventDispatcher().on(MessageCreateEvent.class).subscribe(messageHandler);
+        bot.registerMessageHandler(messageHandler);
         ButtonClickHandler buttonHandler = new ButtonClickHandler(bot);
         client.getEventDispatcher().on(ButtonInteractionEvent.class).subscribe(buttonHandler);
         

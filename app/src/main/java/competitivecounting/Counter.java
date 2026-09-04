@@ -562,7 +562,13 @@ public class Counter implements ContractOwner {
         if (score < 0) {
             throw new IllegalArgumentException("Cannot add negative bonus score!");
         }
-        this.score += contractHandler.getNetto(score, message);
+        addScoreWithoutPayingContracts(contractHandler.getNetto(score, message));
+    }
+    public void addScoreWithoutPayingContracts(int scoreAdd) {
+        if (scoreAdd < 0) {
+            throw new IllegalArgumentException("Cannot add negative bonus score!");
+        }
+        this.score += scoreAdd;
     }
 
     public void addBonusScoreFromContract(int score, Message message) {
@@ -725,4 +731,6 @@ public class Counter implements ContractOwner {
     public CountingBoosterManager getCountingBoosterManager() {
         return countingBoosterManager;
     }
+
+
 }
