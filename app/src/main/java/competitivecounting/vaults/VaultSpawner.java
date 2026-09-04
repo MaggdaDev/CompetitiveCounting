@@ -10,7 +10,6 @@ import discord4j.core.object.entity.Message;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class VaultSpawner {
     private final static Vault[] ALL_VAULTS = {
@@ -20,15 +19,10 @@ public class VaultSpawner {
             new TrophyVault()
     };
     private final Vault[] vaults;
-    private Dialogue activeDialogue = null;
-    private final CountingStreak streak;
     private Vault activeVault = null;
-    private Counter riddleSolver = null;
     private CountingContext previousContext;
-    private final static long VAULT_CLAIM_TIMEOUT_SECONDS = 30;
 
-    public VaultSpawner(CountingStreak streak) {
-        this.streak = streak;
+    public VaultSpawner() {
         vaults = new Vault[ALL_VAULTS.length];
         for (int i = 0; i < ALL_VAULTS.length; i++) {
             try {
@@ -51,7 +45,7 @@ public class VaultSpawner {
         }
 
         List<Vault> eligibleVaults = new ArrayList<>();
-        for (Vault vault: vaults) {
+        for (Vault vault : vaults) {
             if (vault.canSpawn(previousContext)) {
                 eligibleVaults.add(vault);
             }
@@ -60,14 +54,14 @@ public class VaultSpawner {
         if (eligibleVaults.size() == 0) {
             ret += "The last count did not meet the requirements of any vault!";
         } else if (eligibleVaults.size() == 1) {
-           ret += "The last count only met the requirements for the " + eligibleVaults.get(0).getVaultName() + ".";
+            ret += "The last count only met the requirements for the " + eligibleVaults.get(0).getVaultName() + ".";
         } else {
             ret += "The last count met the requirements of the following vaults: \n";
-            for (int i = 0; i < eligibleVaults.size(); i ++) {
+            for (int i = 0; i < eligibleVaults.size(); i++) {
                 ret += eligibleVaults.get(i).getVaultName();
-                if(i == eligibleVaults.size() - 2) {
+                if (i == eligibleVaults.size() - 2) {
                     ret += " & ";
-                } else if(i <= eligibleVaults.size() - 3) {
+                } else if (i <= eligibleVaults.size() - 3) {
                     ret += ", ";
                 }
             }
@@ -79,8 +73,8 @@ public class VaultSpawner {
     private static String getStaticVaultInfo(Counter counter) {
         String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n";
         for (Vault vault : ALL_VAULTS) {
-            int odds = (int)Math.round(1. / vault.getSpawnChance());
-            int oddsWithBoni = (int)Math.round(1. / counter.getCountingBoosterManager().modifyVaultRate(vault.getSpawnChance()));
+            int odds = (int) Math.round(1. / vault.getSpawnChance());
+            int oddsWithBoni = (int) Math.round(1. / counter.getCountingBoosterManager().modifyVaultRate(vault.getSpawnChance()));
             s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() +
                     " (1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n";
         }
@@ -99,41 +93,11 @@ public class VaultSpawner {
             if (vault.maybeSpawn(context)) {
                 activeVault = vault;
                 ((VaultLocator) context.getCounter().getCollection().getEquippable(Equippables.VAULT_LOCATOR)).incrementLocatedVaults();
-                activeDialogue = new Dialogue().addEmojiReaction(CountingEmojis.VAULT_LOCATOR_ICON)
-                        .addWaitForEmojiReaction(CountingEmojis.VAULT_LOCATOR_ICON, false, (reactionMessage) -> {
-                            if (activeVault != vault) {
-                                System.err.println("No/different active vault when user reacted vault locator icon?");
-                            }
-                        }, new AtomicReference<>(context.getCounter().getId()),
-                                VAULT_CLAIM_TIMEOUT_SECONDS, currMsg -> {
-                                    currMsg.removeReactions(CountingEmojis.VAULT_LOCATOR_ICON).subscribe();
-                                    activeVault = null;
-                                    CountingBot.write(currMsg, "The " + vault.getVaultName() + " on number " + context.getCurrentNumber()
-                                            + " disappeared as it was not activated within " + VAULT_CLAIM_TIMEOUT_SECONDS + " seconds.");
-                                    return true;
-                                })
-                        .addRunnable((m) -> {
-                            riddleSolver = activeVault.doRiddleBlockingly(message, context);
-                        })
-                        .addMaybeCancelRest(m -> {
-                            boolean shouldCancel = activeVault == null || riddleSolver == null;
-                            if(shouldCancel) {  // TODO Dialogue.addFinally() for cleanup
-                                activeVault = null;
-                                activeDialogue = null;
-                                riddleSolver = null;
-                            }
-                            return shouldCancel;
-                        })
-                        .addRunnable((m) -> activeVault.loot(m, riddleSolver))
-                        .addRunnable((m) -> {
-                            activeVault.reset();
-                            activeVault = null;
-                            activeDialogue = null;
-                            riddleSolver = null;
-                            System.out.println("Reset!");
-                        });
-
-                activeDialogue.play(message);
+                new VaultDialogue(message, context, m -> {
+                    vault.reset();
+                    activeVault = null;
+                }, vault)
+                        .play(message);
                 break;
             }
         }
@@ -145,9 +109,6 @@ public class VaultSpawner {
     }
 
     public void dispose() {
-        if (activeDialogue != null) {
-            activeDialogue.stop();
-        }
         for (Vault vault : vaults) {
             vault.dispose();
         }

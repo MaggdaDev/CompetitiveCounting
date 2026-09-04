@@ -15,12 +15,12 @@ import java.util.function.Function;
 public abstract class Vault {
     private final double spawnChance;
     private final Function<CountingContext, Boolean> requirementsChecker;
-    private Dialogue currentRiddleDialogue = null;
+    private RiddleDialogue currentRiddleDialogue = null;
     private final VaultLootPool lootPool;
     protected final static String RIDDLE_TEXT = "{author} has located a locked vault :satellite:! To find the key, solve the following riddle:\n"
         + "> {riddle}\n-# To submit the key, use `~<key>`(e.g. `~42`).";
 
-    protected final static long RIDDLE_KEY_TIMEOUT_SECONDS = 30;
+    public final static long RIDDLE_KEY_TIMEOUT_SECONDS = 30;
     public Vault(double spawnChance, Function<CountingContext, Boolean> requirementsChecker) {
         this.spawnChance = spawnChance;
         this.requirementsChecker = requirementsChecker;
@@ -31,7 +31,7 @@ public abstract class Vault {
         lootPool.addDrop(drop);
     }
 
-    public abstract void spawn();
+    public abstract RiddleDialogue createRiddleDialogue(Message message, CountingContext context);
 
     /**
      *
@@ -39,7 +39,11 @@ public abstract class Vault {
      * @param context
      * @return the riddle solver
      */
-    public abstract Counter doRiddleBlockingly(Message message, CountingContext context);
+    public final Counter doRiddleBlockingly(Message message, CountingContext context) {
+        currentRiddleDialogue = createRiddleDialogue(message, context);
+        currentRiddleDialogue.playBlocking(message);
+        return currentRiddleDialogue.getWinningCounter(message);
+    }
 
     public void loot(Message message, Counter riddleSolver) {
         if (riddleSolver == null) {
@@ -53,26 +57,25 @@ public abstract class Vault {
         dialogue.playBlocking(message);
     }
 
-    public abstract void reset();
+    public  final void reset() {
+        if (currentRiddleDialogue != null) {
+            currentRiddleDialogue.stop();
+            currentRiddleDialogue = null;
+        }
+    }
 
     public boolean maybeSpawn(CountingContext context) {
         double rand = Math.random();
         CountingBoosterManager countingBoosterManager = context.getCounter().getCountingBoosterManager();
         double spawnThreshold = countingBoosterManager.modifyVaultRate(spawnChance);
-        boolean spawn = (requirementsChecker.apply(context) && rand < spawnThreshold);
-        if (spawn) {
-            spawn();
-        }
-        return spawn;
+        return (requirementsChecker.apply(context) && rand < spawnThreshold);
     }
 
     public void dispose() {
-        if (currentRiddleDialogue != null) {
-            currentRiddleDialogue.stop();
-        }
+        reset();
     }
 
-    protected void setCurrentRiddleDialogue(Dialogue currentRiddleDialogue) {
+    protected void setCurrentRiddleDialogue(RiddleDialogue currentRiddleDialogue) {
         this.currentRiddleDialogue = currentRiddleDialogue;
     }
 
@@ -94,12 +97,7 @@ public abstract class Vault {
         return RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
     }
 
-    protected Counter getCounterFromIdRef(Message msg, AtomicReference<String> ref) {
-        if (ref.get() == null) {
-            return null;
-        }
-        return CountingBot.getCounter(msg.getGuildId().get().asString(), ref.get());
-    }
+
 
 
 }

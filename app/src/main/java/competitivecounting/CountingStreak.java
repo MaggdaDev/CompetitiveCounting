@@ -79,7 +79,7 @@ public class CountingStreak {
         captureHandler = new CaptureHandler(emojiReactHandler);
         streakEnders = new StreakEnders(this);
         captureBlockedUsers = new ArrayList<>();
-        vaultSpawner = new VaultSpawner(this);
+        vaultSpawner = new VaultSpawner();
 
         if (timeLimitRule != null){
             timeLimitRule.initialize(this);

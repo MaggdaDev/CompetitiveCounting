@@ -1,20 +1,14 @@
 package competitivecounting.vaults;
 
-import competitivecounting.Counter;
-import competitivecounting.CountingBot;
+import com.google.common.math.IntMath;
 import competitivecounting.CountingContext;
-import competitivecounting.CountingEmojis;
-import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.equippables.Equippables;
 import competitivecounting.vaults.vaultDrops.ItemDrop;
 import competitivecounting.vaults.vaultDrops.MoneyDrop;
-import com.google.common.math.IntMath;
 import discord4j.core.object.entity.Message;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 public class VaultOfLongStrides extends Vault {
-    public static final double SPAWN_CHANCE = 0.1;
+    public static final double SPAWN_CHANCE = 1. / 8.;
     private static final int MIN_STRIDE_LENGTH = 8;
     private static final String RIDDLE = "What is the greatest common divisor of {0} and {1}?";
     private final static String NAME = "Vault of Long Strides";
@@ -25,56 +19,19 @@ public class VaultOfLongStrides extends Vault {
         addLootToLootPool(new ItemDrop(5, Equippables.POCKET_ABACUS));
     }
 
-
     @Override
-    public void spawn() {
-        //
-    }
-
-    @Override
-    public Counter doRiddleBlockingly(Message message, CountingContext context) {
+    public RiddleDialogue createRiddleDialogue(Message message, CountingContext context) {
         int x = randomInt(1, 20);
         int num1 = randomInt(1, 10)*x;
         int num2 = randomInt(1, 10)*x;
         int correctAnswer = IntMath.gcd(num1, num2);
+
         String riddle = RIDDLE.replace("{0}", String.valueOf(num1)).replace("{1}", String.valueOf(num2));
         String wholeRiddleText = getRiddleText(riddle, context.getCounter().getName());
-        AtomicReference<String> riddleSolverIdToBeFoundOut = new AtomicReference<>();
-        Dialogue riddleDialogue = new Dialogue().addNpcLine(wholeRiddleText, 0)
-                .addWaitForUserAnswer((msg) -> {
-                    String content = msg.getContent().trim().toLowerCase();
-                    if (!content.startsWith("~")) {
-                        return false;
-                    }
-                    String answerStr = content.substring(1);
-                    int answer;
-                    try {
-                        answer = Integer.parseInt(answerStr);
-                    } catch (NumberFormatException e) {
-                        return false;
-                    }
-                    if (answer == correctAnswer && msg.getAuthor().isPresent()) {
-                        riddleSolverIdToBeFoundOut.set(msg.getAuthor().get().getId().asString());
-                        return true;
-                    }
-                    return false;
-                })
-                .addEmojiReaction(CountingEmojis.KEY)
-                .addWaitForEmojiReaction(CountingEmojis.KEY, false,
-                        m -> {}, riddleSolverIdToBeFoundOut, RIDDLE_KEY_TIMEOUT_SECONDS, m -> {
-                            m.removeReactions(CountingEmojis.KEY).subscribe();
-                            CountingBot.write(m, getCounterFromIdRef(message, riddleSolverIdToBeFoundOut).getName() + ", your vault key timed out! The vault will remain locked forever.");
-                            riddleSolverIdToBeFoundOut.set(null);
-                            return true;
-                        });
-        setCurrentRiddleDialogue(riddleDialogue);
-        riddleDialogue.playBlocking(message);
-        return CountingBot.getCounter(message.getGuildId().get().asString(), riddleSolverIdToBeFoundOut.get());
-    }
-
-    @Override
-    public void reset() {
-        setCurrentRiddleDialogue(null);
+        RiddleDialogue currentRiddleDialogue = new RiddleDialogue();
+        currentRiddleDialogue.addNpcLine(wholeRiddleText, 0);
+        currentRiddleDialogue.addWaitForCorrectSolutionAndSetWinningUserRef(correctAnswer);
+        return currentRiddleDialogue.addWaitForKeyReaction();
     }
 
     @Override

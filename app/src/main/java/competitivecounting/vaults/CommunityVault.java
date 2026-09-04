@@ -3,8 +3,6 @@ package competitivecounting.vaults;
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.CountingContext;
-import competitivecounting.CountingEmojis;
-import competitivecounting.dialogue.Dialogue;
 import competitivecounting.interactionhandlers.SlashCommandHandler;
 import competitivecounting.items.equippables.GoodBadUgly;
 import competitivecounting.vaults.vaultDrops.ItemDrop;
@@ -16,8 +14,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CommunityVault extends Vault {
     private final static double SPAWN_CHANCE = 0.03;
@@ -25,9 +23,8 @@ public class CommunityVault extends Vault {
             + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND + "`. "
             + "In the end, the vault will be locked using the key that is closest to 2/3 of the average over all the submitted keys and the initially suggested"
             + " key. ";
-    private final static int TOTAL_RIDDLE_TIME = 30;
+    private final static int TOTAL_RIDDLE_TIME = 20;
     private final static long TIME_INTERVAL_COMMUNITY_COUNT = 20;
-    private Dialogue currentRiddleDialogue = null;
 
     public CommunityVault() {
         super(SPAWN_CHANCE, context -> {
@@ -53,13 +50,7 @@ public class CommunityVault extends Vault {
     }
 
     @Override
-    public void spawn() {
-        //
-
-    }
-
-    @Override
-    public Counter doRiddleBlockingly(Message message, CountingContext context) {
+    public RiddleDialogue createRiddleDialogue(Message message, CountingContext context) {
         int x = randomInt(10, 100);
         String vaultId = String.valueOf(randomInt(1000, 9999));
         String riddleText = getRiddleText(
@@ -67,9 +58,8 @@ public class CommunityVault extends Vault {
                         .replace("{1}", String.valueOf(x))
                         .replace("{2}", vaultId), context.getCounter().getName());
         HashMap<String, Integer> submittedKeysByUserId = new HashMap<>();
-        AtomicReference<String> winningUserIdRef = new AtomicReference<>();
-        currentRiddleDialogue = new Dialogue();
-        currentRiddleDialogue.addNpcLine(riddleText, 0)
+        RiddleDialogue riddleDialogue = new RiddleDialogue();
+        riddleDialogue.addNpcLine(riddleText, 0)
                 .addKeySubmissionAwaiter((userId, key) -> {
                     InteractionApplicationCommandCallbackSpec.Builder specBuilder = InteractionApplicationCommandCallbackSpec.builder()
                             .ephemeral(true);
@@ -96,59 +86,36 @@ public class CommunityVault extends Vault {
                     double average = totalSum / (submittedKeysByUserId.size() + 1);
                     String reducedAverage = String.format(Locale.US, "%.2f", average * 2 / 3);
                     String winningUserId = getWinningUserID(average, x, submittedKeysByUserId);
-                    winningUserIdRef.set(winningUserId);
+                    riddleDialogue.setRiddleSolverId(winningUserId);
                     if (submittedKeysByUserId.isEmpty()) {
                         CountingBot.write(m, "No key suggestions were submitted - this vault will remain locked!");
-                        currentRiddleDialogue.cancelAllRemaining();
+                        riddleDialogue.cancelAllRemaining();
                         return;
                     } else if (winningUserId.isEmpty()) {
                         CountingBot.write(m, "Even though " + submittedKeysByUserId.size() + " suggestions were submitted, but the initial suggestion of " + x + " was closest to 2/3 of the average, which is " + reducedAverage + "."
                                 + " Try again with the next " + getVaultName() + "!");
-                        currentRiddleDialogue.cancelAllRemaining();
+                        riddleDialogue.cancelAllRemaining();
                         return;
                     }
                     CountingBot.write(m, "Time's up! " + submittedKeysByUserId.size() + " suggestions were submitted. The vault is now locked "
                             + " with the key that is closest to " + reducedAverage + ". To find out who got the key right, please"
                             + " all write your suggestions into this channel now, using the syntax `~[key]`!");
-                })
-                .addWaitForUserAnswer((msg) -> {
-                    String content = msg.getContent().trim().toLowerCase();
-                    if (!content.startsWith("~")) {
-                        return false;
-                    }
-                    String answerStr = content.substring(1);
-                    int answer;
-                    try {
-                        answer = Integer.parseInt(answerStr);
-                    } catch (NumberFormatException e) {
-                        return false;
-                    }
-                    String authorId = msg.getAuthor().get().getId().asString();
-                    Counter counter = CountingBot.getCounter(msg.getGuildId().get().asString(), authorId);
-                    if (!submittedKeysByUserId.containsKey(authorId)) {
-                        CountingBot.write(msg, "You did not submit a key suggestion for this vault, " + counter.getName() + "!");
-                        return false;
-                    }
-                    if (submittedKeysByUserId.get(authorId) != answer) {
-                        CountingBot.write(msg, "This is not the key you submitted, " + counter.getName() + "!");
-                        return false;
-                    }
-                    return authorId.equals(winningUserIdRef.get());
-                })
-                .addEmojiReaction(CountingEmojis.KEY)
-                .addWaitForEmojiReaction(CountingEmojis.KEY, false,
-                        m -> {
-                        }, winningUserIdRef, RIDDLE_KEY_TIMEOUT_SECONDS, m -> {
-                            m.removeReactions(CountingEmojis.KEY).subscribe();
-                            CountingBot.write(m, getCounterFromIdRef(message, winningUserIdRef).getName() + ", your vault key timed out! The vault will remain locked forever.");
-                            winningUserIdRef.set(null);
-                            return true;
-                        });
-        currentRiddleDialogue.playBlocking(message);
-        return getCounterFromIdRef(message, winningUserIdRef);
+                });
+        riddleDialogue.addWaitForCorrectSolutionAndSetWinningUserRef((msg, answer) -> {
+            String authorId = msg.getAuthor().get().getId().asString();
+            Counter counter = CountingBot.getCounter(msg.getGuildId().get().asString(), authorId);
+            if (!submittedKeysByUserId.containsKey(authorId)) {
+                CountingBot.write(msg, "You did not submit a key suggestion for this vault, " + counter.getName() + "!");
+                return false;
+            }
+            if (!Objects.equals(submittedKeysByUserId.get(authorId), answer)) {
+                CountingBot.write(msg, "This is not the key you submitted, " + counter.getName() + "!");
+                return false;
+            }
+            return authorId.equals(riddleDialogue.getRiddleSolverRef().get());
+        });
+        return riddleDialogue.addWaitForKeyReaction();
     }
-
-
 
     /**
      *
@@ -176,14 +143,6 @@ public class CommunityVault extends Vault {
 
     private void sendNotUnderstoodMessage(Message message) {
         CountingBot.write(message, "Please check again the syntax of your command. Keep in mind that most of the commands do not work in DMs.");
-    }
-
-    @Override
-    public void reset() {
-        if (currentRiddleDialogue != null) {
-            currentRiddleDialogue.stop();
-        }
-        currentRiddleDialogue = null;
     }
 
     @Override
