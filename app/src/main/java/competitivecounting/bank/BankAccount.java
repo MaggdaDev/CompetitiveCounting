@@ -58,6 +58,10 @@ public class BankAccount {
         return bankUpgrades.getBuyablesString();
     }
 
+    public String getUpgradesMaxedOutString() {
+        return bankUpgrades.getMaxedOutUpgradesString();
+    }
+
     public BankUpgrades getUpgrades() {
         return bankUpgrades;
     }

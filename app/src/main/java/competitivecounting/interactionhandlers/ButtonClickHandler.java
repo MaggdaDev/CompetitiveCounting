@@ -25,9 +25,15 @@ public class ButtonClickHandler extends BaseSubscriber<ButtonInteractionEvent>{
     public void hookOnNext(ButtonInteractionEvent event) {
         try {
             String customId = event.getCustomId();
+
+            if (customId.startsWith("trophies")) {
+                TrophyPaginationHandler.onButtonClick(event, countingBot);  // if the button came from TrophyPaginationHandler, redirect it back there
+                return;
+            }
+
             String userId = event.getInteraction().getUser().getId().asString();
             String guildId = event.getInteraction().getGuildId().get().asString();
-            Counter counter = countingBot.getCounter(guildId, userId);
+            Counter counter = CountingBot.getCounter(guildId, userId);
             if (counter != null) {
                 event.reply(counter.buttonClick(customId, event.getMessage().get())).subscribe();
             }

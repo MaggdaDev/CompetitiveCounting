@@ -9,6 +9,7 @@ public class DepositLimitUpgrade extends BankUpgrade{
     private final static String[] NAMES = {"Miniscule Deposit Limit", "Huge Deposit Limit Upgrade", "Massive Deposit Limit Upgrade", "Humongous Deposit Limit Upgrade"};
     private final static String DESCRIPTION = "Allows me to hoard more money! You should definitely buy this one.";
     private final static String ADVERTISEMENT = "Raise your bank account's deposit limit from {0} to {1}.";
+    private final static String ADVERTISEMENT_MAXED = "Raised your bank account's deposit limit to {0}.";
     private final static String UNIT = " money";
     private final static String BUY_FEEDBACK = "You can now deposit a total of {0} instead of {1}! ";
     private final static String BUY_RECOMMENDATION = "You can buy the *{0}* to increase this limit.";
@@ -70,6 +71,9 @@ public class DepositLimitUpgrade extends BankUpgrade{
     public String getAdvertisement() {
         return ADVERTISEMENT;
     }
+
+    @Override
+    public String getAdvertisementMaxed() { return ADVERTISEMENT_MAXED; }
 
     @Override
     public String getUnit() {

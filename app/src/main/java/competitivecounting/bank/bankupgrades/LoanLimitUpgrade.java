@@ -9,6 +9,7 @@ public class LoanLimitUpgrade extends BankUpgrade {
     private final static String[] NAMES = {"Miserable Loan Limit", "Big Loan Limit Upgrade", "Huge Loan Limit Upgrade", "Massive Loan Limit Upgrade"};
     private final static String DESCRIPTION = "Allows me to give out bigger loans! Perfect for those with big dreams...";
     private final static String ADVERTISEMENT = "This increases the maximum amount of money for a single loan from {0} to {1}.";
+    private final static String ADVERTISEMENT_MAXED = "This increased the maximum amount of money for a single loan to {0}.";
     private final static String BUY_FEEDBACK = "Now you can take loans of up to {0} instead of {1}!";
     private final static String UNIT = " money";
     protected LoanLimitUpgrade() {
@@ -71,6 +72,9 @@ public class LoanLimitUpgrade extends BankUpgrade {
 
     @Override
     public String getAdvertisement() { return ADVERTISEMENT; }
+
+    @Override
+    public String getAdvertisementMaxed() { return ADVERTISEMENT_MAXED; }
 
     @Override
     public String getUnit() {

@@ -371,7 +371,7 @@ public class Counter implements ContractOwner {
             int totalContractOutgoingAmount = 0;
             int totalContractPerc = 0;
             for (Contract curr : contracts) {
-                if (curr.limit != -1) totalContractOutgoingAmount += curr.limit;
+                if (curr.limit != -1) totalContractOutgoingAmount += curr.limit - curr.paidBack;
                 totalContractPerc += curr.percentage;
             }
 

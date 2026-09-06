@@ -10,6 +10,7 @@ public class LoanRateUpgrade extends BankUpgrade{
     private final static String[] NAMES = {"Outrageously High Loan Rate", "Better Loan Rate Upgrade", "Great Loan Rate Upgrade", "Fantastic Loan Rate Upgrade", "Mythic Loan Rate Upgrade"};
     private final static String DESCRIPTION = "Allows you to get better deals on your loans! Which means that you should take out more of them.";
     private final static String ADVERTISEMENT = "This upgrade multiplies interest rate on your loans with a modifier, which is lowered from {0} down to {1}.";
+    private final static String ADVERTISEMENT_MAXED = "This upgrade multiplies interest rate on your loans with a modifier, which has been lowered down to {0}.";
     private final static String UNIT = "%";
     private final static String BUY_FEEDBACK = "The interest rate on your loans is now multiplied by {0} instead of {1}.";
     protected LoanRateUpgrade() {
@@ -72,6 +73,9 @@ public class LoanRateUpgrade extends BankUpgrade{
 
     @Override
     public String getAdvertisement() { return ADVERTISEMENT; }
+
+    @Override
+    public String getAdvertisementMaxed() { return ADVERTISEMENT_MAXED; }
 
     @Override
     public String getUnit() {

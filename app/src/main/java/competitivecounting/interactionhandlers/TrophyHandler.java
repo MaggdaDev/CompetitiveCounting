@@ -50,7 +50,11 @@ public class TrophyHandler {
     }
 
     public void spawnTrophy(Message message, int number) {
-        message.addReaction(CountingEmojis.TROPHY).subscribe();
+        if (number > 0) {
+            message.addReaction(CountingEmojis.TROPHY).subscribe();
+        } else {
+            message.addReaction(CountingEmojis.SPECIAL_TROPHY).subscribe();
+        }
         Counter spawnerCounter = CountingBot.getCounter(message.getGuildId().get().asString(), message.getAuthor().get().getId().asString());
         spawnerCounter.getCollection().getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName()).ifPresent(eq -> {
                 ((DowsingRod) eq).trophySpawned(message, number);
@@ -110,9 +114,9 @@ public class TrophyHandler {
 
     public static String getTrophyDescription(int trophy) {
         if (trophy > 0) {
-            return "trophy #" + trophy;
+            return "\uD83C\uDFC6 " + trophy;
         }
-        String startText = "trophy #" + trophy + ": ";
+        String startText = "<:special_trophy:1546098104141619271> " + trophy + ": ";
         switch (trophy) {
             case -753:
                 return startText + "_Relic of Prestige from the Fallen Empire_";

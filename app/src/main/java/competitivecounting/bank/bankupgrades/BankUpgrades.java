@@ -36,10 +36,36 @@ public class BankUpgrades {
         return s;
     }
 
+    public String getMaxedOutUpgradesString() {
+        String s = "";
+        int counter = 1;
+        for (BankUpgrade upgrade : getAllUpgrades()) {
+            if (upgrade.isMaxedOut()) {
+                String currentValueWithUnit = upgrade.getCurrentValue() + upgrade.getUnit();
+                s += counter + ". '" + upgrade.getUnlockName() + "': You own the " + upgrade.getCurrentName() +
+                        " (level " + upgrade.getCurrentLvlOutOfMaxLvlString() + ").\n" +
+                        "-# " + upgrade.getAdvertisementMaxed().replace("{0}", currentValueWithUnit)
+                        + "\n\n";
+            }
+            counter += 1;
+        }
+        return s;
+    }
+
     public int getAmountBuyableUpgrades() {
         int counter = 0;
         for (BankUpgrade upgrade : getAllUpgrades()) {
             if (!upgrade.isMaxedOut()) {
+                counter++;
+            }
+        }
+        return counter;
+    }
+
+    public int getAmountMaxedOutUpgrades() {
+        int counter = 0;
+        for (BankUpgrade upgrade : getAllUpgrades()) {
+            if (upgrade.isMaxedOut()) {
                 counter++;
             }
         }

@@ -12,6 +12,7 @@ public abstract class BankUpgrade {
     public abstract int getCurrentValue();
     public abstract int getNextValue();
     public abstract String getAdvertisement();
+    public abstract String getAdvertisementMaxed();
     public abstract String getUnit();  // note this has a space like " money" so that "%" can not have a space
     public abstract String getBoughtFeedback();
     public abstract int getEmptyValue();

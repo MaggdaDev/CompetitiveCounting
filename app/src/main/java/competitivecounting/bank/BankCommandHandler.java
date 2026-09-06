@@ -164,16 +164,28 @@ public class BankCommandHandler {
     public void upgrade(Message message, String[] splitMessage, Bank bank, String authorId) throws BankUpgradeException {
         if(splitMessage.length < 3) {
             int amountBuyableUpgrades = bank.getAccount(authorId).getUpgrades().getAmountBuyableUpgrades();
+            int amountMaxedOutUpgrades = bank.getAccount(authorId).getUpgrades().getAmountMaxedOutUpgrades();
             String s;
-            if(amountBuyableUpgrades == 0) {
-                bankWrite(message, "You have bought all available upgrades! ");
-                return;
-            } else if (amountBuyableUpgrades == 1) {
-                s = "You can buy the following upgrade (so close to maxed out!): \n";
+            if (amountBuyableUpgrades == 1) {
+                s = "**You can buy this one remaining upgrade (so close to maxed out!):**\n";
+            } else if (amountBuyableUpgrades > 1) {
+                s = "**There are multiple upgrades that you can buy!**\n";
             } else {
-                s = "There are multiple upgrades that you can buy! \n";
+                s = "**You have bought all available upgrades!**\n";
             }
             s += bank.getAccount(authorId).getUpgradesBuyableString();
+
+            String s2 = "";
+            if (amountMaxedOutUpgrades > 0 & amountBuyableUpgrades == 0){
+                s2 = "\n**All the maxed out upgrades you own:**\n";
+            } else if (amountMaxedOutUpgrades == 1) {
+                s2 = "\n**You have maxed out this upgrade:**\n";
+            } else if (amountMaxedOutUpgrades > 1) {
+                s2 = "\n**You have maxed out these upgrades:**\n";
+            }
+            s2 += bank.getAccount(authorId).getUpgradesMaxedOutString();
+            s += s2;
+
             bankWrite(message, s);
             return;
         }

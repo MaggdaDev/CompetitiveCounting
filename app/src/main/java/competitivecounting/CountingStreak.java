@@ -194,6 +194,10 @@ public class CountingStreak {
                 ? String.valueOf(lastCount)
                 : BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ")";
 
+        String nextCountDisplay = (currentBase == 10)
+                ? String.valueOf(counter)
+                : BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + counter + ")";
+
         String ruleWinnerId = null;
         int winFromRules = 0;
         String moneyInformation = ""; // who lost what to whom, the all known w fragen
@@ -211,14 +215,14 @@ public class CountingStreak {
                 // user fucks up from own rule
                 cuckPayout = (int) (pendingFailScore / 2.0d);
                 loss = user.failFromOwn(message, this);
-                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + ".");
+                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + ". The next number would have been " + nextCountDisplay + ".");
 
                 moneyInformation = user.getName() + " lost **" + loss + "** money due to their own rule '" + winnerRule.toString() + "', but kept **" + cuckPayout + "** money from the streak.";
             } else {
                 // user gets fucked from other rule
                 cuckPayout = (int) (pendingFailScore / 3.0d);
                 loss = user.fail(message, this);
-                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + ".");
+                CountingBot.write(message, causeForLose + "!\n" + user.getName() + " messed up after " + countDisplay + ". The next number would have been " + nextCountDisplay + ".");
 
                 Counter winnerCounter = CountingBot.getCounter(guildId, winnerRule.getOwnerId());
                 ruleWinnerId = winnerCounter.getId();
@@ -235,7 +239,7 @@ public class CountingStreak {
             int loss = user.fail(message, this);
 
             if (!user.getId().equals(lastCounterId)) {
-                CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + countDisplay + ".");
+                CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + countDisplay + ". The next number would have been " + nextCountDisplay + ".");
             } else {
                 CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + countDisplay + ".");
             }

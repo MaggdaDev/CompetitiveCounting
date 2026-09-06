@@ -10,6 +10,7 @@ import java.time.ZoneId;
 public class DailyStreak {
     private int currentCount;
     private long lastDaySinceEpochCounted;
+    private boolean messedUpPreviousDay;
     private final static ZoneId TIMEZONE = ZoneId.of("Europe/Berlin");
 
     private final static int BONUS_PER_DAY = 500;
@@ -17,12 +18,17 @@ public class DailyStreak {
     public DailyStreak() {
         currentCount = 0;
         lastDaySinceEpochCounted = 0;
+        messedUpPreviousDay = false;
     }
 
     public int increment() {
         currentCount++;
         lastDaySinceEpochCounted = getCurrentDaySinceEpoch();
         return currentCount * BONUS_PER_DAY;
+    }
+
+    public void fixedDailyStreakToday() {
+        messedUpPreviousDay = false;
     }
 
     public boolean canIncrement() {
@@ -37,11 +43,12 @@ public class DailyStreak {
         return currentCount;
     }
 
-    public void setCountedTodayWithoutIncrementing() {
+    public void setCountedTodayWithoutIncrementing() {  // cucked streak today
         lastDaySinceEpochCounted = getCurrentDaySinceEpoch();
+        messedUpPreviousDay = true;
     }
 
-    public void addDailyScoreAndGift(Message message,Counter counter) {
+    public void addDailyScoreAndGift(Message message, Counter counter) {
         int count;
         try {
             count = getCountFromDailyMessage(message);
@@ -65,21 +72,27 @@ public class DailyStreak {
                 return;
             }
             int daysSkipped = (int)(getCurrentDaySinceEpoch() - lastDaySinceEpochCounted - 1);
-            int baseScoreAdd =  increment();
+            int baseScoreAdd = increment();
             int scoreAddWithBonus = (int) (counter.getStreakIndependentBonusFact() * baseScoreAdd);
 
             Item item = getDailyGiftItem();
 
             String scoreAddedMsg;
             String loot = "{0} money" + (item != null ? " and a " + item.getName() : "");
-            if (daysSkipped == 0) {
-                scoreAddedMsg = "Good job, you received " + loot + " from your daily streak without missing a day. Come back tomorrow for the next reward!";
-            } else if (getCurrentCount() == 1) {
+
+            if (getCurrentCount() == 1) {
                 scoreAddedMsg = "You started a daily streak and received " + loot + ". Come back tomorrow for the next reward!";
-            }else {
+            } else if (daysSkipped == 0) {
+                if (messedUpPreviousDay) {
+                    scoreAddedMsg = "Nice, you received " + loot + " from getting back on track with your daily streak. Come back tomorrow for the next reward!";
+                    fixedDailyStreakToday();
+                } else {
+                    scoreAddedMsg = "Good job, you received " + loot + " from your daily streak without missing a day. Come back tomorrow for the next reward!";
+                }
+            } else {
                 scoreAddedMsg = "You received " + loot + " from your daily streak after " + daysSkipped + " inactive day" + (daysSkipped>1? "s":"") + ". Come back tomorrow for the next reward!";
             }
-            CountingBot.writeBlocking(message, scoreAddedMsg.replace("{0}", Util.valueAndValueWithBoniToString(baseScoreAdd, scoreAddWithBonus) ));
+            CountingBot.writeBlocking(message, scoreAddedMsg.replace("{0}", Util.valueAndValueWithBoniToString(baseScoreAdd, scoreAddWithBonus)));
             counter.addBonusScore(scoreAddWithBonus, message);
             if (item != null) {
                 counter.getInventory().addItem(item);

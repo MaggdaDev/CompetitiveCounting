@@ -201,51 +201,52 @@ public class CountingBot {
 
     private void trophiesInfo(Message message) {
         Counter author = getCounterFromMessage(message);
-        StringBuilder msg = new StringBuilder();
-
-        if (author.getOwnedTrophies().size() == 0) {
-            msg.append("You don't own any trophies. Keep counting large numbers, and keep an eye out for numbers with a trophy emoji on them!");
-        } else if (author.getOwnedTrophies().size() == 1) {
-            String specialTrophyMessage = TrophyHandler.getTrophyDescription(author.getOwnedTrophies().get(0));
-            if (!specialTrophyMessage.isEmpty()) {
-                msg.append("You own one trophy:\n").append(specialTrophyMessage);
-            } else {
-                msg.append("You own the ").append(author.getOwnedTrophies().get(0)).append("-trophy.");
-                msg.append("\n\nCounting this number in any base will give you twice the money.");
-            }
-        } else {
-            // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
-            List<Integer> ownedTrophies = author.getOwnedTrophies();
-            int streakStartIndex;
-            for (int i = 0; i < ownedTrophies.size(); i++) {
-                // special trophies
-                String specialTrophyMessage = TrophyHandler.getTrophyDescription(ownedTrophies.get(i));
-                if (!specialTrophyMessage.isEmpty()) {
-                    msg.append("\n").append(specialTrophyMessage);
-                    continue;
-                }
-
-                // Usual trophies
-                streakStartIndex = i;
-                while (i < ownedTrophies.size() - 1 && ownedTrophies.get(i + 1) == ownedTrophies.get(i) + 1) {
-                    i++;
-                }
-                if (i - streakStartIndex == 0) {
-                    msg.append("\n").append(ownedTrophies.get(i)).append(" trophy");
-                } else {
-                    msg.append("\ntrophies ").append(ownedTrophies.get(streakStartIndex)).append(" to ").append(ownedTrophies.get(i));
-                }
-            }
-            msg.append("\n\nCounting these numbers in any base will give you twice the money.");
-        }
-
-        if (author.getTrophyShards() == 1) {
-            msg.append("\n\nAdditionally, you own 1 trophy shard.");
-        } else if (author.getTrophyShards() > 1) {
-            msg.append("\n\nAdditionally, you own ").append(author.getTrophyShards()).append(" trophy shards.");
-        }
-
-        write(message, msg.toString());
+        TrophyPaginationHandler.sendTrophyMenu(message, author);
+//        StringBuilder msg = new StringBuilder();
+//
+//        if (author.getOwnedTrophies().size() == 0) {
+//            msg.append("You don't own any trophies. Keep counting large numbers, and keep an eye out for numbers with a trophy emoji on them!");
+//        } else if (author.getOwnedTrophies().size() == 1) {
+//            String specialTrophyMessage = TrophyHandler.getTrophyDescription(author.getOwnedTrophies().get(0));
+//            if (!specialTrophyMessage.isEmpty()) {
+//                msg.append("You own one trophy:\n").append(specialTrophyMessage);
+//            } else {
+//                msg.append("You own the ").append(author.getOwnedTrophies().get(0)).append("-trophy.");
+//                msg.append("\n\nCounting this number in any base will give you twice the money.");
+//            }
+//        } else {
+//            // The list from author.getOwnedTrophies() is sorted in ascending order. Write the owned messages to the String builder, but summarize subsequent tropies using something like trophies 4-7
+//            List<Integer> ownedTrophies = author.getOwnedTrophies();
+//            int streakStartIndex;
+//            for (int i = 0; i < ownedTrophies.size(); i++) {
+//                // special trophies
+//                String specialTrophyMessage = TrophyHandler.getTrophyDescription(ownedTrophies.get(i));
+//                if (!specialTrophyMessage.isEmpty()) {
+//                    msg.append("\n").append(specialTrophyMessage);
+//                    continue;
+//                }
+//
+//                // Usual trophies
+//                streakStartIndex = i;
+//                while (i < ownedTrophies.size() - 1 && ownedTrophies.get(i + 1) == ownedTrophies.get(i) + 1) {
+//                    i++;
+//                }
+//                if (i - streakStartIndex == 0) {
+//                    msg.append("\n").append(ownedTrophies.get(i)).append(" trophy");
+//                } else {
+//                    msg.append("\ntrophies ").append(ownedTrophies.get(streakStartIndex)).append(" to ").append(ownedTrophies.get(i));
+//                }
+//            }
+//            msg.append("\n\nCounting these numbers in any base will give you twice the money.");
+//        }
+//
+//        if (author.getTrophyShards() == 1) {
+//            msg.append("\n\nAdditionally, you own 1 trophy shard.");
+//        } else if (author.getTrophyShards() > 1) {
+//            msg.append("\n\nAdditionally, you own ").append(author.getTrophyShards()).append(" trophy shards.");
+//        }
+//
+//        write(message, msg.toString());
     }
 
 

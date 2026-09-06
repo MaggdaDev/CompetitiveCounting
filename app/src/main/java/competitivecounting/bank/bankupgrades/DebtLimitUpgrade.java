@@ -10,6 +10,7 @@ public class DebtLimitUpgrade extends BankUpgrade{
     private final static String[] NAMES = {"Awful Debt Limit", "Nice Debt Limit Upgrade", "Amazing Debt Limit Upgrade", "Phenomenal Debt Limit Upgrade"};
     private final static String DESCRIPTION = "Allows you to have more total debt! I hope you bought this first...";
     private final static String ADVERTISEMENT = "This upgrades your total debt limit across all of the bank's loans, increasing it from {0} to {1}.";
+    private final static String ADVERTISEMENT_MAXED = "This has upgraded your total debt limit across all of the bank's loans, increasing it to {0}.";
     private final static String UNIT = " money";
     private final static String BUY_FEEDBACK = "You can now have a total debt of {0} instead of {1}.";
     private final static String BUY_RECOMMENDATION = "You can raise this ceiling by buying the {0}.";
@@ -74,6 +75,9 @@ public class DebtLimitUpgrade extends BankUpgrade{
 
     @Override
     public String getAdvertisement() { return ADVERTISEMENT; }
+
+    @Override
+    public String getAdvertisementMaxed() { return ADVERTISEMENT_MAXED; }
 
     @Override
     public String getUnit() {
