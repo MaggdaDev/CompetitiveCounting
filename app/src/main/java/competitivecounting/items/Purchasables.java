@@ -6,7 +6,8 @@ public class Purchasables {
     public final static Item[] PURCHASABLE_ITEMS = {
             Consumables.WHITE_STREAK_ENDER,
             Consumables.HAND_BAG,
-            Equippables.VAULT_LOCATOR
+            Equippables.VAULT_LOCATOR,
+            Equippables.SPONSORED_MONOCLE
     };
 
     public static Item getPurchasableByNameOrNumber(String itemAsNameOrNumber) {

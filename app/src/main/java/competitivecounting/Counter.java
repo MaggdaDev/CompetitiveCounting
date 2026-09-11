@@ -6,12 +6,15 @@
 package competitivecounting;
 
 import competitivecounting.bank.Bank;
+import competitivecounting.bank.BankAccount;
 import competitivecounting.contracts.Contract;
 import competitivecounting.contracts.ContractHandler;
 import competitivecounting.contracts.ContractOwner;
 import competitivecounting.items.*;
 import competitivecounting.items.Collection;
 import competitivecounting.items.equippables.Equippable;
+import competitivecounting.items.equippables.Equippables;
+import competitivecounting.items.equippables.SponsoredMonocle;
 import competitivecounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
@@ -41,7 +44,6 @@ public class Counter implements ContractOwner {
     private int trophyShards;
     private transient HashMap<String, TradeOffer> tradeOffers = new HashMap<String, TradeOffer>();
     private transient ContractHandler contractHandler;
-
 
     private transient String guildId;   // Will be set in initContracts method
     private Inventory inventory;
@@ -580,6 +582,15 @@ public class Counter implements ContractOwner {
 
     }
 
+    public void addBonusScoreFromVault(int money, Message message, CountingContext context) {
+        if (context.getStreak().getCounterIdsOfActiveSponsoredMonocles().contains(getId())) {
+            ((SponsoredMonocle) collection.getEquippable(Equippables.SPONSORED_MONOCLE)).notifyMoneyTransfer(money);
+            context.getGuild().getBank().addMoney(money);
+        } else {
+            addBonusScore(money, message);
+        }
+    }
+
     public int getScore() {
         return score;
     }
@@ -730,6 +741,32 @@ public class Counter implements ContractOwner {
 
     public CountingBoosterManager getCountingBoosterManager() {
         return countingBoosterManager;
+    }
+
+    public int getScoreInBankAccount() {
+        Bank bank = CountingBot.getInstance().getGuilds().get(guildId).getBank();
+        if (! bank.isUnlocked()) {
+            return 0;
+        }
+        BankAccount account = bank.getAccount(getId());
+        if (account == null) {
+            return 0;
+        }
+        return account.getBalance();
+    }
+
+    public void addToBankOrToScoreIfFull(int moneyToAdd, Bank bank, Message message) {
+        BankAccount bankAccount = bank.getAccount(getId());
+        int currentBalance = bankAccount.getBalance();
+        int maxBalance = bankAccount.getUpgrades().getDepositLimitUpgrade().getCurrentValue();
+        if (currentBalance + moneyToAdd > maxBalance) { // todo test
+            int overflow = (currentBalance + moneyToAdd) - maxBalance;
+            bankAccount.setBalance(maxBalance);
+            addBonusScore(overflow, message);
+            bank.removeMoney(overflow);
+        } else {
+            bankAccount.depositWithoutFeeOrAffectingTotalBankScore(moneyToAdd);
+        }
     }
 
 

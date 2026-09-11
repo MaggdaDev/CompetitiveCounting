@@ -1,6 +1,7 @@
 package competitivecounting.vaults.vaultDrops;
 
 import competitivecounting.Counter;
+import competitivecounting.CountingContext;
 import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.Item;
 import discord4j.core.object.entity.Message;
@@ -13,7 +14,7 @@ public class ItemDrop extends VaultDrop {
     }
 
     @Override
-    public void payout(Message message, Dialogue dialogue, Counter counter) {
+    public void payout(Message message, Dialogue dialogue, Counter counter, CountingContext contextAtVaultSpawn) {
         dialogue.addNpcLine("Woah, this vault is heavy... ", 2500)
                 .addNpcLine("Could it be that there is more than just money in here? ", 3500)
                 .addNpcLine("Gg wp, you found a " + item.getName() + "! ", 0)

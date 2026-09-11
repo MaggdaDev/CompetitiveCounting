@@ -1,5 +1,6 @@
 package competitivecounting.bank;
 
+import competitivecounting.CountingBot;
 import competitivecounting.bank.exceptions.BankTransactionException;
 import competitivecounting.contracts.Contract;
 import competitivecounting.contracts.ContractHandler;
@@ -105,7 +106,7 @@ public class Bank implements ContractOwner {
 
     public void deposit(String counterId, int amount) {
         totalScore += amount;
-        accounts.get(counterId).deposit(amount - DEPOSIT_COST);
+        accounts.get(counterId).depositWithoutFeeOrAffectingTotalBankScore(amount - DEPOSIT_COST);
     }
 
     public int getTotalScore() { return this.totalScore; }
@@ -120,6 +121,9 @@ public class Bank implements ContractOwner {
     }
 
     public BankAccount getAccount(String counterId) {
+        if (!alreadyRegistered(counterId)) {
+            register(counterId);
+        }
         return accounts.get(counterId);
     }
 
@@ -135,5 +139,18 @@ public class Bank implements ContractOwner {
         return contractHandler;
     }
 
+    public boolean isMonocleUnlocked(String counterId) {
+        if (!alreadyRegistered(counterId)) {
+            return false;
+        }
+        return accounts.get(counterId).isMonocleUnlocked();
+    }
 
+    public void unlockMonocleFor(String id) {
+        if (!alreadyRegistered(id)) {
+            register(id);
+        }
+        accounts.get(id).setMonocleUnlocked(true);
+        CountingBot.getInstance().save();
+    }
 }

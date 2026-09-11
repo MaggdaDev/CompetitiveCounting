@@ -57,6 +57,8 @@ public class CountingStreak {
 
     private transient CountingContext lastCountingContext = null;
 
+    private List<String> counterIdsOfActiveSponsoredMonocles = new ArrayList<>();
+
     // Pre-initializing (fully replaced by loading from json!)
     public CountingStreak(String key, int base, String guildId) {
         this.key = key;
@@ -114,7 +116,8 @@ public class CountingStreak {
 
 
         if (isNumCorrect(number, message) && (!user.getId().equals(lastCounterId))) { // Count is accepted
-            lastCountingContext = new CountingContext(user, number, lastCount, this, lastScoreAdd, lastCounterId);
+            lastCountingContext = new CountingContext(user, number, lastCount, this, lastScoreAdd, lastCounterId,
+                    CountingBot.getInstance().getGuilds().get(guildId));
             lastCount = number;
             incrementCounter();
             amountOfCountsPerCounter.replace(user.getId(), amountOfCountsPerCounter.get(user.getId()) + 1);
@@ -133,7 +136,7 @@ public class CountingStreak {
                 captureBlockedUsers.add(user.getId());
             }
 
-            trophyHandler.considerSpawningTrophy(number, message, user);
+            trophyHandler.considerSpawningTrophy(message, lastCountingContext);
 
             if (slowModeRule != null) {
                 slowModeRule.applyTimerToMessage(message);
@@ -842,5 +845,11 @@ public class CountingStreak {
         return lastCountingTimesPerCounter;
     }
 
+    public List<String> getCounterIdsOfActiveSponsoredMonocles() {
+        return counterIdsOfActiveSponsoredMonocles;
+    }
 
+    public CountingContext getLastCountingContext() {
+        return lastCountingContext;
+    }
 }

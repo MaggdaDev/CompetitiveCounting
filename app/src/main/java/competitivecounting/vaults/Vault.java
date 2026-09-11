@@ -9,7 +9,10 @@ import competitivecounting.vaults.vaultDrops.VaultDrop;
 import competitivecounting.vaults.vaultDrops.VaultLootPool;
 import discord4j.core.object.entity.Message;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public abstract class Vault {
@@ -17,6 +20,7 @@ public abstract class Vault {
     private final Function<CountingContext, Boolean> requirementsChecker;
     private RiddleDialogue currentRiddleDialogue = null;
     private final VaultLootPool lootPool;
+    private final List<BiConsumer<Counter, VaultDrop>> onDropReceived = new ArrayList<>();
     protected final static String RIDDLE_TEXT = "{author} has located a locked vault :satellite:! To find the key, solve the following riddle:\n"
         + "> {riddle}\n-# To submit the key, use `~<key>`(e.g. `~42`).";
 
@@ -42,10 +46,10 @@ public abstract class Vault {
     public final Counter doRiddleBlockingly(Message message, CountingContext context) {
         currentRiddleDialogue = createRiddleDialogue(message, context);
         currentRiddleDialogue.playBlocking(message);
-        return currentRiddleDialogue.getWinningCounter(message);
+        return currentRiddleDialogue != null ? currentRiddleDialogue.getWinningCounter(message) : null;
     }
 
-    public void loot(Message message, Counter riddleSolver) {
+    public final void loot(Message message, Counter riddleSolver, CountingContext contextAtVaultSpawn) {
         if (riddleSolver == null) {
             CountingBot.write(message, "This vault's key is now lost forever! Continue counting to locate new vaults...");
             return;
@@ -53,11 +57,12 @@ public abstract class Vault {
         Dialogue dialogue = new Dialogue();
         dialogue.addNpcLine(riddleSolver.getName() + " opened a " + getVaultName() + "...", 1000);
         VaultDrop drop = lootPool.drawDrop();
-        drop.payout(message, dialogue, riddleSolver);
+        drop.payout(message, dialogue, riddleSolver, contextAtVaultSpawn);
+        onDropReceived.forEach((listener) -> listener.accept(riddleSolver, drop));
         dialogue.playBlocking(message);
     }
 
-    public  final void reset() {
+    public void reset() {
         if (currentRiddleDialogue != null) {
             currentRiddleDialogue.stop();
             currentRiddleDialogue = null;
@@ -68,6 +73,7 @@ public abstract class Vault {
         double rand = Math.random();
         CountingBoosterManager countingBoosterManager = context.getCounter().getCountingBoosterManager();
         double spawnThreshold = countingBoosterManager.modifyVaultRate(spawnChance);
+        spawnThreshold = context.getCounter().getCollection().modifyVaultRateFromEquippables(spawnThreshold, context);
         return (requirementsChecker.apply(context) && rand < spawnThreshold);
     }
 
@@ -89,12 +95,16 @@ public abstract class Vault {
     public double getSpawnChance() {
         return spawnChance;
     }
-    static int randomInt(int min, int max) {
+    public static int randomInt(int min, int max) {
         return min + (int) (Math.random() * (max - min));
     }
 
     protected String getRiddleText(String riddle, String author) {
         return RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
+    }
+
+    public void addOnDropReceivedListener(BiConsumer<Counter, VaultDrop> listener) {
+        onDropReceived.add(listener);
     }
 
 

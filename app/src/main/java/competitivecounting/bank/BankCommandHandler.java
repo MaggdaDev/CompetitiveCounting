@@ -5,6 +5,8 @@ import competitivecounting.bank.bankupgrades.BankUpgrade;
 import competitivecounting.bank.exceptions.*;
 import competitivecounting.dialogue.Dialogue;
 import competitivecounting.interactionhandlers.TrophyHandler;
+import competitivecounting.items.equippables.Equippables;
+import competitivecounting.items.equippables.SponsoredMonocle;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
@@ -12,7 +14,7 @@ import java.util.*;
 public class BankCommandHandler {
     private final BankTransactionsHandler transactionsHandler;
     private TreeMap<Integer, String> donationMessages;
-
+    public final static int MIN_VAULT_PAYOUT_TO_UNLOCK_MONOCLE = 20000;
     private final HashMap<String, CountingGuild> guilds;
 
     public BankCommandHandler(BankTransactionsHandler transactionsHandler) {
@@ -77,7 +79,8 @@ public class BankCommandHandler {
                     sendDonationMessage(message, donationAmount);
                     shouldSaveJson = true;
                     break;
-                case "balance": case "bal":
+                case "balance":
+                case "bal":
                     int balance = bank.getBalance(authorId);
                     int roundedBalance = 100 * (balance / 100);
                     if (roundedBalance == 0) {
@@ -86,14 +89,16 @@ public class BankCommandHandler {
                         bankWrite(message, "As long as there's enough money in my stash, you can get around " + roundedBalance + " money from me.");
                     }
                     break;
-                case "withdraw": case "wd":
+                case "withdraw":
+                case "wd":
                     int withdrawAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     int newBalance = bank.getBalance(authorId) - withdrawAmount;
                     transactionsHandler.withdraw(guildId, authorId, withdrawAmount, message);
                     shouldSaveJson = true;
                     sendWithdrawMessage(message, withdrawAmount, newBalance);
                     break;
-                case "deposit": case "dp":
+                case "deposit":
+                case "dp":
                     int depositAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     int newBalance2 = bank.getBalance(authorId) + depositAmount - Bank.DEPOSIT_COST;
                     transactionsHandler.deposit(guildId, authorId, depositAmount);
@@ -150,19 +155,20 @@ public class BankCommandHandler {
         return shouldSaveJson;
     }
 
+
     private void sendBankDescription(Message message) {
         CountingBot.write(message, "## The CrocBank Inc. \n" +
-               toCrocText("Welcome to the glorious CrocBank Inc.! I, the crocodile, will gladly assist you with all your banking needs.\n" +
-                       "Money that is deposited here is safe from being lost after failing streaks and is even carried over when you prestige.\n" +
-                       "-# Since running a bank comes with high costs, please be aware that you might have to pay some small fees here or there.\n\n" +
-                       "Furthermore, instead of contracts, you can now take out loans from the CrocBank. " +
-                       "You can freely pick the rate of repayment just like with a normal contract, but you will pay some interest.\n\n" +
-                       "At the start, your account is limited in its features and can be improved by purchasing bank upgrades.\n\n" +
-                       "For more information, please check `~bank help`, whatever that means."));
+                toCrocText("Welcome to the glorious CrocBank Inc.! I, the crocodile, will gladly assist you with all your banking needs.\n" +
+                        "Money that is deposited here is safe from being lost after failing streaks and is even carried over when you prestige.\n" +
+                        "-# Since running a bank comes with high costs, please be aware that you might have to pay some small fees here or there.\n\n" +
+                        "Furthermore, instead of contracts, you can now take out loans from the CrocBank. " +
+                        "You can freely pick the rate of repayment just like with a normal contract, but you will pay some interest.\n\n" +
+                        "At the start, your account is limited in its features and can be improved by purchasing bank upgrades.\n\n" +
+                        "For more information, please check `~bank help`."));
     }
 
     public void upgrade(Message message, String[] splitMessage, Bank bank, String authorId) throws BankUpgradeException {
-        if(splitMessage.length < 3) {
+        if (splitMessage.length < 3) {
             int amountBuyableUpgrades = bank.getAccount(authorId).getUpgrades().getAmountBuyableUpgrades();
             int amountMaxedOutUpgrades = bank.getAccount(authorId).getUpgrades().getAmountMaxedOutUpgrades();
             String s;
@@ -176,7 +182,7 @@ public class BankCommandHandler {
             s += bank.getAccount(authorId).getUpgradesBuyableString();
 
             String s2 = "";
-            if (amountMaxedOutUpgrades > 0 & amountBuyableUpgrades == 0){
+            if (amountMaxedOutUpgrades > 0 & amountBuyableUpgrades == 0) {
                 s2 = "\n**All the maxed out upgrades you own:**\n";
             } else if (amountMaxedOutUpgrades == 1) {
                 s2 = "\n**You have maxed out this upgrade:**\n";
@@ -189,7 +195,7 @@ public class BankCommandHandler {
             bankWrite(message, s);
             return;
         }
-        if(splitMessage.length > 3) {
+        if (splitMessage.length > 3) {
             throw new BankUpgradeException("I cannot help you if you refrain from using the correct syntax. " +
                     "Please use '~bank upgrade <upgrade name>'! \nIf you forgot the names of our Croc Bank Inc.'s magnificent upgrades, " +
                     "you can use '~bank upgrade' without any arguments.");
@@ -224,16 +230,16 @@ public class BankCommandHandler {
         CountingGuild countingGuild = guilds.get(guildId);
         Bank bank = countingGuild.getBank();
         if (bank.isUnlocked()) {
-        new Dialogue()
-                .addNpcLine("Oh look, another customer!", 1000)
-                .addNpcLine("This area seems to be heavily interested in handbags, I'll need to think about raising the prices soon...", 1000)
-                .addNpcLine("I'm sure this handbag will also be of great *use* to you.", 500)
-                .addRunnable((msg) -> {
-                    CountingBot.getInstance().getShopCommandHandler().acquireHandBag(msg, guildId, authorId);
-                    CountingBot.getInstance().save();
-                })
-                .setNpcLineConverter(BankCommandHandler::toCrocText)
-                .play(message);
+            new Dialogue()
+                    .addNpcLine("Oh look, another customer!", 1000)
+                    .addNpcLine("This area seems to be heavily interested in handbags, I'll need to think about raising the prices soon...", 1000)
+                    .addNpcLine("I'm sure this handbag will also be of great *use* to you.", 500)
+                    .addRunnable((msg) -> {
+                        CountingBot.getInstance().getShopCommandHandler().acquireHandBag(msg, guildId, authorId);
+                        CountingBot.getInstance().save();
+                    })
+                    .setNpcLineConverter(BankCommandHandler::toCrocText)
+                    .play(message);
             return;
         }
         Dialogue dialogue = createHandBagBoughtDialogue(message, guildId, authorId);
@@ -247,11 +253,11 @@ public class BankCommandHandler {
         Bank bank = countingGuild.getBank();
         if (bank.isUnlocked()) {
             new Dialogue().addNpcLine("Wow, that is some dedication!", 1000)
-                        .addNpcLine("To buy an item you know is a sham, and to then try to refund it again. Such audacity is almost worth a trophy.", 3000)
-                        .addNpcLine("Hmm, trophy...", 3000)
-                        .addRunnable(trophyHandler::spawnSecondHandbagTrophy)
-                        .setNpcLineConverter(BankCommandHandler::toCrocText)
-                        .play(message);
+                    .addNpcLine("To buy an item you know is a sham, and to then try to refund it again. Such audacity is almost worth a trophy.", 3000)
+                    .addNpcLine("Hmm, trophy...", 3000)
+                    .addRunnable(trophyHandler::spawnSecondHandbagTrophy)
+                    .setNpcLineConverter(BankCommandHandler::toCrocText)
+                    .play(message);
 
         } else {
             Dialogue dialogue = createRequestHandbagRefundDialogue(message, bank);
@@ -334,7 +340,6 @@ public class BankCommandHandler {
      * @return whether the json should be saved after the call
      * @throws BankTransactionException
      */
-    // NIGGER
     private boolean sendFlexMessage(Message message, Bank bank) throws BankTransactionException {
         String guildId = message.getGuildId().get().asString();
         String authorId = message.getAuthor().get().getId().asString();
@@ -407,6 +412,37 @@ public class BankCommandHandler {
 
     private static void write(Message message, String text) {
         CountingBot.write(message, text);
+    }
+
+    public static int getReducedFee(Counter user, int originalFee) {
+        Bank bank = CountingBot.getInstance().getGuilds().get(user.getGuildId()).getBank();
+        if (!bank.isUnlocked()) {
+            return 0;
+        }
+        return Math.min(originalFee, (user.getScoreInBankAccount() + user.getScore()) / 5);
+    }
+
+    public static int chargeFee(Counter user, int fee, String reason, Message m) {
+        if (fee <= 0) {
+            return 0;
+        }
+        Bank bank = CountingBot.getInstance().getGuilds().get(user.getGuildId()).getBank();
+        if (!bank.isUnlocked()) {
+            return 0;
+        }
+        if (!bank.alreadyRegistered(user.getId())) {
+            bank.register(user.getId());
+        }
+        int reducedFee = getReducedFee(user, fee);
+        int fromScore = Math.min(reducedFee, user.getScore());
+        int fromBank = reducedFee - fromScore;
+        user.subtractScore(fromScore);
+        bank.withdraw(user.getId(), fromBank);
+        bank.addMoney(reducedFee);
+        CountingBot.write(m, "-# " + user.getName() + ", you have been charged " + reducedFee + " money by the CrocBank Inc. "
+                + " for the following service: " + reason + ".");
+        System.out.println("Charged " + reducedFee + " money from user " + user.getName() + " as fee. (" + fromScore + " from score, " + fromBank + " from bank account)");
+        return reducedFee;
     }
 
 

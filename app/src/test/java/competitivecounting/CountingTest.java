@@ -98,7 +98,7 @@ public class CountingTest {
         guild.getCounters().put(COUNTER_ID, counter);
         guild.getCounters().put(OTHER_COUNTER_ID, otherCounter);
         CountingStreak streak = new CountingStreak(CHANNEL_ID, 10, GUILD_ID);
-        context = new CountingContext(counter, 0, 1, streak, 0, "");
+        context = new CountingContext(counter, 0, 1, streak, 0, "", guild);
 
         // Message
         output = new ArrayList<>();
@@ -164,6 +164,14 @@ public class CountingTest {
 
     public User getMockedUser(String userId) {
         return mockedUsers.get(userId);
+    }
+
+    protected void sleep(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }

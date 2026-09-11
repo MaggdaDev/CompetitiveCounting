@@ -22,11 +22,12 @@ public class NpcLine extends DialogueElement{
 
     @Override
     public void run(Message message) {
-        sentMessage = CountingBot.writeBlocking(message, npcLineConverter == null ? text : npcLineConverter.apply(text));
         try {
+            sentMessage = CountingBot.writeBlocking(message, npcLineConverter == null ? text : npcLineConverter.apply(text));
             Thread.sleep(sleepDuration);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            cancelRemainingElements();
+            System.out.println("Sleep of npc line (" + text + ") interrupted: " + e.getMessage());
         }
     }
 

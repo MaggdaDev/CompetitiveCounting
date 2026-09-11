@@ -72,20 +72,20 @@ public class BankLoanHandler {
                 .addEmojiReaction(CountingEmojis.GOBLIN)
                 .initializeParallelDialogElements()
                 .addWaitForEmojiReaction(CountingEmojis.GOBLIN, true, m-> {
-                    int consultingFee = Math.min(599, initCounter.getScore() / 10);
-                    BankCommandHandler.bankWrite(message, "Even though you have decided not to move forward with this transaction, " +
-                            "I must inform you that I have meticulously measured the administrative expenses for this consultation you have requested, "+
-                                    "and you will receive an invoice of " + consultingFee + " money.");
-                    initCounter.subtractScore(consultingFee);
+                    BankCommandHandler.chargeFee(initCounter, 599, // TODO test
+                            "Compensation for consultation regarding a discontinued loan application", m);
                 }, new AtomicReference<>(userId), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
                 .addWaitForEmojiReaction(CountingEmojis.HANDSHAKE, false, m->{}, new AtomicReference<>(userId),
                         ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
                 .finishParallelDialogElementsAndAdd(
                         LOAN_CONFIRMATION_TIMEOUT_SECONDS, m -> {
-                            int consultingFee = Math.min(999, initCounter.getScore() / 5);
+                            int consultingFee = BankCommandHandler.getReducedFee(initCounter, 999); // TODO test
                             BankCommandHandler.bankWrite(message, "Thank you for choosing the CrocBank Inc.'s financial consulting service. "
                             + "Your loan request has timed out, but you were charged " + consultingFee + " money.");
-                            initCounter.subtractScore(consultingFee);
+                            BankCommandHandler.chargeFee(initCounter, consultingFee,
+                                    "Compensation for advisory services regarding a discontinued loan application, " +
+                                            "in combination with an inappropriate waiting period",
+                                    m);
                             return true;
                         })
                 .addRunnable(m -> {

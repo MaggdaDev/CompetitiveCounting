@@ -37,7 +37,7 @@ public class VaultDialogue extends Dialogue {
                     }
                     return shouldCancel;
                 })
-                .addRunnable((m) -> vault.loot(m, riddleSolver))
+                .addRunnable((m) -> vault.loot(m, riddleSolver, context))
                 .addRunnable(cleanupCallback);
     }
 }

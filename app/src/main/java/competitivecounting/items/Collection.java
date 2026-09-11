@@ -2,12 +2,11 @@ package competitivecounting.items;
 
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
+import competitivecounting.CountingContext;
 import competitivecounting.CountingStreak;
 import competitivecounting.dialogue.Dialogue;
-import competitivecounting.items.equippables.DowsingRod;
-import competitivecounting.items.equippables.Equippable;
+import competitivecounting.items.equippables.*;
 import com.google.common.base.Objects;
-import competitivecounting.items.equippables.Equippables;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
@@ -162,13 +161,30 @@ public class Collection {
         equippables.forEach(e -> e.streakDisposed(streak));
     }
 
-    public double modifyTrophyRateFromEquippables(double trophyChance, int number) {
+    public double modifyTrophyRateFromEquippables(double trophyChance, CountingContext context) {
+        int number = context.getCurrentNumber();
         // Dowsing Rod
         Optional<Equippable> maybeDowsingRod = getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName());
         if (maybeDowsingRod.isPresent()) {
             trophyChance = ((DowsingRod) maybeDowsingRod.get()).modifyTrophyRate(trophyChance, number);
         }
 
+        // rest
+        for (Equippable equippable : equippables) {
+            if (equippable instanceof TrophyRateModifier && !(equippable instanceof DowsingRod)) {  // TODO also dowsing rod
+                trophyChance = ((TrophyRateModifier) equippable).modifyTrophyRate(trophyChance, context);
+            }
+        }
+
         return trophyChance;
+    }
+
+    public double modifyVaultRateFromEquippables(double vaultChance, CountingContext context) {
+        for (Equippable equippable : equippables) {
+            if (equippable instanceof VaultRateModifier) {
+                vaultChance = ((VaultRateModifier) equippable).modifyVaultRate(vaultChance, context);
+            }
+        }
+        return vaultChance;
     }
 }

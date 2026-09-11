@@ -14,7 +14,6 @@ public class KeySubmissionAwaiter extends DialogueElement {
     private final SlashCommandHandler.KeySubmissionListener listener;
     private final CountDownLatch finishedAtZeroLatch;
     private final Supplier<Boolean> shouldCancelOnTimeout;
-    private boolean shouldCancelRemaning = false;
     private final int timeoutSeconds;
     private String channelId;
 
@@ -40,19 +39,16 @@ public class KeySubmissionAwaiter extends DialogueElement {
                 message.addReaction(CountingEmojis.ONE).subscribe();
                 Thread.sleep(2000);
                 if (shouldCancelOnTimeout.get()) {
-                    shouldCancelRemaning = true;
+                    cancelRemainingElements();
                 }
             }
             CountingBot.getInstance().getSlashCommandHandler().removeKeySubmissionConsumer(channelId, listener);
         } catch (InterruptedException e) {
+            cancelRemainingElements();
             e.printStackTrace();
         }
     }
 
-    @Override
-    public boolean shouldCancelRemaningElements() {
-        return shouldCancelRemaning;
-    }
 
     @Override
     public void dispose() {

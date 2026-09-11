@@ -8,13 +8,17 @@ public class CountingContext {
     private final CountingStreak streak;
     private final int lastScoreAdd;
     private final String lastCounterId;
-    public CountingContext(Counter counter, int currentNumber, int lastNumber, CountingStreak streak, int lastScoreAdd, String lastCounterId) {
+    private final long creationTime = System.currentTimeMillis();
+    private final CountingGuild guild;
+    public CountingContext(Counter counter, int currentNumber, int lastNumber, CountingStreak streak, int lastScoreAdd,
+                           String lastCounterId, CountingGuild guild) {
         this.counter = counter;
         this.currentNumber = currentNumber;
         this.lastNumber = lastNumber;
         this.streak = streak;
         this.lastScoreAdd = lastScoreAdd;
         this.lastCounterId = lastCounterId;
+        this.guild = guild;
     }
 
     public Counter getCounter() {
@@ -43,5 +47,13 @@ public class CountingContext {
      */
     public String getLastCounterId() {
         return lastCounterId;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
+    }
+
+    public CountingGuild getGuild() {
+        return guild;
     }
 }

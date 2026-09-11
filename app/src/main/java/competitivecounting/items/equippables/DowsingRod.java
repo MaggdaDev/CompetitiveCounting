@@ -9,7 +9,7 @@ import discord4j.core.object.entity.Message;
 
 import java.util.Objects;
 
-public class DowsingRod extends Equippable {
+public class DowsingRod extends Equippable {    // TODO implements TrophyRateModifier
     public final static String NAME = "Wünschel:magic_wand:Rute";
     public final static double WISH_MULTIPLIER = 10.;
     public final static String COLLECTION_DESCRIPTION_EMPTY = "_Use_ to wish for a trophy that gains x" + (int)WISH_MULTIPLIER + " spawn-probability!\n-# Successful wishes: {0}";

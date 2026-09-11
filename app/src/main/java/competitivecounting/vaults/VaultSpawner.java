@@ -1,9 +1,9 @@
 package competitivecounting.vaults;
 
 import competitivecounting.*;
-import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.equippables.Equippables;
 import competitivecounting.items.equippables.VaultLocator;
+import competitivecounting.vaults.publicgoodsvault.VaultOfPublicGoods;
 import competitivecounting.vaults.trophyvault.TrophyVault;
 import discord4j.core.object.entity.Message;
 
@@ -14,9 +14,10 @@ import java.util.Optional;
 public class VaultSpawner {
     private final static Vault[] ALL_VAULTS = {
             new VaultOfLongStrides(),
-            new CommunityVault(),
             new PrimeVault(),
-            new TrophyVault()
+            new TrophyVault(),
+            new CommunityVault(),
+            new VaultOfPublicGoods()
     };
     private final Vault[] vaults;
     private Vault activeVault = null;
@@ -34,12 +35,12 @@ public class VaultSpawner {
     }
 
     public static void vaultInfo(Message message, Optional<CountingStreak> streak, Counter counter) {
-        String s = streak.isEmpty() ? getStaticVaultInfo(counter) : streak.get().getVaultSpawner().getStreakVaultInfo(counter);
+        String s = streak.isEmpty() ? getStaticVaultInfo(counter, streak) : streak.get().getVaultSpawner().getStreakVaultInfo(counter, streak.get());
         CountingBot.write(message, s);
     }
 
-    private String getStreakVaultInfo(Counter counter) {
-        String ret = getStaticVaultInfo(counter);
+    private String getStreakVaultInfo(Counter counter, CountingStreak streak) {
+        String ret = getStaticVaultInfo(counter, Optional.of(streak));
         if (previousContext == null) {
             return ret;
         }
@@ -70,13 +71,21 @@ public class VaultSpawner {
 
     }
 
-    private static String getStaticVaultInfo(Counter counter) {
+    private static String getStaticVaultInfo(Counter counter, Optional<CountingStreak> streak) {
         String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n";
         for (Vault vault : ALL_VAULTS) {
             int odds = (int) Math.round(1. / vault.getSpawnChance());
-            int oddsWithBoni = (int) Math.round(1. / counter.getCountingBoosterManager().modifyVaultRate(vault.getSpawnChance()));
+            double spawnChance = vault.getSpawnChance();
+            spawnChance = counter.getCountingBoosterManager().modifyVaultRate(spawnChance);
+            if (streak.isPresent()) {
+                CountingContext lastContext = streak.get().getLastCountingContext();
+                if (lastContext != null) {
+                    spawnChance = counter.getCollection().modifyVaultRateFromEquippables(spawnChance, lastContext);
+                }
+            }
+            int oddsWithBoni = (int) Math.round(1. / spawnChance);
             s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() +
-                    " (1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n";
+                    (spawnChance <= 0 ? "" : "(1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n");
         }
         return s;
     }
@@ -91,10 +100,20 @@ public class VaultSpawner {
         }
         for (Vault vault : vaults) {
             if (vault.maybeSpawn(context)) {
+                if (vault instanceof CommunityVault) {
+                    if (context.getStreak().getCounterIdsOfActiveSponsoredMonocles().contains(context.getCounter().getId())) {
+                        if (getVaultOfPublicGoods().canSpawn(context)) {
+                            vault = getVaultOfPublicGoods();
+                        } else {
+                            CountingBot.write(message, context.getCounter().getName() + ", even though you have an active CrocBank Inc. sponsorship, the "
+                                    + VaultOfPublicGoods.NAME + " cannot spawn, as not all participating counters can afford the buy-in of " + VaultOfPublicGoods.BUY_IN + " money.");
+                        }
+                    }
+                }
                 activeVault = vault;
                 ((VaultLocator) context.getCounter().getCollection().getEquippable(Equippables.VAULT_LOCATOR)).incrementLocatedVaults();
                 new VaultDialogue(message, context, m -> {
-                    vault.reset();
+                    activeVault.reset();
                     activeVault = null;
                 }, vault)
                         .play(message);
@@ -115,5 +134,13 @@ public class VaultSpawner {
         // empty
     }
 
+    public VaultOfPublicGoods getVaultOfPublicGoods() {
+        for (Vault vault : vaults) {
+            if (vault instanceof VaultOfPublicGoods) {
+                return (VaultOfPublicGoods) vault;
+            }
+        }
+        return null;
+    }
 
 }

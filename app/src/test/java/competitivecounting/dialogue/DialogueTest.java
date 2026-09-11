@@ -2,6 +2,7 @@ package competitivecounting.dialogue;
 
 import competitivecounting.CountingEmojis;
 import competitivecounting.CountingTest;
+import discord4j.core.object.reaction.ReactionEmoji;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class DialogueTest extends CountingTest {
     int successes = 0;
     int fails = 0;
-    int timeouts = 0;
+    int timeouts = 0,
+    firstCalls = 0,
+    secondCalls = 0,
+    thirdCalls = 0;
 
     @BeforeEach
     public void setUp() {
@@ -21,6 +25,9 @@ class DialogueTest extends CountingTest {
         successes = 0;
         fails = 0;
         timeouts = 0;
+        firstCalls = 0;
+        secondCalls = 0;
+        thirdCalls = 0;
     }
 
     @Test
@@ -60,6 +67,7 @@ class DialogueTest extends CountingTest {
         assertEquals(0, successes);
         assertEquals(1, timeouts);
         assertEquals(0, fails);
+        System.out.println(output);
         assertEquals("test", output.get(output.size()-1));
 
         // Cancel remaining after thumbs down iff wished
@@ -89,8 +97,38 @@ class DialogueTest extends CountingTest {
         assertEquals(2, timeouts);
         assertEquals(2, fails);
         assertEquals("Second message",output.get(output.size()-1));
+
+
     }
 
+    @Test
+    void testCancelRemainingForMultiPersonParallelCheck() throws InterruptedException {
+        // Test multiperson
+        new Dialogue().initializeParallelDialogElements()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {
+                    firstCalls++;
+                }, new AtomicReference<>(COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, false, m -> {
+                    secondCalls++;
+                }, new AtomicReference<>(OTHER_COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
+                .finishParallelDialogElementsAndAdd(1, m -> {
+                    timeouts++;
+                    return true;
+                }).addRunnable(m -> {
+                    thirdCalls++;
+                }).play(message);
+        sleep(200);
+        simulateEmojiReaction(CountingEmojis.THUMBS_UP);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        assertEquals(0, thirdCalls);
+        assertEquals(0, timeouts);
+        sleep(1200);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        assertEquals(0, thirdCalls);
+        assertEquals(1, timeouts);
+    }
     @Test
     void testOnlyCorrectPersonCanPassThumbsCheck() throws InterruptedException {
         AtomicReference<String> counterIdRestriction = new AtomicReference<>(OTHER_COUNTER_ID);
@@ -161,6 +199,7 @@ class DialogueTest extends CountingTest {
                         }, m -> {
                             fails++;
                         }, false, new AtomicReference<>(null), 1, m -> {
+                            System.out.println("TIMOUT");
                             timeouts++;
                             return false;
                         })
@@ -187,5 +226,225 @@ class DialogueTest extends CountingTest {
         assertEquals(0, timeouts);
         assertEquals(1, successes);
         assertEquals(0, fails);
+    }
+
+    @Test
+    void testMultiPersonParallelCheck() throws InterruptedException{
+
+        assertEquals(0, secondCalls);    // If one sufficient has run, do not call the other!
+        assertEquals(0, firstCalls);
+        new Dialogue().addNpcLine("test", 0).initializeParallelDialogElements()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m-> {
+                    System.out.println("FIRST");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+
+                    }
+                    firstCalls++;
+                }, new AtomicReference<>(COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {
+                    System.out.println("SECOND!");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                    }
+                    secondCalls++;
+                }, new AtomicReference<>(OTHER_COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
+                .finishParallelDialogElementsAndAdd(2, m-> {
+                    fails++;
+                    return false;
+                }).play(message);
+        Thread.sleep(200);
+        simulateEmojiReaction(OTHER_COUNTER_ID, CountingEmojis.THUMBS_UP);
+        simulateEmojiReaction(COUNTER_ID, CountingEmojis.THUMBS_UP);
+        Thread.sleep(1200);
+        assertEquals(1, secondCalls);    // If one sufficient has run, do not call the other!
+        assertEquals(0, firstCalls);
+        Thread.sleep(1000);
+        assertEquals(0, fails);
+    }
+
+    @Test
+    void assertTimeoutExecutedWhenNecessaryConditionsFulfilled() throws InterruptedException {
+        new Dialogue().addNpcLine("test", 0).initializeParallelDialogElements()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m-> {
+                    firstCalls++;
+                    System.out.println("FIRST");
+                }, new AtomicReference<>(COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m -> {
+                    secondCalls++;
+                }, new AtomicReference<>(OTHER_COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
+                .finishParallelDialogElementsAndAdd(5, m-> {
+                    timeouts++;
+                    return false;
+                }).play(message);
+        Thread.sleep(200);
+        simulateEmojiReaction(COUNTER_ID, CountingEmojis.THUMBS_UP);
+        Thread.sleep(200);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        Thread.sleep(5000);
+        assertEquals(0, successes);
+        assertEquals(0, fails);
+        assertEquals(1, timeouts);
+    }
+
+    @Test
+    void noTimeoutDueToLongRunningSuccessInLinearDialogue() throws InterruptedException{
+        new Dialogue()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, (msg, c) -> {
+                    System.out.println("Long running success started");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println("Long running success finished");
+                    successes++;
+                    return true;
+                }, 1, m -> {
+                    timeouts++;
+                    return true;
+                }).play(message);
+        Thread.sleep(200);
+        assertEquals(0, successes);
+        assertEquals(0, timeouts);
+        simulateEmojiReaction(CountingEmojis.THUMBS_UP);
+        Thread.sleep(1000);
+        assertEquals(0, successes);
+        assertEquals(0, timeouts);
+        Thread.sleep(1000);
+        assertEquals(1, successes);
+        assertEquals(0, timeouts);
+
+        new Dialogue()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, (msg, c) -> {
+                    System.out.println("Long running success started");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println("Long running success finished");
+                    return false;
+                }, 1, m -> {
+                    timeouts++;
+                    return true;
+                }).addRunnable(m ->  successes++).play(message);
+        Thread.sleep(200);
+        assertEquals(1, successes);
+        assertEquals(0, timeouts);
+        simulateEmojiReaction(CountingEmojis.THUMBS_UP);
+        Thread.sleep(1000);
+        assertEquals(1, successes);
+        assertEquals(0, timeouts);
+        Thread.sleep(1000);
+        assertEquals(1, successes);
+        assertEquals(1, timeouts);
+    }
+
+    @Test
+    void testSufficientNecessaryTimeout() throws InterruptedException {
+        new Dialogue().addNpcLine("test",0)
+                .initializeParallelDialogElements()
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, false, m-> {
+                    firstCalls++;
+                    System.out.println("FIRST");
+                }, new AtomicReference<>(COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
+                .addWaitForEmojiReaction(CountingEmojis.TWO, false, m-> {
+                    secondCalls++;
+                    System.out.println("SECOND");
+                }, new AtomicReference<>(COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.NECESSARY)
+                .addWaitForEmojiReaction(CountingEmojis.THUMBS_UP, false, m-> {
+                    System.out.println("THIRD started...");
+                    sleep(2000);
+                    thirdCalls++;
+                    System.out.println("THIRD");
+                }, new AtomicReference<>(COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
+                .finishParallelDialogElementsAndAdd(1, m-> {
+                    System.out.println("TIMEOUT");
+                    timeouts++;
+                    return false;
+                }).play(message);
+        sleep(200);
+        simulateEmojiReaction(COUNTER_ID, CountingEmojis.THUMBS_DOWN);
+        sleep(200);
+        simulateEmojiReaction(COUNTER_ID, CountingEmojis.THUMBS_UP);
+        sleep(200);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        assertEquals(0, thirdCalls);
+        assertEquals(0, timeouts);
+        sleep(200);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        assertEquals(0, thirdCalls);
+        assertEquals(0, timeouts);
+        sleep(1000);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        assertEquals(0, thirdCalls);
+        assertEquals(0, timeouts);
+        sleep(1000);
+        assertEquals(1, firstCalls);
+        assertEquals(0, secondCalls);
+        assertEquals(1, thirdCalls);
+        assertEquals(0, timeouts);
+
+    }
+
+    @Test
+    void testOnCanceled() throws InterruptedException {
+       createOnCanceledDialogue().play(message);
+       sleep(200);
+       simulateEmojiReaction(CountingEmojis.THUMBS_UP);
+       sleep(1000);
+       assertEquals(0, firstCalls);
+       assertEquals(0, secondCalls);
+       assertEquals(1, successes);
+       assertEquals(0, fails);
+       assertEquals(0, timeouts);
+       assertEquals(1, thirdCalls);
+
+        createOnCanceledDialogue().play(message);
+        sleep(200);
+        simulateEmojiReaction(CountingEmojis.THUMBS_DOWN);
+        sleep(1000);
+        assertEquals(1, firstCalls);
+        assertEquals(1, secondCalls);
+        assertEquals(1, successes);
+        assertEquals(1, fails);
+        assertEquals(0, timeouts);
+        assertEquals(1, thirdCalls);
+
+        createOnCanceledDialogue().play(message);
+        sleep(200);
+        sleep(1000);
+        assertEquals(2, firstCalls);
+        assertEquals(2, secondCalls);
+        assertEquals(1, successes);
+        assertEquals(1, fails);
+        assertEquals(1, timeouts);
+        assertEquals(1, thirdCalls);
+
+    }
+
+    private Dialogue createOnCanceledDialogue() {
+        return  new Dialogue()
+                .addOnCanceled(m -> {
+                    firstCalls++;
+                }).addOnCanceled(m -> {
+                    secondCalls++;
+                }).addSinglePersonThumbsUpDownConfirmation(m -> {
+                    successes++;
+                }, m -> {
+                    fails++;
+                }, true, new AtomicReference<>(null), 1, m -> {
+                    timeouts++;
+                    return true;
+                }).addRunnable(m -> {
+                    thirdCalls++;
+                });
     }
 }

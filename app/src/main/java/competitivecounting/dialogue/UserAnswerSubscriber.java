@@ -42,6 +42,7 @@ public class UserAnswerSubscriber extends DialogueElement {
             latch.await();
         } catch (InterruptedException e) {
             System.out.println("User answer react waiter thread interrupted with message: " + e.getMessage());
+            cancelRemainingElements();
             Thread.currentThread().interrupt(); // Restore the interrupted status
         }
     }

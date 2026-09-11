@@ -1,6 +1,10 @@
 package competitivecounting.items;
 
 import competitivecounting.*;
+import competitivecounting.bank.Bank;
+import competitivecounting.bank.BankCommandHandler;
+import competitivecounting.items.equippables.SponsoredMonocle;
+import competitivecounting.vaults.publicgoodsvault.VaultOfPublicGoods;
 import discord4j.core.object.entity.Message;
 
 import java.util.HashMap;
@@ -78,8 +82,23 @@ public class ShopCommandHandler {
         StringBuilder sb = new StringBuilder();
         sb.append("Welcome to the shop! The items you can find here are: \n\n");
         int itemCounter = 1;
+        CountingGuild guild = guilds.get(message.getGuildId().get().asString());
+        Bank bank = guild.getBank();
         for (Item item : Purchasables.PURCHASABLE_ITEMS) {
-            sb.append(itemCounter + ") " + item.getName())
+            if (item instanceof SponsoredMonocle ) {
+                if (bank.isMonocleUnlocked(message.getAuthor().get().getId().asString())) {
+                    sb.append(itemCounter).append(") ")
+                            .append("\uD83D\uDC0A: ").append(item.getName())
+                            .append(" - ")
+                            .append(item.getPrice())
+                            .append("\n")
+                            .append(VaultOfPublicGoods.SPONSOR_TAG)
+                            .append("\n");
+                }
+                continue;
+            }
+            sb.append(itemCounter).append(") ")
+                    .append(item.getName())
                     .append(" - ")
                     .append(item.getPrice())
                     .append("\n");
@@ -95,11 +114,19 @@ public class ShopCommandHandler {
             return;
         }
         Item toBuy = Purchasables.getPurchasableByNameOrNumber(itemToBuy);
+        Bank bank = guilds.get(message.getGuildId().get().asString()).getBank();
+        if (toBuy instanceof SponsoredMonocle && !bank.isMonocleUnlocked(message.getAuthor().get().getId().asString())) {
+            CountingBot.write(message, "The manufacturer is not willing to sell this item to you!");
+            return;
+        }
         if (!counter.canAfford(toBuy.getPrice())) {
             CountingBot.write(message, "This item is too expensive for you! You only have " + counter.getScore() + " out of the needed " + toBuy.getPrice() + " money.");
             return;
         }
         counter.subtractScore(toBuy.getPrice());
+        if (toBuy instanceof SponsoredMonocle) {
+            bank.addMoney(toBuy.getPrice().getPrice());
+        }
         if (toBuy == Consumables.HAND_BAG) {
             CountingBot.getInstance().handBagBought(message);
         } else {
@@ -110,7 +137,13 @@ public class ShopCommandHandler {
     }
 
     private void writeItemBoughtMessage(Message message, Item item) {
-        CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + ". Use `" + "~inv" + "` to check out your inventory!");
+        if (item instanceof SponsoredMonocle) {
+            BankCommandHandler.bankWrite(message, "Excellent choice! You have bought a carefully manufactured *"
+                    + item.getName() + "* from the CrocBank Inc. and paid " + item.getPrice()
+                    + ".\nEquip it and activate the sponsorship to gain a boosted trophy and vault spawn-rate, as well as the possibility to access a brand new vault... ");
+        } else {
+            CountingBot.write(message, "You have bought a *" + item.getName() + "* and paid " + item.getPrice() + ". Use `" + "~inv" + "` to check out your inventory!");
+        }
     }
 
     public void acquireHandBag(Message message, String guildId, String counterId) {

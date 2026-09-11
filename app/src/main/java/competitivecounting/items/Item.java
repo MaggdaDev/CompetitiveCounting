@@ -29,13 +29,23 @@ public class Item {
 
             int consumablesCount = consumables.size();
             int equippablesCount = equippables.size();
-            int globalItemsCount = consumablesCount + equippablesCount;
+
+            Item[] extraItems = new Item[] {
+                    CrocStonk.instance
+            };
+
+            int extraItemsCount = extraItems.length;
+
+            int globalItemsCount = consumablesCount + equippablesCount + extraItemsCount;
             ALL_ITEMS = new Item[globalItemsCount];
             for (int i = 0; i < consumablesCount; i++) {
                 ALL_ITEMS[i] = consumables.get(i);
             }
             for (int i = 0; i < equippablesCount; i++) {
                 ALL_ITEMS[consumablesCount + i] = equippables.get(i);
+            }
+            for (int i = 0; i < extraItemsCount; i++) {
+                ALL_ITEMS[consumablesCount + equippablesCount + i] = extraItems[i];
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize items", e);

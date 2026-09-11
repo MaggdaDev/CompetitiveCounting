@@ -761,11 +761,11 @@ public class CountingBot {
 
     private void scoreInfo(Message message) {
         Counter counter = getCounterFromMessage(message);
-        BankAccount potentialAccount = guilds.get(message.getGuildId().get().asString()).getBank().getAccount(message.getAuthor().get().getId().asString());
-        String msg = "Your current score is " + (counter.getPossibleTotal() + (potentialAccount == null ? 0 : potentialAccount.getBalance())) + " money " +
+        int scoreInBank = counter.getScoreInBankAccount();
+        String msg = "Your current score is " + (counter.getPossibleTotal() + scoreInBank) + " money " +
                 "(" + counter.getScore() + " in your purse + " + counter.getCurrentScoreAdd() + " possible from current streaks";
-        if (!(potentialAccount == null) && !(potentialAccount.getBalance() == 0)) {
-            msg += " + " + potentialAccount.getBalance() + " in your CrocBank:tm: account";
+        if (scoreInBank > 0) {
+            msg += " + " + scoreInBank + " in your CrocBank:tm: account";
         }
         msg += ").";
         if (counter.getPrestiges() != 0) {

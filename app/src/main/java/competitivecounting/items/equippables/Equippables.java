@@ -5,5 +5,6 @@ public class Equippables {
             POCKET_ABACUS = new PocketAbacus(null),
             GOOD_BAD_UGLY = new GoodBadUgly(null),
             COIN_MINER = new CoinMiner(null),
-            DOWSING_ROD = new DowsingRod(null);
+            DOWSING_ROD = new DowsingRod(null),
+            SPONSORED_MONOCLE = new SponsoredMonocle(null);
 }

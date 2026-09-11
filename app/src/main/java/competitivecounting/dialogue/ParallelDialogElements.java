@@ -2,33 +2,72 @@ package competitivecounting.dialogue;
 
 import discord4j.core.object.entity.Message;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Stream;
 
-public class ParallelDialogElements extends DialogueElement{
-    private final DialogueElement[] sufficientElements, necessaryElements;
-    private boolean shouldCancelRemainingElements = false;
+public class ParallelDialogElements extends DialogueElement implements Finishable {
+    private final List<ParallelizableDialogueElement> sufficientElements = new ArrayList<>(),
+            necessaryElements = new ArrayList<>();
+    @Override
+    public boolean isFinished() {
+        for (ParallelizableDialogueElement currEl: sufficientElements) {
+            if (currEl.isFinished()) {
+                return true;
+            }
+        }
+        if (necessaryElements.isEmpty()) {
+            return false;
+        }
+        for (ParallelizableDialogueElement currEl: necessaryElements) {
+            if (!currEl.isFinished()) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-    public ParallelDialogElements(DialogueElement[] sufficient, DialogueElement[] necessary) {
-        this.sufficientElements = sufficient;
-        this.necessaryElements = necessary;
+    public void addSufficientElement(ParallelizableDialogueElement element) {
+        sufficientElements.add(element);
+    }
+
+    public void addNecessaryElement(ParallelizableDialogueElement element) {
+        necessaryElements.add(element);
+    }
+
+    private void executeAsyncAndCheckFinished(ParallelizableDialogueElement element, Message message, CountDownLatch finishedLatch) {
+        CompletableFuture.supplyAsync(() -> {
+            element.run(message);
+            synchronized (this) {
+                if (isFinished()) {
+                    finishedLatch.countDown();
+                }
+            }
+            return element;
+        }).exceptionally(e -> {
+            System.out.println("THe completable future was finished exceptionally");
+            return null;
+        }).thenAccept(e -> {
+            if (e != null && e.shouldCancelRemaningElements()) {
+                cancelRemainingElements();
+            }
+        });
+
     }
 
     @Override
     public void run(Message message) {
-        CompletableFuture<DialogueElement>[] necessaryFutures = new CompletableFuture[necessaryElements.length];
-        CompletableFuture<DialogueElement>[] sufficientFutures = new CompletableFuture[sufficientElements.length];
-        for (int i = 0; i < necessaryFutures.length; i++) {
-            necessaryFutures[i] = elementToFuture(message, necessaryElements[i]);
-        }
-        for (int i = 0; i < sufficientFutures.length; i++) {
-            sufficientFutures[i] = elementToFuture(message, sufficientElements[i]);
-        }
-        CompletableFuture<Object> anySufficientFuture = CompletableFuture.anyOf(sufficientFutures);
-        CompletableFuture<Void> allNecessaryFutures = necessaryFutures.length == 0? new CompletableFuture<>() : CompletableFuture.allOf(necessaryFutures);
-        Object result = CompletableFuture.anyOf(anySufficientFuture, allNecessaryFutures).join();
-        shouldCancelRemainingElements = false;
-        if (result instanceof DialogueElement) {
-            shouldCancelRemainingElements = ((DialogueElement)result).shouldCancelRemaningElements();
+        CountDownLatch parallelizationFinishedLatch = new CountDownLatch(1);
+        necessaryElements.forEach(e -> executeAsyncAndCheckFinished(e, message, parallelizationFinishedLatch));
+        sufficientElements.forEach(e -> executeAsyncAndCheckFinished(e, message, parallelizationFinishedLatch));
+        try {
+            parallelizationFinishedLatch.await();
+        } catch (InterruptedException e) {
+            cancelRemainingElements();
+            System.out.println("Parallel Dialog elements interrupted: " + e.getMessage());
         }
         for (DialogueElement currEl: sufficientElements) {
             currEl.dispose();
@@ -36,13 +75,6 @@ public class ParallelDialogElements extends DialogueElement{
         for (DialogueElement currEl: necessaryElements) {
             currEl.dispose();
         }
-    }
-
-    private CompletableFuture<DialogueElement> elementToFuture(Message message, DialogueElement element) {
-        return CompletableFuture.supplyAsync(() -> {
-            element.run(message);
-            return element;
-        });
     }
 
     @Override
@@ -56,8 +88,4 @@ public class ParallelDialogElements extends DialogueElement{
         }
     }
 
-    @Override
-    public boolean shouldCancelRemaningElements() {
-        return shouldCancelRemainingElements;
-    }
 }

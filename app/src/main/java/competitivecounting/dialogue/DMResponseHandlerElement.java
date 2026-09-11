@@ -24,6 +24,7 @@ public class DMResponseHandlerElement extends DialogueElement {
         try {
             Thread.sleep(timespan * 1000L);
         } catch (InterruptedException e) {
+            cancelRemainingElements();
             e.printStackTrace();
         }
         if (CountingBot.getInstance().getUserDMHandler().hasHandler(handleAndShouldRemoveHandler)) {

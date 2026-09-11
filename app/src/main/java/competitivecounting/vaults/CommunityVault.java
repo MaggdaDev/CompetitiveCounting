@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 public class CommunityVault extends Vault {
+    public final static String NAME = "Community Vault";
     private final static double SPAWN_CHANCE = 1. / 40.;
     private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. The initial suggestion for the key is {1}, "
             + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND + "`. "
@@ -147,7 +148,7 @@ public class CommunityVault extends Vault {
 
     @Override
     protected String getVaultName() {
-        return "Community Vault";
+        return NAME;
     }
 
     @Override

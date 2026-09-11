@@ -3,6 +3,7 @@ package competitivecounting.interactionhandlers;
 import com.google.common.base.Objects;
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
+import competitivecounting.CountingContext;
 import competitivecounting.CountingEmojis;
 import competitivecounting.items.equippables.DowsingRod;
 import competitivecounting.items.equippables.Equippables;
@@ -40,12 +41,12 @@ public class TrophyHandler {
         spawnTrophy(message, -1050505);
     }
 
-    public void considerSpawningTrophy(int number, Message message, Counter user) {
-        double trophyChance = trophyChanceFromNumber(number);
-        trophyChance = user.getCountingBoosterManager().modifyTrophyRate(trophyChance); // Counting Boost
-        trophyChance = user.getCollection().modifyTrophyRateFromEquippables(trophyChance, number);  // Passive items (dowsing rod)
+    public void considerSpawningTrophy(Message message, CountingContext context) {
+        double trophyChance = trophyChanceFromNumber(context.getCurrentNumber());
+        trophyChance = context.getCounter().getCountingBoosterManager().modifyTrophyRate(trophyChance); // Counting Boost
+        trophyChance = context.getCounter().getCollection().modifyTrophyRateFromEquippables(trophyChance, context);  // Passive items (dowsing rod)
         if (randBool(trophyChance)) {
-            spawnTrophy(message, number);
+            spawnTrophy(message, context.getCurrentNumber());
         }
     }
 

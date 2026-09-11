@@ -8,6 +8,8 @@ public class BankAccount {
 
     private BankUpgrades bankUpgrades;
 
+    private boolean monocleUnlocked = false;
+
     BankAccount(String ownerId) {
         this.ownerId = ownerId;
         this.balance = 0;
@@ -38,7 +40,7 @@ public class BankAccount {
 
 
 
-    public void deposit(int money) {
+    public void depositWithoutFeeOrAffectingTotalBankScore(int money) {
         if (money >= 0) {
             balance += money;
         } else {
@@ -66,5 +68,11 @@ public class BankAccount {
         return bankUpgrades;
     }
 
+    public boolean isMonocleUnlocked() {
+        return monocleUnlocked;
+    }
 
+    public void setMonocleUnlocked(boolean monocleUnlocked) {
+        this.monocleUnlocked = monocleUnlocked;
+    }
 }

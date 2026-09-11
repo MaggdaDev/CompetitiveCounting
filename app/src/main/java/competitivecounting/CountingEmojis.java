@@ -22,6 +22,7 @@ public interface CountingEmojis {
             COIN = ReactionEmoji.unicode("\uD83E\uDE99"),
             ARROW_UP = ReactionEmoji.unicode("\u2B06"),
             ARROW_DOWN = ReactionEmoji.unicode("\u2B07"),
+            RED_QUESTION_MARK = ReactionEmoji.unicode("\u2753"),
             SPECIAL_TROPHY = ReactionEmoji.of(Long.parseLong("1546098104141619271"), "special_trophy", false);
 
     ReactionEmoji[] ALL_NUMBER_EMOJIS = {

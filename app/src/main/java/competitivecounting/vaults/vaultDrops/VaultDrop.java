@@ -1,6 +1,7 @@
 package competitivecounting.vaults.vaultDrops;
 
 import competitivecounting.Counter;
+import competitivecounting.CountingContext;
 import competitivecounting.dialogue.Dialogue;
 import discord4j.core.object.entity.Message;
 
@@ -14,6 +15,6 @@ public abstract class VaultDrop {
         return weight;
     }
 
-    public abstract void payout(Message message, Dialogue dialogue, Counter counter);
+    public abstract void payout(Message message, Dialogue dialogue, Counter payoutReceiver, CountingContext contextAtVaultSpawn);
 }
 

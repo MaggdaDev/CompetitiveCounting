@@ -23,16 +23,7 @@ public class Dialogue {
     private Thread thread;
     private Function<String, String> npcLineConverter;
     private boolean cancelAllRemaining = false;
-
-    public static class DialogStatusInfo {
-        public WaitingStatus waitingStatus;
-        public DialogStatusInfo(WaitingStatus waitingStatus) {
-            this.waitingStatus = waitingStatus;
-        }
-    }
-    public enum WaitingStatus {
-        CREATED, WAITING, FINISHED, TIMED_OUT
-    }
+    private final List<Consumer<Message>> onCanceled = new ArrayList<>();
 
     public Dialogue addNpcLine(String text, int readTimeMillis) {
         elements.add(new NpcLine(text, readTimeMillis, str -> npcLineConverter != null ? npcLineConverter.apply(str) : str, true));
@@ -121,12 +112,14 @@ public class Dialogue {
             Message currentMessage = message;
             while (currentState < elements.size()) {
                 if (cancelAllRemaining) {
+                    onCanceled.forEach(consumer -> consumer.accept(message));
                     break;
                 }
                 DialogueElement element = elements.get(currentState);
                 element.run(currentMessage);
                 if (element.shouldCancelRemaningElements()) {
                     currentState = elements.size();
+                    onCanceled.forEach(consumer -> consumer.accept(message));
                 }
                 if (element.getNewMessage().isPresent()) {
                     currentMessage = element.getNewMessage().get();
@@ -138,6 +131,7 @@ public class Dialogue {
             }
         };
         if (blocking) {
+            thread = Thread.currentThread();
             dialogueRunnable.run();
         } else {
             thread = new Thread(dialogueRunnable);
@@ -164,8 +158,8 @@ public class Dialogue {
         return elements;
     }
 
-    public void addParallelWaitingDialogueElement(DialogueElement[] sufficient, DialogueElement[] necessary) {
-        elements.add(new ParallelDialogElements(sufficient, necessary));
+    public void addParallelWaitingDialogueElement(ParallelDialogElements parallelDialogElements) {
+        elements.add(parallelDialogElements);
     }
 
     public void cancelAllRemaining() {
@@ -190,5 +184,10 @@ public class Dialogue {
                 .addWaitForEmojiReaction(CountingEmojis.THUMBS_DOWN, cancelRemainingDialogOnThumbsDown, onCancel, counterIdRestriction,
                         ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)
                 .finishParallelDialogElementsAndAdd(timeoutSeconds, onTimeout);
+    }
+
+    public Dialogue addOnCanceled(Consumer<Message> onCanceled) {
+        this.onCanceled.add(onCanceled);
+        return this;
     }
 }

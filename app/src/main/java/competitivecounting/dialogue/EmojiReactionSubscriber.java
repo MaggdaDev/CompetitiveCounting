@@ -9,17 +9,15 @@ import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class EmojiReactionSubscriber extends DialogueElement {
+public class EmojiReactionSubscriber extends ParallelizableDialogueElement {
     private final ReactionEmoji emoji;
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
     private EmojiReactHandler emojiReactHandler;
-    private boolean shouldCancelRemainingDialogue = false;
 
     private BiFunction<Message, Counter, Boolean> onReactCallback = null;
     private final AtomicReference<String> counterIdRestriction;
@@ -27,26 +25,24 @@ public class EmojiReactionSubscriber extends DialogueElement {
     private Thread waitingThread = null;
     private final long timeoutSeconds;
     private final Function<Message, Boolean> onTimeout;
-    private final Dialogue.DialogStatusInfo dialogStatusInfo;
-
-    public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
-                                   BiFunction<Message, Counter, Boolean> onReactCallback, AtomicReference<String> counterIdRestriction,
-                                   long timeoutSeconds, Function<Message, Boolean> onTimeoutCallback) {
-        this(emoji, shouldCancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction, timeoutSeconds, onTimeoutCallback,
-                new Dialogue.DialogStatusInfo(Dialogue.WaitingStatus.CREATED));
-    }
 
     public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
                                    BiFunction<Message, Counter, Boolean> onReactCallback, AtomicReference<String> counterIdRestriction,
                                    long timeoutSeconds, Function<Message, Boolean> onTimeoutCallback,
-                                   Dialogue.DialogStatusInfo dialogStatusInfo) {
+                                   Finishable parentLock) {
+        super(parentLock);
         this.emoji = emoji;
-        this.shouldCancelRemainingDialogue = shouldCancelRemainingDialogueOnReact;
+        setCancelRemainingElementsIfNotAlreadyCanceled(shouldCancelRemainingDialogueOnReact);
         this.onReactCallback = onReactCallback;
         this.counterIdRestriction = counterIdRestriction;
         this.timeoutSeconds = timeoutSeconds;
         this.onTimeout = onTimeoutCallback;
-        this.dialogStatusInfo = dialogStatusInfo;
+    }
+
+    public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
+                                   BiFunction<Message, Counter, Boolean> onReactCallback, AtomicReference<String> counterIdRestriction,
+                                   long timeoutSeconds, Function<Message, Boolean> onTimeoutCallback) {
+        this(emoji, shouldCancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction, timeoutSeconds, onTimeoutCallback, null);
     }
 
     @Override
@@ -62,12 +58,20 @@ public class EmojiReactionSubscriber extends DialogueElement {
                             return false;
                         }
                     }
-                    synchronized (dialogStatusInfo) { // Do not timeout while in this block for the case that onReactCallback takes a long time
-                        if (onReactCallback.apply(message, CountingBot.getCounter(msg.getGuildId().get().asString(), user.getId().asString()))) {
-                            latch.countDown(); // Signal that the reaction was received
-                            dialogStatusInfo.waitingStatus = Dialogue.WaitingStatus.FINISHED;   // In case timeout is waiting for onReactCallback, it will not execute onTimeout
-                            return true; // Return true to indicate the reaction was handled and the handler can be removed
+                    boolean reactionSuccessful;
+                    synchronized (parentLock) {
+                        if (parentLock.isFinished()) {
+                            System.out.println("Parent lock is already finished, ignoring reaction");
+                            return true;
                         }
+                        reactionSuccessful = onReactCallback.apply(message, CountingBot.getCounter(msg.getGuildId().get().asString(), user.getId().asString()));
+                        if (reactionSuccessful) {
+                            setFinished();
+                        }
+                    }
+                    if (reactionSuccessful) {
+                        latch.countDown(); // Signal that the reaction was received
+                        return true;
                     }
                     return false;
                 },
@@ -75,30 +79,30 @@ public class EmojiReactionSubscriber extends DialogueElement {
         );
         waitingThread = Thread.currentThread();
         try {
-            dialogStatusInfo.waitingStatus = Dialogue.WaitingStatus.WAITING;
             latch.await(timeoutSeconds, java.util.concurrent.TimeUnit.SECONDS); // Wait for the reaction or timeout
-            synchronized (dialogStatusInfo) {
-                if (dialogStatusInfo.waitingStatus == Dialogue.WaitingStatus.FINISHED) {
-                    return;
-                }
-                boolean waitSuccessful = latch.getCount() == 0;
-                if (waitingThread == null || !waitingThread.isAlive()) {
-                    waitSuccessful = true;
-                }
-                if (!waitSuccessful) { // timeout
-                    if (onTimeout != null) {
-                        shouldCancelRemainingDialogue = onTimeout.apply(message);
+            boolean waitSuccessful = latch.getCount() == 0;
+            if (waitingThread == null || !waitingThread.isAlive()) {
+                waitSuccessful = true;
+            }
+            if (!waitSuccessful) { // timeout
+                synchronized (parentLock) {
+                    if (parentLock.isFinished()) {
+                        System.out.println("Parent lock is already finished, ignoring timeout");
+                        return;
                     }
+                    if (onTimeout != null) {
+                        setCancelRemainingElementsIfNotAlreadyCanceled(onTimeout.apply(message));
+                    }
+                    setFinished();
                 }
+
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            System.out.println("EmojiReactionSubscriber waiting thread interrupted: " + e.getMessage());
+            cancelRemainingElements();
+        } finally {
+            setFinished();
         }
-    }
-
-    @Override
-    public boolean shouldCancelRemaningElements() {
-        return shouldCancelRemainingDialogue;
     }
 
     @Override

@@ -33,6 +33,9 @@ public class EquippablesDeserializer implements JsonDeserializer<Equippable> {
             case DowsingRod.NAME:
                 ret = context.deserialize(obj, DowsingRod.class);
                 break;
+            case SponsoredMonocle.NAME:
+                ret = context.deserialize(obj, SponsoredMonocle.class);
+                break;
             default:
                 throw new JsonParseException("Unknown type: " + type);
         }
