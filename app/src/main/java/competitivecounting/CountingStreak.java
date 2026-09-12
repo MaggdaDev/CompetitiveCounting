@@ -199,7 +199,7 @@ public class CountingStreak {
 
         String nextCountDisplay = (currentBase == 10)
                 ? String.valueOf(counter)
-                : BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + counter + ")";
+                : BaseSystems.decimalToSystem(counter, currentBase) + " (=" + counter + ")";
 
         String ruleWinnerId = null;
         int winFromRules = 0;

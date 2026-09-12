@@ -98,7 +98,7 @@ public class CommunityVault extends Vault {
                         riddleDialogue.cancelAllRemaining();
                         return;
                     }
-                    CountingBot.write(m, "Time's up! " + submittedKeysByUserId.size() + " suggestions were submitted. The vault is now locked "
+                    CountingBot.write(m, "Time's up! " + submittedKeysByUserId.size() + " suggestions were submitted. The vault is now locked"
                             + " with the key that is closest to " + reducedAverage + ". To find out who got the key right, please"
                             + " all write your suggestions into this channel now, using the syntax `~[key]`!");
                 });

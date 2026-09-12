@@ -117,7 +117,8 @@ public class TrophyHandler {
         if (trophy > 0) {
             return "\uD83C\uDFC6 " + trophy;
         }
-        String startText = "<:special_trophy:1546098104141619271> " + trophy + ": ";
+        String trophyEmojiString = "<:special_trophy:1546098104141619271> ";
+        String startText = trophyEmojiString + trophy + ": ";
         switch (trophy) {
             case -753:
                 return startText + "_Relic of Prestige from the Fallen Empire_";
@@ -130,12 +131,11 @@ public class TrophyHandler {
             case -1050505:
                 return startText + "_Gucci Fendi & Prada Collector_";
             case -4:
-                return "Trophy of the Fourth Virtue: _Tropaeum Temperantiae_";
+                return trophyEmojiString + "Trophy of the Fourth Virtue: _Tropaeum Temperantiae_";
             default:
                 return startText;
         }
     }
-
 
     private double trophyChanceFromNumber(double number) {
         return 1.0 / (100.0 + 300.0 * Math.exp(-0.05 * number) + 100.0 * Math.exp(-0.01 * number));
