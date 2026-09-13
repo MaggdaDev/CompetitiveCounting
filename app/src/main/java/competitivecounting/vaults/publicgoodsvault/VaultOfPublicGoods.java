@@ -476,7 +476,7 @@ public class VaultOfPublicGoods extends Vault {
     }
 
     @Override
-    protected String getVaultName() {
+    public String getVaultName() {
         return NAME;
     }
 

@@ -25,6 +25,7 @@ public abstract class Vault {
         + "> {riddle}\n-# To submit the key, use `~<key>`(e.g. `~42`).";
 
     public final static long RIDDLE_KEY_TIMEOUT_SECONDS = 30;
+    private boolean isRunning = false;
     public Vault(double spawnChance, Function<CountingContext, Boolean> requirementsChecker) {
         this.spawnChance = spawnChance;
         this.requirementsChecker = requirementsChecker;
@@ -44,6 +45,7 @@ public abstract class Vault {
      * @return the riddle solver
      */
     public final Counter doRiddleBlockingly(Message message, CountingContext context) {
+        isRunning = true;
         currentRiddleDialogue = createRiddleDialogue(message, context);
         currentRiddleDialogue.playBlocking(message);
         return currentRiddleDialogue != null ? currentRiddleDialogue.getWinningCounter(message) : null;
@@ -67,6 +69,7 @@ public abstract class Vault {
             currentRiddleDialogue.stop();
             currentRiddleDialogue = null;
         }
+        isRunning = false;
     }
 
     public boolean maybeSpawn(CountingContext context) {
@@ -81,11 +84,7 @@ public abstract class Vault {
         reset();
     }
 
-    protected void setCurrentRiddleDialogue(RiddleDialogue currentRiddleDialogue) {
-        this.currentRiddleDialogue = currentRiddleDialogue;
-    }
-
-    protected abstract String getVaultName();
+    public abstract String getVaultName();
     public abstract String getSpawnConditionsDescription();
 
     public boolean canSpawn(CountingContext context) {
@@ -103,15 +102,11 @@ public abstract class Vault {
         return RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
     }
 
-    public String getVaultNamePublicly(Vault activeVault) {
-        return activeVault.getVaultName();  // kuk kak jawer
-    }
-
     public void addOnDropReceivedListener(BiConsumer<Counter, VaultDrop> listener) {
         onDropReceived.add(listener);
     }
 
-
-
-
+    public boolean isRunning() {
+        return isRunning;
+    }
 }

@@ -67,7 +67,7 @@ public class VaultSpawner {
                 }
             }
         }
-        ret.append((hasActiveVault()) ? "\n\nThere is currently a **" + activeVault.getVaultName() + "** active!" : "");
+        ret.append((hasRunningVault()) ? "\n\nThere is currently a **" + activeVault.getVaultName() + "** active!" : "");
         return ret.toString();
 
     }
@@ -127,8 +127,11 @@ public class VaultSpawner {
         return activeVault;
     }
 
-    public boolean hasActiveVault() {
-        return activeVault != null;
+    public boolean hasRunningVault() {
+        if (activeVault == null) {
+            return false;
+        }
+        return activeVault.isRunning();
     }
 
     public void dispose() {

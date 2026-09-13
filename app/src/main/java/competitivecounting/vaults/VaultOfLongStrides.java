@@ -35,7 +35,7 @@ public class VaultOfLongStrides extends Vault {
     }
 
     @Override
-    protected String getVaultName() {
+    public String getVaultName() {
         return NAME;
     }
 

@@ -102,7 +102,7 @@ public class PrimeVault extends Vault {
     }
 
     @Override
-    protected String getVaultName() {
+    public String getVaultName() {
         return "Vault of Primes";
     }
 

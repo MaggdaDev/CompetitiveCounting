@@ -112,8 +112,8 @@ public class CountingStreak {
             CountingBot.write(message, "This number will be ignored; A streak has already been started, please continue with the next number!");
             return true;
         }
-        if (vaultSpawner.hasActiveVault()) {  // check is only performed down here to see if we should communicate to the user that this number would have been ignored
-            CountingBot.write(message, "Please finish the current active " + vaultSpawner.getActiveVault().getVaultNamePublicly(vaultSpawner.getActiveVault()) + " before counting the next number, " + user.getName() + "!");
+        if (vaultSpawner.hasRunningVault()) {  // check is only performed down here to see if we should communicate to the user that this number would have been ignored
+            CountingBot.write(message, "Please finish the current active " + vaultSpawner.getActiveVault().getVaultName() + " before counting the next number, " + user.getName() + "!");
             return true;
         }
 
