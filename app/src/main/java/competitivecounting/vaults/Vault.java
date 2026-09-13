@@ -103,6 +103,10 @@ public abstract class Vault {
         return RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
     }
 
+    public String getVaultNamePublicly(Vault activeVault) {
+        return activeVault.getVaultName();  // kuk kak jawer
+    }
+
     public void addOnDropReceivedListener(BiConsumer<Counter, VaultDrop> listener) {
         onDropReceived.add(listener);
     }

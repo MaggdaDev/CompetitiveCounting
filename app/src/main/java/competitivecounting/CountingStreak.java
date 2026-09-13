@@ -108,9 +108,12 @@ public class CountingStreak {
             CountingBot.write(message, "This number will be ignored");
             return true;
         }
-
         if (lastCount == 1 && number == 1) {
             CountingBot.write(message, "This number will be ignored; A streak has already been started, please continue with the next number!");
+            return true;
+        }
+        if (vaultSpawner.hasActiveVault()) {  // check is only performed down here to see if we should communicate to the user that this number would have been ignored
+            CountingBot.write(message, "Please finish the current active " + vaultSpawner.getActiveVault().getVaultNamePublicly(vaultSpawner.getActiveVault()) + " before counting the next number, " + user.getName() + "!");
             return true;
         }
 
@@ -150,8 +153,11 @@ public class CountingStreak {
                 }
             }
             if (timeLimitNewlyAdded) {
+                String notimeAddCost = (user.getAddruleDiscountFactor() != 1.0) ?
+                        Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice*user.getAddruleDiscountFactor()))
+                        : String.valueOf(currTimePrice);
                 CountingBot.write(message, "Watch out! The next number will activate the timelimit countdown!\n" + user.getPing() + " be ready to keep counting!\n" +
-                        "-# Hint: `~addrule notime` can be used to remove the time limit, but it will cost more money.");  // 67 wer das findet ist dumm leel kann das auf sohn ~~500~~ 450 upgraden bin zu faul leel
+                        "-# Hint: `~addrule notime` can be used to remove the time limit, but it will cost " + notimeAddCost + " money.");
                 timeLimitNewlyAdded = false;
             }
             lastCounterId = user.getId();
@@ -203,7 +209,7 @@ public class CountingStreak {
 
         String ruleWinnerId = null;
         int winFromRules = 0;
-        String moneyInformation = ""; // who lost what to whom, the all known w fragen
+        String moneyInformation; // who lost what to whom, the all known w fragen
 
         if (winnerRule != null) {
             int loss;
@@ -212,6 +218,8 @@ public class CountingStreak {
                 causeForLose = "Slowmode-rule broken";
             } else if (winnerRule instanceof TimeLimitRule) {
                 causeForLose = "Timelimit-rule broken";
+            } else if (destroyedByWrongCapture) {
+                causeForLose = "Incorrectly answered captcha";
             }
 
             if (winnerRule.getOwnerId().equals(user.getId())) {
@@ -243,6 +251,8 @@ public class CountingStreak {
 
             if (!user.getId().equals(lastCounterId)) {
                 CountingBot.write(message, "Wrong number!\n" + user.getName() + " messed up after " + countDisplay + ". The next number would have been " + nextCountDisplay + ".");
+            } else if (destroyedByWrongCapture){
+                CountingBot.write(message, "Incorrectly answered captcha!\n" + user.getName() + " scripted all the way to " + countDisplay + "! Please count by hand next time...");
             } else {
                 CountingBot.write(message, "Oops!\n" + user.getName() + " counted twice in a row at " + countDisplay + ".");
             }
@@ -642,18 +652,21 @@ public class CountingStreak {
                 break;
             case "notime":
                 if (!author.canAfford(currTimePrice)) {
-                    CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + currTimePrice + " money to remove the current time rule.");
+                    CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " +
+                            Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice * author.getAddruleDiscountFactor())) + " money to remove the current time rule.");
                     break;
                 }
                 if (slowModeRule != null) {
                     slowModeRule.stop();
-                    CountingBot.write(message, "Removed the rule " + slowModeRule.toString() + " for " + currTimePrice + " money.");
+                    CountingBot.write(message, "You paid " + Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice * author.getAddruleDiscountFactor())) +
+                            " to remove: " + slowModeRule.toString());
                     slowModeRule = null;
                     author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
                     currTimePrice *= timePriceFact;
                 } else if (timeLimitRule != null) {
                     timeLimitRule.cancel();
-                    CountingBot.write(message, "Removed the rule " + timeLimitRule.toString() + " for " + currTimePrice + " money.");
+                    CountingBot.write(message, "You paid " + Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice * author.getAddruleDiscountFactor())) +
+                            " to remove: " + timeLimitRule.toString());
                     timeLimitRule = null;
                     author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
                     currTimePrice *= timePriceFact;

@@ -10,7 +10,7 @@ public class VaultLocator extends Equippable {
     public final static String COLLECTION_DESCRIPTION = "You can now locate vaults (~vaults for more info). \n-# Vaults located: {0}";
     public final static Price PRICE = new Price(1, Price.Unit.PRESTIGE_POINTS);
     public VaultLocator(Counter owner) {
-        super(PRICE, NAME,DESCRIPTION, owner);
+        super(PRICE, NAME, DESCRIPTION, owner);
     }
 
 

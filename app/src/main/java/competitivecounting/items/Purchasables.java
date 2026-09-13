@@ -30,7 +30,7 @@ public class Purchasables {
     public static boolean isValidPurchasable(String itemAsNameOrNumber) {
         try {
             int number = Integer.parseInt(itemAsNameOrNumber);
-            return  1 <= number && number <= PURCHASABLE_ITEMS.length;
+            return 1 <= number && number <= PURCHASABLE_ITEMS.length;
         } catch(NumberFormatException e) {
             // continue
         }

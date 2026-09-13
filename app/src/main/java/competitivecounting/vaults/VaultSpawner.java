@@ -40,9 +40,9 @@ public class VaultSpawner {
     }
 
     private String getStreakVaultInfo(Counter counter, CountingStreak streak) {
-        String ret = getStaticVaultInfo(counter, Optional.of(streak));
+        StringBuilder ret = new StringBuilder(getStaticVaultInfo(counter, Optional.of(streak)));
         if (previousContext == null) {
-            return ret;
+            return ret.toString();
         }
 
         List<Vault> eligibleVaults = new ArrayList<>();
@@ -51,28 +51,29 @@ public class VaultSpawner {
                 eligibleVaults.add(vault);
             }
         }
-        ret += "\n";
-        if (eligibleVaults.size() == 0) {
-            ret += "The last count did not meet the requirements of any vault!";
+        ret.append("\n");
+        if (eligibleVaults.isEmpty()) {
+            ret.append("The last count did not meet the requirements of any vault!");
         } else if (eligibleVaults.size() == 1) {
-            ret += "The last count only met the requirements for the " + eligibleVaults.get(0).getVaultName() + ".";
+            ret.append("The last count only met the requirements for the ").append(eligibleVaults.get(0).getVaultName()).append(".");
         } else {
-            ret += "The last count met the requirements of the following vaults: \n";
+            ret.append("The last count met the requirements of the following vaults: \n");
             for (int i = 0; i < eligibleVaults.size(); i++) {
-                ret += eligibleVaults.get(i).getVaultName();
+                ret.append(eligibleVaults.get(i).getVaultName());
                 if (i == eligibleVaults.size() - 2) {
-                    ret += " & ";
+                    ret.append(" & ");
                 } else if (i <= eligibleVaults.size() - 3) {
-                    ret += ", ";
+                    ret.append(", ");
                 }
             }
         }
-        return ret;
+        ret.append((hasActiveVault()) ? "\n\nThere is currently a **" + activeVault.getVaultName() + "** active!" : "");
+        return ret.toString();
 
     }
 
     private static String getStaticVaultInfo(Counter counter, Optional<CountingStreak> streak) {
-        String s = "If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n";
+        StringBuilder s = new StringBuilder("If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n");
         for (Vault vault : ALL_VAULTS) {
             int odds = (int) Math.round(1. / vault.getSpawnChance());
             double spawnChance = vault.getSpawnChance();
@@ -84,10 +85,9 @@ public class VaultSpawner {
                 }
             }
             int oddsWithBoni = (int) Math.round(1. / spawnChance);
-            s += "- " + vault.getVaultName() + ": " + vault.getSpawnConditionsDescription() +
-                    (spawnChance <= 0 ? "" : "(1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n");
+            s.append("- ").append(vault.getVaultName()).append(": ").append(vault.getSpawnConditionsDescription()).append(spawnChance <= 0 ? "" : " (1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n");
         }
-        return s;
+        return s.toString();
     }
 
     public Optional<Vault> maybeSpawnVault(Message message, CountingContext context) {
@@ -125,6 +125,10 @@ public class VaultSpawner {
 
     public Vault getActiveVault() {
         return activeVault;
+    }
+
+    public boolean hasActiveVault() {
+        return activeVault != null;
     }
 
     public void dispose() {
