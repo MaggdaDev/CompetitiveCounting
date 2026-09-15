@@ -15,6 +15,8 @@ public class RootRule extends NumberRule{
 
     private final int root, base;
     final static String NUMBER_RULE_TYPE = "ROOT";
+    private final String ruleTypeString = "Numbers must not an integer root of power: ";
+    private final int MINIMUM_VALUE = 2;
     public RootRule(String owner, int nthRoot, int base) {
         super(owner, NUMBER_RULE_TYPE);
         this.root = nthRoot;
@@ -53,6 +55,11 @@ public class RootRule extends NumberRule{
     @Override
     public String getValueInBase() {
         return BaseSystems.decimalToSystem(root, base);
+    }
+
+    @Override
+    public int getMinimumValue() {
+        return MINIMUM_VALUE;
     }
 
 }

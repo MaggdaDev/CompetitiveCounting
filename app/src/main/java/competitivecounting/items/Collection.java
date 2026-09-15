@@ -63,7 +63,7 @@ public class Collection {
 
     @Override
     public String toString() {
-        if (getEquippables().size() == 0) {
+        if (getEquippables().isEmpty()) {
             return "Your collection is empty! You can add up to " + getMaxSize() + " different equippables " +
                     "to your collection by calling `~inv use` on them. \nBe ready for a global multiplicative bonus scaling with the amount of unique items in your collection!";
         }

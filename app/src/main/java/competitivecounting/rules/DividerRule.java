@@ -6,6 +6,7 @@ public class DividerRule extends NumberRule {
     private final int divider, base;
     final static String NUMBER_RULE_TYPE = "DIVIDER";
     private final String ruleTypeString = "Numbers must not be divisible by: ";
+    private final static int MINIMUM_VALUE = 2;
     public DividerRule(String ownerId, int divider, int base) {
         super(ownerId, NUMBER_RULE_TYPE);
         this.divider = divider;
@@ -25,6 +26,11 @@ public class DividerRule extends NumberRule {
     @Override
     public String getRuleTypeString() {
         return ruleTypeString;
+    }
+
+    @Override
+    public int getMinimumValue() {
+        return MINIMUM_VALUE;
     }
 
     @Override

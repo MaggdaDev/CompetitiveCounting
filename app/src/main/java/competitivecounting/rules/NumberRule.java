@@ -5,6 +5,10 @@
  */
 package competitivecounting.rules;
 
+import reactor.util.function.Tuple2;
+
+import java.util.Objects;
+
 /**
  *
  * @author DavidPrivat
@@ -22,6 +26,21 @@ public abstract class NumberRule implements Rule {
     
     public abstract String toString();
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NumberRule that = (NumberRule) o;
+
+        return Objects.equals(numberRuleType, that.numberRuleType) &&
+                Objects.equals(getValueInBase(), that.getValueInBase());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(numberRuleType, getValueInBase());
+    }
+
     public abstract String getRuleTypeString();
 
     public abstract String getValueInBase();
@@ -34,4 +53,6 @@ public abstract class NumberRule implements Rule {
     public String getNumberRuleType() {
         return numberRuleType;
     }
+
+    public abstract int getMinimumValue();
 }

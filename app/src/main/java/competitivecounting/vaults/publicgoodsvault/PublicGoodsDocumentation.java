@@ -103,11 +103,11 @@ public class PublicGoodsDocumentation {
         if (buyIn >= 0) {
             s.append("Buy-in: ").append(buyIn).append(" money\n\n");
         }
-        if (stageContributions.size() > 0) {
+        if (!stageContributions.isEmpty()) {
             s.append("## Stages:\n");
             for (int i = 0; i < stageContributions.size(); i++) {
                 StageContribution contribution = stageContributions.get(i);
-                s.append("- " + contribution.stageNumber + ": ")
+                s.append("- ").append(contribution.stageNumber - 1).append(": ")
                         .append(contribution.crocCoinsContributed)
                         .append(" CC contributed");
                 if (potData.size() > i) {

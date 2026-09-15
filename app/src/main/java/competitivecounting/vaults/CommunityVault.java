@@ -11,21 +11,25 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 public class CommunityVault extends Vault {
+    public final static int MIN_KEY = 0, MAX_KEY = 100;
+    private final static double EXTRA_CONDITION_FACT = 2.;
     public final static String NAME = "Community Vault";
     private final static double SPAWN_CHANCE = 1. / 40.;
-    private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. The initial suggestion for the key is {1}, "
-            + "but everyone may suggest their own key using the command `/" + SlashCommandHandler.SUBMIT_KEY_COMMAND + "`. "
-            + "In the end, the vault will be locked using the key that is closest to 2/3 of the average over all the submitted keys and the initially suggested"
-            + " key. ";
+    private final static String RIDDLE = "The key for this vault will be determined in {0} seconds. " +
+            "Everyone may suggest a number between " + MIN_KEY + " and " + MAX_KEY + " using the command `/" +
+            SlashCommandHandler.SUBMIT_KEY_COMMAND + "`. Win by being the first to suggest a key meeting one of the following 2 win conditions: " +
+            "Be either the closest to 2/3 of the average, or at least " + EXTRA_CONDITION_FACT + "x as large!{1}";
     private final static int TOTAL_RIDDLE_TIME = 20;
     private final static long TIME_INTERVAL_COMMUNITY_COUNT = 20;
+
+    private double lastAverage = -1;
 
     public CommunityVault() {
         super(SPAWN_CHANCE, context -> {
@@ -52,55 +56,43 @@ public class CommunityVault extends Vault {
 
     @Override
     public RiddleDialogue createRiddleDialogue(Message message, CountingContext context) {
-        int x = randomInt(10, 100);
-        String vaultId = String.valueOf(randomInt(1000, 9999));
         String riddleText = getRiddleText(
-                RIDDLE.replace("{0}", String.valueOf(TOTAL_RIDDLE_TIME))
-                        .replace("{1}", String.valueOf(x))
-                        .replace("{2}", vaultId), context.getCounter().getName());
-        HashMap<String, Integer> submittedKeysByUserId = new HashMap<>();
+                RIDDLE.replace("{0}", String.valueOf(TOTAL_RIDDLE_TIME)), context.getCounter().getName())
+                .replace("{1}", lastAverage == -1 ?
+                        "" : "\n-# Last average in this streak: " + String.format(Locale.US, "%.2f", lastAverage) + ".");
+        LinkedHashMap<String, Integer> submittedKeysByUserId = new LinkedHashMap<>();
         RiddleDialogue riddleDialogue = new RiddleDialogue();
         riddleDialogue.addNpcLine(riddleText, 0)
                 .addKeySubmissionAwaiter((userId, key) -> {
                     InteractionApplicationCommandCallbackSpec.Builder specBuilder = InteractionApplicationCommandCallbackSpec.builder()
                             .ephemeral(true);
-                    if (key < 0) {
-                        specBuilder.content("Please submit a non-negative integer as key suggestion!");
-                    } else if (key > Integer.MAX_VALUE / 100) {
-                        specBuilder.content("Please do not submit a suggestion near the integer limit!");
+                    int keyInt = (int) key;
+                    if (submittedKeysByUserId.containsKey(userId)) {
+                        specBuilder.content("You have already submitted a key suggestion for this vault!");
                     } else {
-                        int keyInt = (int) key;
-                        if (submittedKeysByUserId.containsKey(userId)) {
-                            specBuilder.content("You have already submitted a key suggestion for this vault!");
-                        } else {
-                            submittedKeysByUserId.put(userId, keyInt);
-                            specBuilder.content("You have submitted the key " + keyInt + ".");
-                        }
+                        submittedKeysByUserId.put(userId, keyInt);
+                        specBuilder.content("You have submitted the key " + keyInt + ".");
                     }
                     return specBuilder.build();
                 }, new CountDownLatch(1), () -> false, TOTAL_RIDDLE_TIME)
                 .addRunnable(m -> {
-                    double totalSum = x;
+                    double totalSum = 0;
                     for (int submittedKey : submittedKeysByUserId.values()) {
                         totalSum += submittedKey;
                     }
-                    double average = totalSum / (submittedKeysByUserId.size() + 1);
-                    String reducedAverage = String.format(Locale.US, "%.2f", average * 2 / 3);
-                    String winningUserId = getWinningUserID(average, x, submittedKeysByUserId);
+                    double average = totalSum / (submittedKeysByUserId.size());
+                    System.out.println("Average: " + average);
+                    String reducedAverage = String.format(Locale.US, "%.1f", average * 2. / 3.);
+                    String winningUserId = determineWinner(average, submittedKeysByUserId);
                     riddleDialogue.setRiddleSolverId(winningUserId);
                     if (submittedKeysByUserId.isEmpty()) {
                         CountingBot.write(m, "No key suggestions were submitted - this vault will remain locked!");
                         riddleDialogue.cancelAllRemaining();
                         return;
-                    } else if (winningUserId.isEmpty()) {
-                        CountingBot.write(m, "Even though " + submittedKeysByUserId.size() + " suggestions were submitted, but the initial suggestion of " + x + " was closest to 2/3 of the average, which is " + reducedAverage + "."
-                                + " Try again with the next " + getVaultName() + "!");
-                        riddleDialogue.cancelAllRemaining();
-                        return;
                     }
-                    CountingBot.write(m, "Time's up! " + submittedKeysByUserId.size() + " suggestions were submitted. The vault is now locked"
-                            + " with the key that is closest to " + reducedAverage + ". To find out who got the key right, please"
-                            + " all write your suggestions into this channel now, using the syntax `~[key]`!");
+                    lastAverage = average;
+                    String timesUpMsg = getTimesUpString(submittedKeysByUserId, reducedAverage, average);
+                    CountingBot.write(m,  timesUpMsg );
                 });
         riddleDialogue.addWaitForCorrectSolutionAndSetWinningUserRef((msg, answer) -> {
             String authorId = msg.getAuthor().get().getId().asString();
@@ -118,28 +110,50 @@ public class CommunityVault extends Vault {
         return riddleDialogue.addWaitForKeyReaction();
     }
 
+    private static String getTimesUpString(LinkedHashMap<String, Integer> submittedKeysByUserId, String reducedAverage, double average) {
+        String pluralOrSingular = submittedKeysByUserId.size() == 1 ? " suggestion was" : " suggestions were";
+        String timesUpMsg = "Time's up! " + submittedKeysByUserId.size() + pluralOrSingular + " submitted with average " + format(average) +  ". Win condition";
+        if (average * EXTRA_CONDITION_FACT <= MAX_KEY) {
+            timesUpMsg += "s:\n- Key ≥ " + (int) Math.ceil(average * EXTRA_CONDITION_FACT)
+             + "\n- 2) Key closest to " + reducedAverage;
+        } else {
+            timesUpMsg +=":\n- Key closest to " + reducedAverage;
+        }
+        return timesUpMsg + "\nTo find out who got the key right, please"
+                + " all write your suggestions into this channel now, using the syntax `~[key]`!";
+    }
+
     /**
      *
      * @param average
-     * @param x
      * @param submittedKeysByUserId
      * @return the winning key, or -1 if the bot won
      */
-    private static String getWinningUserID(double average, int x, HashMap<String, Integer> submittedKeysByUserId) {
-        double reducedAverage = average * 2 / 3;
-        String winningUserId = "";
+    private String determineWinner(double average, LinkedHashMap<String, Integer> submittedKeysByUserId) {
+        double reducedAverage = average * 2. / 3.;
+        // Check extra condition
+        String extraConditionWinner = "";
+        for (Map.Entry<String, Integer> entries : submittedKeysByUserId.entrySet()) {
+            if (entries.getValue() >=  (average * EXTRA_CONDITION_FACT)) {
+                extraConditionWinner = entries.getKey();
+                break;
+            }
+        }
+        String usualWinnerId = "";
         double closestDistance = Double.MAX_VALUE;
         for (Map.Entry<String, Integer> entries : submittedKeysByUserId.entrySet()) {
             double distance = Math.abs(entries.getValue() - reducedAverage);
             if (distance < closestDistance) {
                 closestDistance = distance;
-                winningUserId = entries.getKey();
+                usualWinnerId = entries.getKey();
             }
         }
-        if (Math.abs(x - reducedAverage) < closestDistance) {
-            winningUserId = "";
+        for (Map.Entry<String, Integer> entries : submittedKeysByUserId.entrySet()) {
+            if (Objects.equals(entries.getKey(), extraConditionWinner) || Objects.equals(entries.getKey(), usualWinnerId)) {
+                return entries.getKey();
+            }
         }
-        return winningUserId;
+        return "";
     }
 
     private void sendNotUnderstoodMessage(Message message) {
@@ -161,5 +175,9 @@ public class CommunityVault extends Vault {
         String text = RIDDLE_TEXT.replace("{author}", author).replace("{riddle}", riddle);
         text = text.substring(0, text.indexOf("-#"));
         return text;
+    }
+
+    private static String format(double d) {
+        return String.format(Locale.US, "%.1f",d);
     }
 }
