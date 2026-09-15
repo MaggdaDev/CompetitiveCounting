@@ -5,7 +5,6 @@ import competitivecounting.BaseSystems;
 public class DividerRule extends NumberRule {
     private final int divider, base;
     final static String NUMBER_RULE_TYPE = "DIVIDER";
-    public final static String COMMAND_NAME = "div";
     private final String ruleTypeString = "Numbers must not be divisible by: ";
     private final static int MINIMUM_VALUE = 2;
     public DividerRule(String ownerId, int divider, int base) {

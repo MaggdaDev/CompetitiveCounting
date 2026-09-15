@@ -3,6 +3,7 @@ package competitivecounting.interactionhandlers;
 import com.google.common.base.Objects;
 import competitivecounting.CountingBot;
 import competitivecounting.CountingStreak;
+import competitivecounting.vaults.CommunityVault;
 import competitivecounting.vaults.Vault;
 import competitivecounting.vaults.publicgoodsvault.PublicGoodsDocumentation;
 import competitivecounting.vaults.publicgoodsvault.VaultOfPublicGoods;
@@ -21,9 +22,10 @@ import java.util.Optional;
 
 public class SlashCommandHandler {
     public final static String SUBMIT_KEY_COMMAND = "guesskey";
-    private final static String SUBMIT_KEY_COMMAND_DESC = "Submit a guess for a vault key.";
+    private final static String SUBMIT_KEY_COMMAND_DESC = "Submit a guess between " + CommunityVault.MIN_KEY + " and " +
+            CommunityVault.MAX_KEY + " for a vault key.";
     private final static String SUBMIT_KEY_COMMAND_KEY_ARG_NAME = "key";
-    private final static String SUBMIT_KEY_COMMAND_KEY_ARG_DESC = "The submitted key";
+    private final static String SUBMIT_KEY_COMMAND_KEY_ARG_DESC = "The submitted key (" + CommunityVault.MIN_KEY + "-" + CommunityVault.MAX_KEY + ").";
 
     private final static String CROC_COINS_COMMAND = "croccoins";
     private final static String CROC_COINS_COMMAND_DESC = "Check your Croc Coins balance.";
@@ -55,7 +57,8 @@ public class SlashCommandHandler {
                 .ephemeral(true)
                 .build();
         invalidKeyReplySpec = InteractionApplicationCommandCallbackSpec.builder()
-                .content("Only non-negative integers are valid keys.")
+                .content("Only integers between " + CommunityVault.MIN_KEY +
+                        " and " + CommunityVault.MAX_KEY + " are valid keys.")
                 .ephemeral(true)
                 .build();
         noRecentVaultOfPublicGoodsReplySpec = InteractionApplicationCommandCallbackSpec.builder()
@@ -75,7 +78,8 @@ public class SlashCommandHandler {
                             .description(SUBMIT_KEY_COMMAND_KEY_ARG_DESC)
                             .type(ApplicationCommandOption.Type.INTEGER.getValue())
                             .required(true)
-                            .maxValue(100.)
+                            .maxValue((double)CommunityVault.MAX_KEY)
+                            .minValue((double)CommunityVault.MIN_KEY)
                             .build()
                     ).build();
 
@@ -145,7 +149,7 @@ public class SlashCommandHandler {
                             .flatMap(ApplicationCommandInteractionOption::getValue)
                             .map(ApplicationCommandInteractionOptionValue::asLong)
                             .get();
-                    if (vaultKeySubmission < 0) {
+                    if (vaultKeySubmission < CommunityVault.MIN_KEY || vaultKeySubmission > CommunityVault.MAX_KEY) {
                         throw new NumberFormatException();
                     }
                     String userId = event.getInteraction().getUser().getId().asString();

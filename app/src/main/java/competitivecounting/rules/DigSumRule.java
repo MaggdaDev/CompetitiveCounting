@@ -6,6 +6,7 @@
 package competitivecounting.rules;
 
 import competitivecounting.BaseSystems;
+import reactor.util.function.Tuple2;
 
 /**
  *
@@ -16,7 +17,6 @@ public class DigSumRule extends NumberRule{
     private final int digSum;
     private final double base;
     final static String NUMBER_RULE_TYPE = "DIGSUM";
-    public final static String COMMAND_NAME = "digsum";
     private final String ruleTypeString = "Numbers must not have a digsum of: ";
     private final int MINIMUM_VALUE = 1;
     public DigSumRule(String owner, int digSum, int base) {

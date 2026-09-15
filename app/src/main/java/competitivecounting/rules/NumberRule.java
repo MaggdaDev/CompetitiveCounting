@@ -5,6 +5,8 @@
  */
 package competitivecounting.rules;
 
+import reactor.util.function.Tuple2;
+
 import java.util.Objects;
 
 /**

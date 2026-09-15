@@ -8,7 +8,7 @@ import competitivecounting.vaults.vaultDrops.MoneyDrop;
 import discord4j.core.object.entity.Message;
 
 public class VaultOfLongStrides extends Vault {
-    public static final double SPAWN_CHANCE = 1. / 8.;
+    public static final double SPAWN_CHANCE = 1. / 12.;
     private static final int MIN_STRIDE_LENGTH = 8;
     private static final String RIDDLE = "What is the greatest common divisor of {0} and {1}?";
     private final static String NAME = "Vault of Long Strides";

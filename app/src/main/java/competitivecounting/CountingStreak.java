@@ -17,6 +17,7 @@ import reactor.core.Disposable;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.IntBinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,6 +56,14 @@ public class CountingStreak {
 
     private HashMap<String, Integer> amountOfCountsPerCounter = new HashMap<>();
     private HashMap<String, Long> lastCountingTimesPerCounter = new HashMap<>();
+
+    private static final Map<String, Unlockable> RULE_MAP = Map.of(
+            "div", Unlockable.DIV_RULE,
+            "digsum", Unlockable.DIGSUM_RULE,
+            "root", Unlockable.ROOT_RULE,
+            "slowmode", Unlockable.SLOWMODE_RULE,
+            "timelimit", Unlockable.TIMELIMIT_RULE
+    );
 
     private transient CountingContext lastCountingContext = null;
 
@@ -369,80 +378,61 @@ public class CountingStreak {
     public double getTimeRulesBonusFact() {
         if (timeLimitRule != null) {
             return TimeLimitRule.BONUS_FACTOR;
-        } else if (slowModeRule != null && slowModeRule.isNewlyAdded() == false) {
+        } else if (slowModeRule != null && !slowModeRule.isNewlyAdded()) {
             return slowModeRule.getCurrentBonusFactor();
         }
         return 1.0;
     }
 
-    private boolean canBuyDivRule(Counter author, Message message) {
-        if (!author.isUnlocked(Unlockable.DIV_RULE)) {
-            CountingBot.write(message, "You have to unlock this rule before you can use it.");
-            return false;
-        }
-        int priceInt = (int) (currDivPrice * author.getAddruleDiscountFactor());
-        if (!author.canAfford(priceInt)) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt + " money to add this new rule.");
-            return false;
-        }
-
-        return true;
+    private boolean hasUnlockedNumberRule(Counter author, String ruleType) {
+        Unlockable rule = RULE_MAP.get(ruleType);
+        return rule == null || author.isUnlocked(rule);
     }
 
-    private boolean canBuyDigSumRule(Counter author, Message message) {
-        if (!author.isUnlocked(Unlockable.DIGSUM_RULE)) {
-            CountingBot.write(message, "You have to unlock this rule before you can use it.");
-            return false;
-        }
-        int priceInt = (int) (currDigPrice * author.getAddruleDiscountFactor());
-        if (!author.canAfford(priceInt)) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt + " money to add this new rule.");
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean canBuyRootRule(Counter author, Message message) {
-        if (!author.isUnlocked(Unlockable.ROOT_RULE)) {
-            CountingBot.write(message, "You have to unlock this rule before you can use it.");
-            return false;
-        }
-        int priceInt = (int) (currRootPrice * author.getAddruleDiscountFactor());
-        if (!author.canAfford(priceInt)) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean canBuySlowmodeRule(Counter author, Message message) {
-        if (!author.isUnlocked(Unlockable.SLOWMODE_RULE)) {
-            CountingBot.write(message, "You have to unlock this rule before you can use it.");
-            return false;
-        }
-        int priceInt = (int) (currTimePrice * author.getAddruleDiscountFactor());
-        if (!author.canAfford(priceInt)) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
-            return false;
+    public boolean canAffordNumberRulesWithOneType(Message message, Counter author, String ruleType, int amountRules) {
+        int totalPrice = 0;
+        int dummyCurrentPrice = 0;
+        int fahh = 1;
+        IntBinaryOperator operation = (price, value) -> price;
+        switch (ruleType) {
+            case "div":
+                dummyCurrentPrice = currDivPrice;
+                fahh = divPriceAdd;
+                operation = Integer::sum;
+                break;
+            case "digsum":
+                dummyCurrentPrice = currDigPrice;
+                if (currentBase == 1) {
+                    fahh = 1;
+                    operation = Integer::sum;
+                } else {
+                    fahh = currentBase < 4 ? digPriceLowBaseFact : digPriceFact;
+                    operation = (price, value) -> price * value;
+                }
+                break;
+            case "root":
+                dummyCurrentPrice = currRootPrice;
+                break;
+            case "slowmode":
+            case "timelimit":
+            case "notime":
+                dummyCurrentPrice = currTimePrice;
+                fahh = timePriceFact;
+                operation = (price, value) -> price * value;
+                break;
         }
 
-        return true;
-    }
-
-    private boolean canBuyTimelimitRule(Counter author, Message message) {
-
-        if (!author.isUnlocked(Unlockable.TIMELIMIT_RULE)) {
-            CountingBot.write(message, "You have to unlock this rule before you can use it.");
-            return false;
+        for (int i = 0; i < amountRules; i++) {
+            totalPrice += dummyCurrentPrice;
+            dummyCurrentPrice = operation.applyAsInt(dummyCurrentPrice, fahh);
         }
-        int priceInt = (int) (currTimePrice * author.getAddruleDiscountFactor());
-        if (!author.canAfford(priceInt)) {
-            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " + priceInt  + " money to add this new rule.");
-            return false;
+        boolean canAfford = author.canAfford((int) (totalPrice * author.getAddruleDiscountFactor()));
+        if (!canAfford) {
+            String addOrRemoveOneOrMany = (ruleType.equals("notime")) ? "to remove the timed rules." : "to add" + ((amountRules > 1) ? " these " + amountRules + " new rules." : "this new rule.");
+            CountingBot.write(message, "You only have " + author.getScore() + " out of the needed "
+                    + Util.valueAndValueWithBoniToString(totalPrice, (int) (totalPrice * author.getAddruleDiscountFactor())) + " money " + addOrRemoveOneOrMany);
         }
-        return true;
+        return author.canAfford(totalPrice);
     }
 
     private void addRuleInfo(Message message, Counter author) {
@@ -511,115 +501,115 @@ public class CountingStreak {
             e.printStackTrace();
             return;
         }
+        if (!RULE_MAP.containsKey(ruleName) && !ruleName.equals("notime")) {
+            CountingBot.write(message, "This rule doesn't exist.");
+            return;
+        }
+        if (!hasUnlockedNumberRule(author, ruleName)) {
+            CountingBot.write(message, "You have to unlock this rule with ~unlock before you can use it.");
+            return;
+        }
+        String[] ruleNumbers;
+        if (!Set.of("notime", "timelimit").contains(ruleName)) {
+            if (splitted.length < 3) {
+                CountingBot.write(message, "Error: Please enter a number!");
+                return;
+            }
+            ruleNumbers = splitted[2].split(";");
+        } else {
+            ruleNumbers = new String[0];
+        }
+
+        if (!canAffordNumberRulesWithOneType(message, author, ruleName, ruleNumbers.length)) {
+            return;
+        }
 
         switch (ruleName) {
             case "div":
-                if (!canBuyDivRule(author, message)) {
-                    break;
-                }
-                if (splitted.length < 3) {
-                    CountingBot.write(message, "Error: Please enter a number!");
+                DividerRule dummyDivRule = new DividerRule(ownerId, 0, currentBase);
+
+                String divValidationResult = validateNumberRuleStringArray(ruleNumbers, dummyDivRule, currentBase);
+                if (!Objects.equals(divValidationResult, "valid")) {
+                    CountingBot.write(message, divValidationResult);
                     return;
                 }
 
-                DividerRule dummyRule = new DividerRule(ownerId, 0, currentBase);
+                int totalDivRulesAddedCost = 0;
+                List<DividerRule> divRulesList = new ArrayList<>();
 
-                String validationResult = validateNumberRuleStringArray(splitted[2].split(";"), dummyRule, currentBase);
-                if (!Objects.equals(validationResult, "valid")) {
-                    CountingBot.write(message, validationResult);
-                    return;
-                }
-
-                String[] bluds = splitted[2].split(";");
-                int totalRulesAddedCost = 0;
-                List<DividerRule> rulesList = new ArrayList<>();
-
-                for (String blud : bluds) {
-                    String probablyNumber = blud.trim();
+                for (String ruleNumberString : ruleNumbers) {
+                    String probablyNumber = ruleNumberString.trim();
                     if (probablyNumber.isEmpty()) continue;
                     int divInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
+
                     DividerRule ruleToAdd = new DividerRule(ownerId, divInDecimal, currentBase);
                     addNumberRule(ruleToAdd);
-                    rulesList.add(ruleToAdd);
-                    totalRulesAddedCost += currDivPrice;
+                    divRulesList.add(ruleToAdd);
+
+                    totalDivRulesAddedCost += currDivPrice;
                     author.subtractScore((int) (author.getAddruleDiscountFactor() * currDivPrice));
                     currDivPrice += divPriceAdd;
                 }
-                CountingBot.write(message, createYouPaidToAddMultipleRuleString(author, totalRulesAddedCost, rulesList));
+                CountingBot.write(message, createYouPaidToAddMultipleRuleString(author, totalDivRulesAddedCost, divRulesList));
                 break;
             case "digsum":
-                if (!canBuyDigSumRule(author, message)) {
-                    break;
-                }
-                if (splitted.length < 3) {
-                    CountingBot.write(message, "Error: Please enter a number!");
+                DigSumRule dummyDigsumRule = new DigSumRule(ownerId, 0, currentBase);
+                String digsumValidationResult = validateNumberRuleStringArray(ruleNumbers, dummyDigsumRule, currentBase);
+                if (!Objects.equals(digsumValidationResult, "valid")) {
+                    CountingBot.write(message, digsumValidationResult);
                     return;
                 }
-                int digsumInDecimal = 0;
-                try {
-                    String probablyNumber = splitted[2];
-                    if(!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
-                        CountingBot.write(message, "Error: Please enter a number in the current base system!");
-                        return;
+
+                int totalDigsumRulesAddedCost = 0;
+                List<DigSumRule> digsumRuleList = new ArrayList<>();
+
+                for (String ruleNumberString : ruleNumbers) {
+                    String probablyNumber = ruleNumberString.trim();
+                    if (probablyNumber.isEmpty()) continue;
+                    int digsumInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
+
+                    DigSumRule ruleToAdd = new DigSumRule(ownerId, digsumInDecimal, currentBase);
+                    addNumberRule(ruleToAdd);
+                    digsumRuleList.add(ruleToAdd);
+
+                    totalDigsumRulesAddedCost += currDigPrice;
+                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currDigPrice));
+                    if(currentBase == 1) {
+                        currDigPrice++;
+                    } else if (currentBase < 5) {
+                        currDigPrice *= digPriceLowBaseFact;
+                    } else {
+                        currDigPrice *= digPriceFact;
                     }
-                    digsumInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
-                } catch (NumberFormatException e) {
-                    CountingBot.write(message, "Error: Please enter an integer without special characters!");
-                    return;
                 }
-                if (digsumInDecimal < 1) {
-                    CountingBot.write(message, "Error: Please enter an integer greater than 0!");
-                    return;
-                }
-                DigSumRule addDigSum = new DigSumRule(ownerId, digsumInDecimal, currentBase);
-                addNumberRule(addDigSum);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currDigPrice, addDigSum.toString()));
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currDigPrice));
-                if(currentBase == 1) {
-                    currDigPrice++;
-                } else if(currentBase < 5) {
-                    currDigPrice *= digPriceLowBaseFact;
-                } else {
-                    currDigPrice *= digPriceFact;
-                }
+                CountingBot.write(message, createYouPaidToAddMultipleRuleString(author, totalDigsumRulesAddedCost, digsumRuleList));
                 break;
             case "root":
-                if (!canBuyRootRule(author, message)) {
-                    break;
-                }
-                if (splitted.length < 3) {
-                    CountingBot.write(message, "Error: Please enter a number!");
+                RootRule dummyRootRule = new RootRule(ownerId, 0, currentBase);
+                String rootValidationResult = validateNumberRuleStringArray(ruleNumbers, dummyRootRule, currentBase);
+                if (!Objects.equals(rootValidationResult, "valid")) {
+                    CountingBot.write(message, rootValidationResult);
                     return;
                 }
-                int rootInDecimal = 0;
-                try {
-                    String probablyNumber = splitted[2];
-                    if(!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
-                        CountingBot.write(message, "Error: Please enter a number in the current base system!");
-                        return;
-                    }
-                    rootInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
-                } catch (NumberFormatException e) {
-                    CountingBot.write(message, "Error: Please enter an integer without special characters!");
-                    return;
+
+                int totalRootRulesAddedCost = 0;
+                List<RootRule> rootRuleList = new ArrayList<>();
+
+                for (String ruleNumberString : ruleNumbers) {
+                    String probablyNumber = ruleNumberString.trim();
+                    if (probablyNumber.isEmpty()) continue;
+                    int rootInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
+
+                    RootRule ruleToAdd = new RootRule(ownerId, rootInDecimal, currentBase);
+                    addNumberRule(ruleToAdd);
+                    rootRuleList.add(ruleToAdd);
+
+                    totalRootRulesAddedCost += currRootPrice;
+                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currRootPrice));
                 }
-                if (rootInDecimal < 2) {
-                    CountingBot.write(message, "Error: Please enter an integer greater than 1!");
-                    return;
-                }
-                RootRule addRootRule = new RootRule(ownerId, rootInDecimal, currentBase);
-                addNumberRule(addRootRule);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currRootPrice, addRootRule.toString()));
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currRootPrice));
+                CountingBot.write(message, createYouPaidToAddMultipleRuleString(author, totalRootRulesAddedCost, rootRuleList));
                 break;
             case "slowmode":
-                if (!canBuySlowmodeRule(author, message)) {
-                    break;
-                }
-                if (splitted.length < 3) {
-                    CountingBot.write(message, "Error: Please enter a number!");
-                    return;
-                }
                 int slow;
                 try {
                     slow = Integer.parseUnsignedInt(splitted[2]);
@@ -641,15 +631,12 @@ public class CountingStreak {
                 currTimePrice *= timePriceFact;
                 break;
             case "timelimit":
-                if (!canBuyTimelimitRule(author, message)) {
-                    break;
-                }
                 this.timeLimitNewlyAdded = true;
                 timeLimitRule = new TimeLimitRule(ownerId, this);
 
                 CountingBot.write(message, createYouPaidToAddRuleString(author, currTimePrice, timeLimitRule.toString()));
                 if (slowModeRule != null) {
-                    CountingBot.write(message, "This rule is being replaced: " + slowModeRule.toString());
+                    CountingBot.write(message, "This rule is being replaced: " + slowModeRule);
                     slowModeRule = null;
                 }
                 author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));

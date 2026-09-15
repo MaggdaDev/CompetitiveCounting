@@ -12,7 +12,7 @@ import competitivecounting.vaults.vaultDrops.MoneyDrop;
 import discord4j.core.object.entity.Message;
 
 public class TrophyVault extends Vault {
-    public static final double SPAWN_CHANCE = 1. / 8.;
+    public static final double SPAWN_CHANCE = 1. / 12.;
     private final static String NAME = "Vault of Trophies";
     private final static String SPAWN_CONDITIONS_DESCRIPTION = "Spawns on counts whose trophy you own.";
 
@@ -22,6 +22,9 @@ public class TrophyVault extends Vault {
         super(SPAWN_CHANCE, context -> {
             Counter counter = context.getCounter();
             int number = context.getCurrentNumber();
+            if (number <= 1) {
+                return false;
+            }
             return counter.getOwnedTrophies().contains(number);
         });
         wiki = new TrophyVaultWikipedia();
