@@ -582,7 +582,6 @@ public class CountingBot {
     private void addRule(Message message) {
         String channelID = message.getChannelId().asString();
         if (streaks.containsKey(channelID)) {
-            String content = message.getContent();
             streaks.get(channelID).addRule(message, getUserIdFromDiscordUserObject(message.getAuthor().get()));
         } else {
             write(message, "You have to start a streak before you can add rules.");

@@ -18,6 +18,7 @@ import reactor.core.Disposable;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author DavidPrivat
@@ -520,27 +521,31 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter a number!");
                     return;
                 }
-                int divInDecimal = 0;
-                try {
-                    String probablyNumber = splitted[2];
-                    if(!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
-                        CountingBot.write(message, "Error: Please enter a number in the current base system!");
-                        return;
-                    }
-                    divInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
-                } catch (NumberFormatException e) {
-                    CountingBot.write(message, "Error: Please enter an integer without special characters!");
+
+                DividerRule dummyRule = new DividerRule(ownerId, 0, currentBase);
+
+                String validationResult = validateNumberRuleStringArray(splitted[2].split(";"), dummyRule, currentBase);
+                if (!Objects.equals(validationResult, "valid")) {
+                    CountingBot.write(message, validationResult);
                     return;
                 }
-                if (divInDecimal < 2) {
-                    CountingBot.write(message, "Error: Please enter an integer greater than 1!");
-                    return;
+
+                String[] bluds = splitted[2].split(";");
+                int totalRulesAddedCost = 0;
+                List<DividerRule> rulesList = new ArrayList<>();
+
+                for (String blud : bluds) {
+                    String probablyNumber = blud.trim();
+                    if (probablyNumber.isEmpty()) continue;
+                    int divInDecimal = BaseSystems.toDecimal(probablyNumber, currentBase);
+                    DividerRule ruleToAdd = new DividerRule(ownerId, divInDecimal, currentBase);
+                    addNumberRule(ruleToAdd);
+                    rulesList.add(ruleToAdd);
+                    totalRulesAddedCost += currDivPrice;
+                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currDivPrice));
+                    currDivPrice += divPriceAdd;
                 }
-                DividerRule add = new DividerRule(ownerId, divInDecimal, currentBase);
-                addNumberRule(add);
-                CountingBot.write(message, createYouPaidToAddRuleString(author, currDivPrice, add.toString()));
-                author.subtractScore((int) (author.getAddruleDiscountFactor() * currDivPrice));
-                currDivPrice += divPriceAdd;
+                CountingBot.write(message, createYouPaidToAddMultipleRuleString(author, totalRulesAddedCost, rulesList));
                 break;
             case "digsum":
                 if (!canBuyDigSumRule(author, message)) {
@@ -615,7 +620,7 @@ public class CountingStreak {
                     CountingBot.write(message, "Error: Please enter a number!");
                     return;
                 }
-                int slow = 0;
+                int slow;
                 try {
                     slow = Integer.parseUnsignedInt(splitted[2]);
                 } catch (NumberFormatException e) {
@@ -684,11 +689,52 @@ public class CountingStreak {
 
     private String createYouPaidToAddRuleString(Counter author, double cost, String ruleName) {
         double addruleDiscount = author.getAddruleDiscountFactor();
-        if(addruleDiscount == 1.0) {
-            return "You paid " + (int)cost + " to add: " + ruleName;
-        } else {
-            return "You paid ~~" + (int)cost + "~~ " + (int) (cost * addruleDiscount) + " to add: " + ruleName;
+        return "You paid " + Util.valueAndValueWithBoniToString((int) cost, (int) (cost * addruleDiscount)) + " to add: " + ruleName;
+    }
+
+    private String createYouPaidToAddMultipleRuleString(Counter author, double totalCost, List<? extends NumberRule> ruleNames) {  // what the fuck is this
+        double addruleDiscount = author.getAddruleDiscountFactor();
+        StringBuilder sb = new StringBuilder("You paid ").append(Util.valueAndValueWithBoniToString((int)totalCost, (int) (totalCost*addruleDiscount))).append(" to add: ").append(ruleNames.get(0).getRuleTypeString());
+        for (int i = 0; i < ruleNames.size(); i++) {
+            sb.append(ruleNames.get(i).getValueInBase());
+            if (i < ruleNames.size() - 1) {
+                sb.append(", ");
+            }
         }
+        return sb.toString();
+    }
+
+    public String validateNumberRuleStringArray(
+            String[] ruleArray,
+            NumberRule rule,
+            int currentBase) {
+
+        for (String ruleNumber : ruleArray) {
+            String probablyNumber = ruleNumber.trim();
+
+            if (probablyNumber.isEmpty()) {
+                continue;
+            }
+
+            int number;
+
+            try {
+                if (!BaseSystems.isNumInSystem(probablyNumber, currentBase)) {
+                    return "Error: Please enter a number in the current base system!";
+                }
+
+                number = BaseSystems.toDecimal(probablyNumber, currentBase);
+
+            } catch (NumberFormatException e) {
+                return "Error: Please enter an integer without special characters!";
+            }
+
+            if (number < rule.getMinimumValue()) {
+                return "Error: Please enter an integer greater than 1!";
+            }
+        }
+
+        return "valid";
     }
 
     public void addNumberRule(NumberRule rule) {
@@ -699,8 +745,9 @@ public class CountingStreak {
         if (numberRules.isEmpty() && timeLimitRule == null && slowModeRule == null) {
             return "No rules!";
         } else {
+            ArrayList<NumberRule> sanitisedNumberRules = sanitiseNumberRuleList(numberRules);
             String ret = "Active rules:";
-            for (NumberRule rule : numberRules) {
+            for (NumberRule rule : sanitisedNumberRules) {
                 ret += "\n\t\\- " + rule.toString();
             }
             if (slowModeRule != null) {
@@ -713,13 +760,18 @@ public class CountingStreak {
         }
     }
 
+    public ArrayList<NumberRule> sanitiseNumberRuleList(ArrayList<NumberRule> rules) {
+        return new ArrayList<>(new LinkedHashSet<>(rules));
+    }
+
     public String getCompactRulesInfo() {
         if (numberRules.isEmpty() && timeLimitRule == null && slowModeRule == null) {
             return "No rules!";
         }
         StringBuilder builder = new StringBuilder("Active Rules:");
         if (!numberRules.isEmpty()) {
-            Map<String, List<NumberRule>> rulesInAGroup = numberRules.stream().collect(Collectors.groupingBy(NumberRule::getRuleTypeString, TreeMap::new, Collectors.toList()));
+            ArrayList<NumberRule> sanitisedNumberRules = sanitiseNumberRuleList(numberRules);
+            Map<String, List<NumberRule>> rulesInAGroup = sanitisedNumberRules.stream().collect(Collectors.groupingBy(NumberRule::getRuleTypeString, TreeMap::new, Collectors.toList()));
 
             for (Map.Entry<String, List<NumberRule>> entry : rulesInAGroup.entrySet()) {
                 builder.append("\n\t\\- ").append(entry.getKey());
@@ -756,7 +808,7 @@ public class CountingStreak {
                 }
             case 1: // ~streak
                 ret = "Base: " + currentBase + (currentBase == 1 ? ", character: " : ", characters: ");
-                ret += (currentBase == 1) ? "1&1" : java.util.stream.IntStream.range(0, currentBase).mapToObj(i -> BaseSystems.digitToChar(i) + " ").collect(java.util.stream.Collectors.joining());
+                ret += (currentBase == 1) ? "1&1" : IntStream.range(0, currentBase).mapToObj(i -> BaseSystems.digitToChar(i) + " ").collect(Collectors.joining());
         }
         return ret;
     }

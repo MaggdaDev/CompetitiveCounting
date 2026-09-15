@@ -75,6 +75,7 @@ public class SlashCommandHandler {
                             .description(SUBMIT_KEY_COMMAND_KEY_ARG_DESC)
                             .type(ApplicationCommandOption.Type.INTEGER.getValue())
                             .required(true)
+                            .maxValue(100.)
                             .build()
                     ).build();
 

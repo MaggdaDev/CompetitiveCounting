@@ -13,7 +13,7 @@ public class SponsoredMonocle extends Equippable implements VaultRateModifier, T
     public final static String NAME = "Sponsored<:monocle:1548071169553338411>Monocle";
     private final static String DESCRIPTION = "When equipped, can be used to activate a sponsorship by the CrocBank Inc. for selected streaks!";
     private final static String COLLECTION_DESCRIPTION = "_Use_ to activate a sponsorship by the CrocBank Inc. for this streak.\n"
-            + "-# Money paid to CrocBank Inc.: {0}         Current bonus trophy/vault rate: {2}";
+            + "-# Money paid to CrocBank Inc.: {0}         Current bonus trophy/vault rate: {2}         Currently active: {3}";  // todo implement way to pass to this class whether it is active
     private double moneyToCrocBankInc = 0;
     public final static double BASE_TROPHY_AND_VAULT_RATE_MULTIPLIER = 1.2; // TODO auto-upgrading
 
@@ -62,10 +62,8 @@ public class SponsoredMonocle extends Equippable implements VaultRateModifier, T
             return rate;
         }
         if (!context.getStreak().getCounterIdsOfActiveSponsoredMonocles().contains(owner.getId())) {
-            System.out.println("Do not modify rate, as monocle of " + owner.getName() + " is not active in this streak.");
             return rate;
         }
-        System.out.println("Monocle: Modify rate from " + rate + " to " + Util.multiplyProbabilityThreshold(rate, getTrophyVaultRateMultiplier()));
         return Util.multiplyProbabilityThreshold(rate, getTrophyVaultRateMultiplier());
     }
 
