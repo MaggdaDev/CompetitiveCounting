@@ -13,7 +13,7 @@ public class DailyStreak {
     private boolean messedUpPreviousDay;
     private final static ZoneId TIMEZONE = ZoneId.of("Europe/Berlin");
 
-    private final static int BONUS_PER_DAY = 500;
+    private final static int BONUS_PER_DAY = 100;
 
     public DailyStreak() {
         currentCount = 0;
