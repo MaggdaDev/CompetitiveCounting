@@ -142,8 +142,10 @@ public class CountingBot {
                     contractInfo(message);
                 } else if (commandWithoutIndicator.startsWith("removecontract")) {
                     removeContract(message);
-                } else if (commandWithoutIndicator.startsWith("person") || commandWithoutIndicator.startsWith("counter") || commandWithoutIndicator.startsWith("last")) {
+                } else if (commandWithoutIndicator.startsWith("person") || commandWithoutIndicator.startsWith("counter")) {
                     personInfo(message);
+                } else if (commandWithoutIndicator.startsWith("last")) {
+                    personAndNumberInfo(message);
                 } else if (commandWithoutIndicator.startsWith("fact") || commandWithoutIndicator.startsWith("mult")) {
                     factorInfo(message);
                 } else if (commandWithoutIndicator.startsWith("streak")) {
@@ -281,6 +283,23 @@ public class CountingBot {
             CountingBot.write(message, "No current streak! You can be the first person to count.");
         }
     }
+
+    private void personAndNumberInfo(Message message) {
+        String channelId = message.getChannelId().asString();
+        if (!streaks.containsKey(channelId)) {
+            write(message, "No current streak! You can start with 1.");
+            return;
+        }
+        CountingStreak streak = streaks.get(channelId);
+        Counter lastCounter = streak.getLastCounter();
+        if (lastCounter == null) {
+            CountingBot.write(message, "No current streak! You can start with 1.");
+            return;
+        }
+        write(message, "The last number was " + Util.getNumberInBaseString(streak.getLastNum(), streak.getBase(), true) + ", counted by " + lastCounter.getName() + ".");
+    }
+
+
 
     private void numberInfo(Message message) {
         String channelId = message.getChannelId().asString();
