@@ -207,9 +207,8 @@ public class Counter implements ContractOwner {
         this.unlockedSystems = newUnlockedSys;
         this.prestigePoints -= Unlockable.getBasePrice(base);
 
-        CountingBot.write(message, "You unlocked the 'base-" + base + "-system' and paid " + Unlockable.getBasePrice(base) + " prestige points. Counting in this System will no longer give you reduced score, and you can start streaks with this system now.");
+        CountingBot.write(message, "You have unlocked base " + base + " and paid " + Unlockable.getBasePrice(base) + " prestige points. You can start streaks in this base system now, and you get a " + Counter.SYSTEM_OWNED_FACT + "x bonus on your counts in this base.");
         CountingBot.getInstance().save();
-
     }
 
     public void daily(Message message) {

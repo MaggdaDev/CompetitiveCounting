@@ -3,8 +3,8 @@ package competitivecounting.dialogue;
 import competitivecounting.Counter;
 import competitivecounting.CountingEmojis;
 import competitivecounting.interactionhandlers.SlashCommandHandler;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +47,7 @@ public class Dialogue {
         return builder;
     }
 
-    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
+    public Dialogue addWaitForEmojiReaction(Emoji emoji, boolean cancelRemainingDialogueOnReact,
                                             Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction,
                                             long timeoutSeconds, Function<Message, Boolean> onTimeout) {
         elements.add(new EmojiReactionSubscriber(emoji, cancelRemainingDialogueOnReact, (msg, user) -> {
@@ -57,14 +57,14 @@ public class Dialogue {
         return this;
     }
 
-    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, boolean cancelRemainingDialogueOnReact,
+    public Dialogue addWaitForEmojiReaction(Emoji emoji, boolean cancelRemainingDialogueOnReact,
                                             long timeoutSeconds, Function<Message, Boolean> onTimeout) {
         return addWaitForEmojiReaction(emoji, cancelRemainingDialogueOnReact, (m) -> {
                 }, new AtomicReference<>(),
                 timeoutSeconds, onTimeout);
     }
 
-    public Dialogue addWaitForEmojiReaction(ReactionEmoji emoji, BiFunction<Message, Counter, Boolean> onReactCallback,
+    public Dialogue addWaitForEmojiReaction(Emoji emoji, BiFunction<Message, Counter, Boolean> onReactCallback,
                                             long timeoutSeconds, Function<Message, Boolean> onTimeout) {
         elements.add(new EmojiReactionSubscriber(emoji, false, onReactCallback, new AtomicReference<>(),
                 timeoutSeconds, onTimeout));
@@ -82,7 +82,7 @@ public class Dialogue {
     }
 
 
-    public Dialogue addEmojiReaction(ReactionEmoji emoji) {
+    public Dialogue addEmojiReaction(Emoji emoji) {
         elements.add(new EmojiReaction((emoji)));
         return this;
     }

@@ -4,8 +4,8 @@ import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.interactionhandlers.EmojiReactHandler;
 import com.google.common.base.Objects;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class EmojiReactionSubscriber extends ParallelizableDialogueElement {
-    private final ReactionEmoji emoji;
+    private final Emoji emoji;
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
@@ -26,7 +26,7 @@ public class EmojiReactionSubscriber extends ParallelizableDialogueElement {
     private final long timeoutSeconds;
     private final Function<Message, Boolean> onTimeout;
 
-    public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
+    public EmojiReactionSubscriber(Emoji emoji, boolean shouldCancelRemainingDialogueOnReact,
                                    BiFunction<Message, Counter, Boolean> onReactCallback, AtomicReference<String> counterIdRestriction,
                                    long timeoutSeconds, Function<Message, Boolean> onTimeoutCallback,
                                    Finishable parentLock) {
@@ -39,7 +39,7 @@ public class EmojiReactionSubscriber extends ParallelizableDialogueElement {
         this.onTimeout = onTimeoutCallback;
     }
 
-    public EmojiReactionSubscriber(ReactionEmoji emoji, boolean shouldCancelRemainingDialogueOnReact,
+    public EmojiReactionSubscriber(Emoji emoji, boolean shouldCancelRemainingDialogueOnReact,
                                    BiFunction<Message, Counter, Boolean> onReactCallback, AtomicReference<String> counterIdRestriction,
                                    long timeoutSeconds, Function<Message, Boolean> onTimeoutCallback) {
         this(emoji, shouldCancelRemainingDialogueOnReact, onReactCallback, counterIdRestriction, timeoutSeconds, onTimeoutCallback, null);

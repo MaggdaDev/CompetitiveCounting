@@ -2,9 +2,11 @@ package competitivecounting.interactionhandlers;
 
 import competitivecounting.CountingEmojis;
 import discord4j.core.event.domain.message.ReactionAddEvent;
+import discord4j.core.object.emoji.CustomEmoji;
+import discord4j.core.object.emoji.Emoji;
+import discord4j.core.object.emoji.UnicodeEmoji;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.Disposable;
 
 import java.util.ArrayList;
@@ -17,14 +19,14 @@ import java.util.function.Consumer;
 public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
 
     private final String channelIdAsString;
-    private final static ReactionEmoji.Unicode TROPHY_UNICODE = CountingEmojis.TROPHY.asUnicodeEmoji().get();
-    private final static ReactionEmoji SPECIAL_TROPHY_REACTION_EMOJI = CountingEmojis.SPECIAL_TROPHY.asCustomEmoji().get();
+    private final static UnicodeEmoji TROPHY_UNICODE = CountingEmojis.TROPHY.asUnicodeEmoji().get();
+    private final static CustomEmoji SPECIAL_TROPHY_REACTION_EMOJI = CountingEmojis.SPECIAL_TROPHY.asCustomEmoji().get();
 
     private final HashMap<String, List<BiFunction<Message, User, Boolean>>> emojiReactions = new HashMap<>(); // unicodeEmoji.raw -> functions
 
     private final ArrayList<TriFunction<Message, User, Integer, Boolean>> onNumberReact = new ArrayList<>();
 
-    private final ArrayList<TriFunction<Message, User, ReactionEmoji.Unicode, Boolean>> onAnyReact = new ArrayList<>();
+    private final ArrayList<TriFunction<Message, User, UnicodeEmoji, Boolean>> onAnyReact = new ArrayList<>();
 
     private Disposable singleUseHandlerDisposable = null;
     private boolean isActive = false;
@@ -48,18 +50,18 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         if (!isActive) {
             return;
         }
-        ReactionEmoji emoji = event.getEmoji();
+        Emoji emoji = event.getEmoji();
         User user = event.getUser().block();
         if (user == null || user.isBot()) {
             return;
         }
 
         if (emoji.asUnicodeEmoji().isPresent()) {
-            ReactionEmoji.Unicode unicodeEmoji = emoji.asUnicodeEmoji().get();
+            UnicodeEmoji unicodeEmoji = emoji.asUnicodeEmoji().get();
 
             onAnyReact.removeIf(func -> func.apply(event.getMessage().block(), user, unicodeEmoji));
 
-            List<ReactionEmoji> numberList = Arrays.asList(CountingEmojis.ALL_NUMBER_EMOJIS);
+            List<Emoji> numberList = Arrays.asList(CountingEmojis.ALL_NUMBER_EMOJIS);
             if (numberList.contains(unicodeEmoji)) {
                 int number = numberList.indexOf(unicodeEmoji);
                 disposeIfSingleUse(onNumberReact.removeIf(func -> func.apply(event.getMessage().block(), user, number)));
@@ -84,11 +86,11 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         }
     }
 
-    private String getEmojiKey(ReactionEmoji emoji) {
-        if (emoji instanceof ReactionEmoji.Unicode) {
-            return ((ReactionEmoji.Unicode) emoji).getRaw();
-        } else if (emoji instanceof ReactionEmoji.Custom) {
-            ReactionEmoji.Custom custom = (ReactionEmoji.Custom) emoji;
+    private String getEmojiKey(Emoji emoji) {
+        if (emoji instanceof UnicodeEmoji) {
+            return ((UnicodeEmoji) emoji).getRaw();
+        } else if (emoji instanceof CustomEmoji) {
+            CustomEmoji custom = (CustomEmoji) emoji;
             return custom.isAnimated()
                     ? "<a:" + custom.getName() + ":" + custom.getId().asString() + ">"  // starts with <a: if animated
                     : "<:" + custom.getName() + ":" + custom.getId().asString() + ">";
@@ -96,11 +98,11 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         return emoji.toString();
     }
 
-    public void addOnEmojiReact(BiFunction<Message, User, Boolean> consumer, ReactionEmoji... emojis) {
+    public void addOnEmojiReact(BiFunction<Message, User, Boolean> consumer, Emoji... emojis) {
         if (emojis.length == 0) {
             throw new IllegalArgumentException("At least one emoji must be provided");
         }
-        for (ReactionEmoji emoji : emojis) {
+        for (Emoji emoji : emojis) {
             String emojiRaw = getEmojiKey(emoji);
             if (emojiReactions.containsKey(emojiRaw)) {
                 emojiReactions.get(emojiRaw).add(consumer);
@@ -120,11 +122,11 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         onNumberReact.add(consumer);
     }
 
-    public void addOnAnyReact(TriFunction<Message, User, ReactionEmoji.Unicode, Boolean> consumer) {
+    public void addOnAnyReact(TriFunction<Message, User, UnicodeEmoji, Boolean> consumer) {
         onAnyReact.add(consumer);
     }
 
-    public boolean hasOnAnyReact(TriFunction<Message, User, ReactionEmoji.Unicode, Boolean> consumer) {
+    public boolean hasOnAnyReact(TriFunction<Message, User, UnicodeEmoji, Boolean> consumer) {
         return onAnyReact.contains(consumer);
     }
 
@@ -132,7 +134,7 @@ public class EmojiReactHandler implements Consumer<ReactionAddEvent> {
         return onNumberReact.contains(consumer);
     }
 
-    public void removeOnAnyReact(TriFunction<Message, User, ReactionEmoji.Unicode, Boolean> consumer) {
+    public void removeOnAnyReact(TriFunction<Message, User, UnicodeEmoji, Boolean> consumer) {
         onAnyReact.remove(consumer);
     }
 

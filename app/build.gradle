@@ -11,12 +11,16 @@ plugins {
     id 'application'
     id 'antlr'
     id 'org.jetbrains.kotlin.jvm'
-
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+}
+
+application {
+    mainClass = 'competitivecounting.Main'
 }
 
 dependencies {
@@ -25,7 +29,7 @@ dependencies {
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:30.1.1-jre'
-    implementation "com.discord4j:discord4j-core:3.2.6"
+    implementation "com.discord4j:discord4j-core:3.3.3"
     implementation 'com.google.code.gson:gson:2.8.9'
 
     implementation("org.jsoup:jsoup:1.21.2")
@@ -41,15 +45,11 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-task fatJar(type: Jar) {
-    manifest {
-        attributes 'Main-Class': 'competitivecounting.Main'
-    }
-    archiveBaseName.set('competitivecounting')
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+shadowJar {
+    archiveBaseName.set("competitivecounting")
+    archiveClassifier.set("")
 }
+
 compileKotlin {
     kotlinOptions {
         jvmTarget = "11"

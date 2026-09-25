@@ -2,7 +2,6 @@ package competitivecounting.dialogue;
 
 import competitivecounting.CountingEmojis;
 import competitivecounting.CountingTest;
-import discord4j.core.object.reaction.ReactionEmoji;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -238,7 +237,7 @@ class DialogueTest extends CountingTest {
                     System.out.println("FIRST");
                     try {
                         Thread.sleep(500);
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException ignored) {
 
                     }
                     firstCalls++;
@@ -247,7 +246,7 @@ class DialogueTest extends CountingTest {
                     System.out.println("SECOND!");
                     try {
                         Thread.sleep(500);
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException ignored) {
                     }
                     secondCalls++;
                 }, new AtomicReference<>(OTHER_COUNTER_ID), ParallelDialogElementsBuilder.ParallelDialogElementType.SUFFICIENT)

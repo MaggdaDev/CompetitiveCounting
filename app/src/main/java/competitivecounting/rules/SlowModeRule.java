@@ -6,8 +6,8 @@
 package competitivecounting.rules;
 
 import competitivecounting.CountingEmojis;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 
 import java.time.Instant;
 
@@ -34,11 +34,11 @@ public class SlowModeRule implements Rule {
             public void run() {
                 epochAtStart = Instant.now().getEpochSecond();
                 int timer = secondsDiff;
-                ReactionEmoji one, two, three, clock;
-                one = ReactionEmoji.unicode("\u0031\u20E3");
-                two = ReactionEmoji.unicode("\u0032\u20E3");
-                three = ReactionEmoji.unicode("\u0033\u20E3");
-                clock = ReactionEmoji.unicode("\u23F3");
+                Emoji one, two, three, clock;
+                one = Emoji.unicode("\u0031\u20E3");
+                two = Emoji.unicode("\u0032\u20E3");
+                three = Emoji.unicode("\u0033\u20E3");
+                clock = Emoji.unicode("\u23F3");
                 message.addReaction(clock).subscribe();
                 while (timer > 0) {
                     if (shouldStop) {

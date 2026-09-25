@@ -102,7 +102,7 @@ public class TimeLimitRule implements Rule {
                 return;
             }
             hasLost = true;
-            streak.timeLimitLost(ownerId, message, loser);
+            streak.timeLimitLost(message, loser);
             CountingBot.getInstance().disposeStreak(streak.getKey());
 
         }

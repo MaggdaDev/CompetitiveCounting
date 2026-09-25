@@ -15,8 +15,9 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
-import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
+import discord4j.gateway.intent.Intent;
+import discord4j.gateway.intent.IntentSet;
 
 import java.io.IOException;
 
@@ -36,11 +37,13 @@ public class Main {
         try {
             
             String sec = Storage.loadConfig();
-            sec = sec.replaceAll("\n", "");
+            sec = sec.replace("\n", "");
             client = DiscordClientBuilder.create(sec)
-                .build()
-                .login()
-                .block();
+                    .build()
+                    .gateway()
+                    .setEnabledIntents(IntentSet.of(Intent.GUILD_MESSAGES, Intent.MESSAGE_CONTENT, Intent.DIRECT_MESSAGES))
+                    .login()
+                    .block();
         } catch(Exception e) {
             e.printStackTrace();
             return;
@@ -48,9 +51,9 @@ public class Main {
         client.getEventDispatcher().on(ReadyEvent.class)
                 .subscribe(event -> {
                     final User self = event.getSelf();
-                    System.out.println(String.format(
-                            "Logged in as %s#%s", self.getUsername(), self.getDiscriminator()
-                    ));
+                    System.out.printf(
+                            "Logged in as %s%n", self.getUsername()
+                    );
                 });
         LocalHttpServer httpServer;
         try {

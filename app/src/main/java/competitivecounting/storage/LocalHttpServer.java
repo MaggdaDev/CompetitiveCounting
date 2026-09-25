@@ -15,7 +15,7 @@ public class LocalHttpServer implements HttpHandler {
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/countingbotadmin/save", this);
         server.start();
-        System.out.println("Local http server running on:  "+ PORT);
+        System.out.println("Local http server running on port: "+ PORT);
     }
 
     public void setSaveStreaksRunnable(Runnable saveStreaksRunnable) {

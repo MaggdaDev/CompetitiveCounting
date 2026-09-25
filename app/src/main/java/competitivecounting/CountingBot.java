@@ -22,6 +22,8 @@ import competitivecounting.tradeoffer.TradeHandler;
 import competitivecounting.tradeoffer.TradeOffer;
 import competitivecounting.vaults.VaultSpawner;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.object.emoji.Emoji;
+import discord4j.discordjson.json.MessageReferenceData;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -29,7 +31,6 @@ import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateSpec;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.Disposable;
@@ -288,10 +289,7 @@ public class CountingBot {
             return;
         }
         CountingStreak streak = streaks.get(channelId);
-        int base = streak.getBase();
-        int lastNumberCounted = streak.getLastNum();
-        String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
-        write(message, "The last number was **" + (base == 10 ? lastNumberCounted + "**." : lastNumberInBase + "** (=" + lastNumberCounted + ")."));
+        write(message, "The last number was " + Util.getNumberInBaseString(streak.getLastNum(), streak.getBase(), true) + ".");
     }
 
     private void streakInfo(Message message) {
@@ -311,8 +309,6 @@ public class CountingBot {
             CountingBot.write(message, "No current streak! You can be the first person to count.");
             return;
         }
-
-        String lastNumberInBase = BaseSystems.decimalToSystem(lastNumberCounted, base);
 
         String ruleInfo = streak.getCompactRulesInfo();
         String baseInfo = streak.getBaseInfoRespond(1);
@@ -357,7 +353,7 @@ public class CountingBot {
 
         String resultInfo = "Information about the current streak:\n\n";
         resultInfo += "**" + lastCounter.getName() + "** counted the previous number.";
-        resultInfo += "\nThe last number was **" + (base == 10 ? lastNumberCounted + "**." : lastNumberInBase + "** (=" + lastNumberCounted + ").");
+        resultInfo += "\nThe last number was " + Util.getNumberInBaseString(lastNumberCounted, base, true) + ".";
         resultInfo += "\n\n" + baseInfo;
         resultInfo += "\n\n" + factorInfo;
         resultInfo += "\n\n" + ruleInfo;
@@ -646,7 +642,6 @@ public class CountingBot {
             String channelId = message.getChannelId().asString();
             disposeStreak(channelId);
         };
-        User user = message.getAuthor().get();
         String channelKey = message.getChannelId().asString();
         String content = message.getContent();
         boolean deleteStreak = false;
@@ -741,11 +736,19 @@ public class CountingBot {
         });
     }
     public static void respond(Message msg, String s) {
-        msg.getChannel().block().createMessage(s).withMessageReference(msg.getId()).subscribe();
+        MessageReferenceData reference = MessageReferenceData.builder()
+                .messageId(msg.getId().asLong())
+                .channelId(msg.getChannelId().asLong())
+                .build();
+
+        msg.getChannel().block()
+                .createMessage(s)
+                .withMessageReference(reference)
+                .subscribe();
     }
 
     // implement me!
-    public static void reactWithBlockPrevention(Message message, ReactionEmoji emoji, String emojiDisplayName) {
+    public static void reactWithBlockPrevention(Message message, Emoji emoji, String emojiDisplayName) {
         message.addReaction(emoji)
                 .onErrorResume(discord4j.rest.http.client.ClientException.class, error -> {
                     if (error.getStatus().code() == 403) {
@@ -853,9 +856,9 @@ public class CountingBot {
     }
 
     public void requestHandBagRefundViaItem(Message message) {
-        String chanelId = message.getChannelId().asString();
-        EmojiReactHandler emojiHandler = new EmojiReactHandler(chanelId, true);
-        Disposable disposableSubscription = subscribeEmojiReactHandler(emojiHandler, chanelId);
+        String channelId = message.getChannelId().asString();
+        EmojiReactHandler emojiHandler = new EmojiReactHandler(channelId, true);
+        Disposable disposableSubscription = subscribeEmojiReactHandler(emojiHandler, channelId);
         emojiHandler.activateWithSingleUseMode(disposableSubscription);
         TrophyHandler trophyHandler = new TrophyHandler(emojiHandler);
         bankCommandHandler.handBagRefundRequestedViaItemUse(message, trophyHandler);

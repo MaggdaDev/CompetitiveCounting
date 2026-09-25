@@ -38,6 +38,7 @@ public class VaultDialogue extends Dialogue {
                     return shouldCancel;
                 })
                 .addRunnable((m) -> vault.loot(m, riddleSolver, context))
+                .addRunnable((m) -> context.getStreak().notifyStreakVaultComplete(vault.getVaultName(), message))  // send in channel "you may continue counting"
                 .addRunnable(cleanupCallback);
     }
 }

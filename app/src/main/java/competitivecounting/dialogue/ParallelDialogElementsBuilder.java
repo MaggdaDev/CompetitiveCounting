@@ -1,10 +1,7 @@
 package competitivecounting.dialogue;
 
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -20,7 +17,7 @@ public class ParallelDialogElementsBuilder {
         SUFFICIENT, NECESSARY
     }
 
-    public ParallelDialogElementsBuilder addWaitForEmojiReaction(ReactionEmoji emoji,
+    public ParallelDialogElementsBuilder addWaitForEmojiReaction(Emoji emoji,
                                                                  boolean cancelRemainingDialogueOnReact,
                                                                  Consumer<Message> onReactCallback, AtomicReference<String> counterIdRestriction,
                                                                  ParallelDialogElementType type) {

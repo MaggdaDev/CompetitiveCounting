@@ -1,8 +1,6 @@
 package competitivecounting.items.equippables;
 
-import competitivecounting.Counter;
-import competitivecounting.CountingBot;
-import competitivecounting.CountingContext;
+import competitivecounting.*;
 import discord4j.core.object.entity.Message;
 
 public class PocketAbacus extends Equippable {
@@ -44,12 +42,13 @@ public class PocketAbacus extends Equippable {
         long now = java.time.Instant.now().getEpochSecond();
         if (now - lastUseSeconds < COOLDOWN_SECONDS) {
             long secondsLeft = COOLDOWN_SECONDS - (now - lastUseSeconds);
-            CountingBot.write(message, "Your " + NAME + " is on cooldown! Please wait " + secondsLeft + " more seconds before using it again.");
+            CountingBot.write(message, "Your " + NAME + " is on cooldown! Please wait " + secondsLeft + " seconds before using it again.");
             return true;
         }
         lastUseSeconds = now;
         uses++;
-        String s = "Using your " + NAME + ", you computed that the next correct number will be " + context.getStreak().getNextCorrectNumberInBase() + ".";
+        CountingStreak streak = context.getStreak();
+        String s = "Using your " + NAME + ", you computed that the next correct number will be " + Util.getNumberInBaseString(streak.getLastNum(), streak.getBase(), true) + ".";
         CountingBot.write(message, s);
         return true;
     }

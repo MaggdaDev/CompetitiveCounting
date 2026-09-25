@@ -2,9 +2,9 @@ package competitivecounting.interactionhandlers;
 
 import competitivecounting.CountingBot;
 import competitivecounting.CountingEmojis;
+import discord4j.core.object.emoji.UnicodeEmoji;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -53,7 +53,7 @@ public class CaptureHandler {
             for(int i = 0; i < 10; i ++) {
                 reactions[i] = sentCaptureMessage.addReaction(CountingEmojis.ALL_NUMBER_EMOJIS[i]);
             }
-            AtomicReference<EmojiReactHandler.TriFunction<Message, User, ReactionEmoji.Unicode, Boolean>> secretHandlerRef = new AtomicReference<>();
+            AtomicReference<EmojiReactHandler.TriFunction<Message, User, UnicodeEmoji, Boolean>> secretHandlerRef = new AtomicReference<>();
             AtomicReference<EmojiReactHandler.TriFunction<Message, User, Integer, Boolean>> numberReactRef = new AtomicReference<>();
             secretHandlerRef.set(
                     (reactedMessage, user, reactedEmoji) -> {

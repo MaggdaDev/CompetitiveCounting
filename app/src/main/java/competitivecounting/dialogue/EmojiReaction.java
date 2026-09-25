@@ -1,11 +1,11 @@
 package competitivecounting.dialogue;
 
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 
 public class EmojiReaction extends DialogueElement{
-    private final ReactionEmoji emoji;
-    public EmojiReaction(ReactionEmoji emoji) {
+    private final Emoji emoji;
+    public EmojiReaction(Emoji emoji) {
         this.emoji = emoji;
     }
 

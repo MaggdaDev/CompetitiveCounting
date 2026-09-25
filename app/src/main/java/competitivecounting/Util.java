@@ -52,6 +52,15 @@ public class Util {
         }
     }
 
+    public static String getNumberInBaseString(int number, int base, boolean ifBold) {
+        String numberInBase = BaseSystems.decimalToSystem(number, base);
+        if (ifBold) {
+            return (base == 10) ? "**" + number + "**" : "**" + numberInBase + "** (=" + number + ")";
+        } else {
+            return (base == 10) ? String.valueOf(number) : numberInBase + " (=" + number + ")";
+        }
+    }
+
     public static String bonusMultToAddPercString(double bonusMultiplier) {
         return "+" + Math.round((bonusMultiplier - 1.0d) * 100.0d) + "%";
     }

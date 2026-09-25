@@ -5,11 +5,12 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
+import discord4j.core.object.emoji.Emoji;
+import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageCreateMono;
 import discord4j.core.spec.MessageCreateSpec;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +19,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.annotation.Nullable;
 
 import javax.swing.text.html.Option;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -121,16 +120,16 @@ public class CountingTest {
 
     }
 
-    protected void simulateEmojiReaction(String reactorUserId, ReactionEmoji emoji) throws InterruptedException {
+    protected void simulateEmojiReaction(String reactorUserId, Emoji emoji) throws InterruptedException {
         ReactionAddEvent event = new ReactionAddEvent(mockedClient, null, Long.parseLong(reactorUserId), Long.parseLong(CHANNEL_ID),
-                Long.parseLong(MESSAGE_ID),null,emoji, null, Long.parseLong(counter.getId()));
+                Long.parseLong(MESSAGE_ID),null, emoji, null, Long.parseLong(counter.getId()), false, List.of(), 0);
         reactionEvents.tryEmitNext(event);
         Thread.sleep(100);
     }
 
-    protected void simulateEmojiReaction(ReactionEmoji emoji) throws InterruptedException {
+    protected void simulateEmojiReaction(Emoji emoji) throws InterruptedException {
         ReactionAddEvent event = new ReactionAddEvent(mockedClient, null, Long.parseLong(COUNTER_ID), Long.parseLong(CHANNEL_ID),
-                Long.parseLong(MESSAGE_ID),null,emoji, null, Long.parseLong(counter.getId()));
+                Long.parseLong(MESSAGE_ID),null,emoji, null, Long.parseLong(counter.getId()), false, List.of(), 0);
         reactionEvents.tryEmitNext(event);
         Thread.sleep(100);
     }

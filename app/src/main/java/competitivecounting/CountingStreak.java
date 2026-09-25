@@ -208,14 +208,9 @@ public class CountingStreak {
             timeLimitRule.cancel();
         }
 
-        // efficiency maxxing
-        String countDisplay = (currentBase == 10)
-                ? String.valueOf(lastCount)
-                : BaseSystems.decimalToSystem(lastCount, currentBase) + " (=" + lastCount + ")";
-
-        String nextCountDisplay = (currentBase == 10)
-                ? String.valueOf(counter)
-                : BaseSystems.decimalToSystem(counter, currentBase) + " (=" + counter + ")";
+        // efficiency maxxing DELUXE
+        String countDisplay = Util.getNumberInBaseString(lastCount, currentBase, false);
+        String nextCountDisplay = Util.getNumberInBaseString(counter, currentBase, false);
 
         String ruleWinnerId = null;
         int winFromRules = 0;
@@ -472,11 +467,7 @@ public class CountingStreak {
 
     private String createAddruleCostString(Counter adder, double cost) {
         double addruleDiscount = adder.getAddruleDiscountFactor();
-        if(addruleDiscount == 1.0) {
-            return "(cost: " + (int)cost + ")";
-        } else {
-            return "(cost: ~~" + (int)cost + "~~ " + (int) (cost * addruleDiscount) + ")";
-        }
+        return "(cost: " + Util.valueAndValueWithBoniToString((int) cost, (int) (cost*addruleDiscount)) + " money)";
     }
 
     public void addRule(Message message, String ownerId) {
@@ -830,7 +821,12 @@ public class CountingStreak {
         return key;
     }
 
-    public void timeLimitLost(String ownerId, Message message, Counter loser) {
+    public void notifyStreakVaultComplete(String vaultName, Message message) {
+        CountingBot.write(message, "This " + vaultName + " has concluded. You may continue counting now!\n" +
+                "The last number was " + Util.getNumberInBaseString(lastCount, currentBase, false) + ", counted by " + getLastCounter().getName() + ".");
+    }
+
+    public void timeLimitLost(Message message, Counter loser) {
         Message lostMessage = message.getChannel().block().createMessage("Whoops! Time ran out!").block();
         fail(lostMessage, lastCount, loser);
     }
@@ -886,11 +882,6 @@ public class CountingStreak {
 
     public CountingContext getLastContext() {
         return lastCountingContext;
-    }
-
-    public String getNextCorrectNumberInBase() {
-        String num = BaseSystems.decimalToSystem(counter, currentBase);
-        return num + (currentBase == 10 ? "" : " (base " + currentBase + ")");
     }
 
     public HashMap<String, Long> getLastCountingTimesPerCounter() {

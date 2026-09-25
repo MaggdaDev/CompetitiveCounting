@@ -7,8 +7,8 @@ import competitivecounting.CountingContext;
 import competitivecounting.CountingEmojis;
 import competitivecounting.items.equippables.DowsingRod;
 import competitivecounting.items.equippables.Equippables;
+import discord4j.core.object.emoji.UnicodeEmoji;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.MessageEditSpec;
 import discord4j.discordjson.possible.Possible;
 import reactor.core.publisher.Mono;
@@ -101,7 +101,7 @@ public class TrophyHandler {
         });
     }
 
-    public void spawnMooseTrophy(Message message, String originalContent, ReactionEmoji uEmoji) {
+    public void spawnMooseTrophy(Message message, String originalContent, UnicodeEmoji uEmoji) {
         String newContent = originalContent.replaceAll("(?i)mouse", "moose");
         message.removeReactions(uEmoji)
                 .then(message.edit(MessageEditSpec.create().withContent(Possible.of(Optional.of(newContent)))))

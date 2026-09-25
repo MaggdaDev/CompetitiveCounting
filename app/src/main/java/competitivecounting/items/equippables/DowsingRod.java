@@ -44,6 +44,11 @@ public class DowsingRod extends Equippable {    // TODO implements TrophyRateMod
                         return false;
                     }
                     String trophyNumberStr = content.substring(5).trim();
+                    /*
+                    todo wünschel in base! very unintuitive otherwise. should it wish in base by default? no reason not to... problem: how to get streak info when doing ~col
+                    todo this ties into the sponsored monocle not getting any streak info either, thus requiring structural changes to the architecture which I will leave up to you
+                    note that there is now a method Util.getNumberInBaseString(int number, int base, boolean ifBold) that forms a proper base string. might be worth looking at
+                     */
                     int trophyNumber;
                     try {
                         trophyNumber = Integer.parseInt(trophyNumberStr);
