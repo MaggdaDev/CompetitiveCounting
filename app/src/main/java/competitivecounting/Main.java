@@ -41,7 +41,7 @@ public class Main {
             client = DiscordClientBuilder.create(sec)
                     .build()
                     .gateway()
-                    .setEnabledIntents(IntentSet.of(Intent.GUILD_MESSAGES, Intent.MESSAGE_CONTENT, Intent.DIRECT_MESSAGES))
+                    .setEnabledIntents(IntentSet.of(Intent.GUILD_MESSAGES, Intent.MESSAGE_CONTENT, Intent.DIRECT_MESSAGES, Intent.GUILD_MESSAGE_REACTIONS))
                     .login()
                     .block();
         } catch(Exception e) {
