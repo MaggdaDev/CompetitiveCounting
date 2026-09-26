@@ -91,7 +91,12 @@ public class BankCommandHandler {
                     break;
                 case "withdraw":
                 case "wd":
-                    int withdrawAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
+                    int withdrawAmount;
+                    if (splitMessage.length > 2 && splitMessage[2].equalsIgnoreCase("all")) {
+                        withdrawAmount = bank.getBalance(authorId);
+                    } else {
+                        withdrawAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
+                    }
                     int newBalance = bank.getBalance(authorId) - withdrawAmount;
                     transactionsHandler.withdraw(guildId, authorId, withdrawAmount, message);
                     shouldSaveJson = true;
@@ -99,7 +104,12 @@ public class BankCommandHandler {
                     break;
                 case "deposit":
                 case "dp":
-                    int depositAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
+                    int depositAmount;
+                    if (splitMessage.length > 2 && splitMessage[2].equalsIgnoreCase("all")) {
+                        depositAmount = CountingBot.getCounter(guildId, authorId).getScore();
+                    } else {
+                        depositAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
+                    }
                     int newBalance2 = bank.getBalance(authorId) + depositAmount - Bank.DEPOSIT_COST;
                     transactionsHandler.deposit(guildId, authorId, depositAmount);
                     shouldSaveJson = true;
