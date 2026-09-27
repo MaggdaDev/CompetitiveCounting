@@ -72,7 +72,7 @@ public class Item {
     }
 
     public String getNameWithoutEmojis() {
-        return removeEmojis(name);
+        return removeExpliciteEmojis(removeEmojis(name));
     }
 
     public String getDescription() {
@@ -89,7 +89,7 @@ public class Item {
     }
 
     public boolean isMeantBy(String name) {
-        return getNameWithoutEmojis().equalsIgnoreCase(removeEmojis(name));
+        return getNameWithoutEmojis().equalsIgnoreCase(removeExpliciteEmojis(removeEmojis(name)));
     }
 
     public static Item getItemByName(String name) {
