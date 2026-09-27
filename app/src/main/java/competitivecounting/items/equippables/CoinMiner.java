@@ -7,7 +7,7 @@ import competitivecounting.vaults.PrimeVault;
 import discord4j.core.object.entity.Message;
 
 public class CoinMiner extends Equippable {
-    public static final String NAME = "Coin:pick:Miner";
+    public static final String NAME = "Coin⛏Miner";
     public static final String DESCRIPTION = "Equip to gain a small chance to mine a " + Consumables.PRIME_COIN.getName() + " while counting primes.";
     private int coinsMined = 0;
     private final static double spawnChance = 0.0015;

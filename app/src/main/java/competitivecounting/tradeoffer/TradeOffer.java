@@ -7,8 +7,10 @@ package competitivecounting.tradeoffer;
 
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
-import competitivecounting.tradeoffer.Tradable.MoneyTrade;
+import competitivecounting.items.Item;
 import discord4j.core.object.entity.Message;
+
+import java.util.HashMap;
 
 /**
  *
@@ -39,12 +41,12 @@ public class TradeOffer {
     public void fullfill(Message message) {
         // all first: end contracts
         for (Tradable currTr : youGetTrades) {
-            if (currTr instanceof Tradable.ContractNullTrade) {
+            if (currTr instanceof ContractNullTrade) {
                 giveTradableFromTo(initCounter, requCounter, currTr, message);
             }
         }
         for (Tradable currTr : iGetTrades) {
-            if (currTr instanceof Tradable.ContractNullTrade) {
+            if (currTr instanceof ContractNullTrade) {
                 giveTradableFromTo(requCounter, initCounter, currTr, message);
             }
         }
@@ -61,12 +63,23 @@ public class TradeOffer {
         }
         //now contracts
         for (Tradable currTr : youGetTrades) {
-            if (currTr instanceof Tradable.ContractTrade) {
+            if (currTr instanceof ContractTrade) {
                 giveTradableFromTo(initCounter, requCounter, currTr, message);
             }
         }
         for (Tradable currTr : iGetTrades) {
-            if (currTr instanceof Tradable.ContractTrade) {
+            if (currTr instanceof ContractTrade) {
+                giveTradableFromTo(requCounter, initCounter, currTr, message);
+            }
+        }
+        // now items
+        for (Tradable currTr : youGetTrades) {
+            if (currTr instanceof ItemTrade) {
+                giveTradableFromTo(initCounter, requCounter, currTr, message);
+            }
+        }
+        for (Tradable currTr : iGetTrades) {
+            if (currTr instanceof ItemTrade) {
                 giveTradableFromTo(requCounter, initCounter, currTr, message);
             }
         }
@@ -75,17 +88,24 @@ public class TradeOffer {
     }
 
     private void giveTradableFromTo(Counter from, Counter to, Tradable tradable, Message message) {
-        if (tradable instanceof Tradable.MoneyTrade) {
+        if (tradable instanceof MoneyTrade) {
             from.transferTo(to, ((MoneyTrade) tradable).getAmount(), message);
             return;
         }
-        if (tradable instanceof Tradable.ContractTrade) {
-            Tradable.ContractTrade trade = (Tradable.ContractTrade) tradable;
+        if (tradable instanceof ContractTrade) {
+            ContractTrade trade = (ContractTrade) tradable;
             from.getContractHandler().addContract(to, trade.getPercentage(), trade.getLimit());
         }
-        if (tradable instanceof Tradable.ContractNullTrade) {
+        if (tradable instanceof ContractNullTrade) {
             to.cancelContractsTo(from);
-
+        }
+        if (tradable instanceof ItemTrade) {
+            ItemTrade trade = (ItemTrade) tradable;
+            String itemName = trade.getItemIdentifier();
+            int itemAmount = trade.getAmount();
+            Item item = Item.getItemByName(itemName);
+            from.getInventory().removeItems(item, itemAmount);
+            to.getInventory().addItems(item, itemAmount);
         }
     }
 
@@ -108,7 +128,7 @@ public class TradeOffer {
 
     private boolean containsEndContracts(Tradable[] t) {
         for (Tradable currTradable : t) {
-            if (currTradable instanceof Tradable.ContractNullTrade) {
+            if (currTradable instanceof ContractNullTrade) {
                 return true;
             }
         }
@@ -122,6 +142,12 @@ public class TradeOffer {
         }
         if (!initCounter.canAfford(getTotalMoneyRequirement(youGetTrades))) {
             return "You don't have enough money in your bank!";
+        }
+
+        // check items
+        String itemsResult = checkItemTradesValid();
+        if (!"VALID".equals(itemsResult)) {
+            return itemsResult;
         }
 
         // check contract < 100%
@@ -146,17 +172,63 @@ public class TradeOffer {
 
             }
         }
-        
-    
 
         return "VALID";
+    }
+
+    private String checkItemTradesValid() {
+        HashMap<String, Integer> youGetItemsAmountMap = extractItemAmountHashMap(iGetTrades);
+        for (String itemName : youGetItemsAmountMap.keySet()) {
+            int amount = youGetItemsAmountMap.get(itemName);
+            Item item = Item.getItemByName(itemName);
+            if (item == null) {
+                return "Unknown item: '" + itemName + "'. Please provide the full name of the item you want to trade!\n-# The emoji may be omitted.";
+            }
+            if (amount <= 0) {
+                return "Invalid amount of item: '" + item.getName() + "'. Please provide a positive amount of the item you want to trade!";
+            }
+            if (requCounter.getInventory().getAmountOfItem(item) < amount) {
+                return requCounter.getName() + " doesn't have enough " + item.getName() + "s!";
+            }
+        }
+        HashMap<String, Integer> iGetItemsAmountMap = extractItemAmountHashMap(youGetTrades);
+        for (String itemName : iGetItemsAmountMap.keySet()) {
+            int amount = iGetItemsAmountMap.get(itemName);
+            Item item = Item.getItemByName(itemName);
+            if (item == null) {
+                return "Unknown item: '" + itemName + "'. Please provide the full name of the item you want to trade!\n-# The emoji may be omitted.";
+            }
+            if (amount <= 0) {
+                return "Invalid amount of item: '" + item.getName() + "'. Please provide a positive amount of the item you want to trade!";
+            }
+            if (initCounter.getInventory().getAmountOfItem(item) < amount) {
+                return "You don't have enough " + item.getName() + "s!";
+            }
+        }
+        return "VALID";
+    }
+
+    private HashMap<String, Integer> extractItemAmountHashMap(Tradable[] tradables) {
+        HashMap<String, Integer> itemAmountMap = new HashMap<>();
+        for (Tradable trad : tradables) {
+            if (trad instanceof ItemTrade) {
+                String itemName = Item.removeEmojis(((ItemTrade) trad).getItemIdentifier()).toLowerCase().trim();
+                int amount = ((ItemTrade) trad).getAmount();
+                if (itemAmountMap.containsKey(itemName)) {
+                    itemAmountMap.put(itemName, itemAmountMap.get(itemName) + amount);
+                } else {
+                    itemAmountMap.put(itemName, amount);
+                }
+            }
+        }
+        return itemAmountMap;
     }
 
     private int getTotalMoneyRequirement(Tradable[] tradables) {
         int money = 0;
         for (Tradable trad : tradables) {
-            if (trad instanceof Tradable.MoneyTrade) {
-                money += ((Tradable.MoneyTrade) trad).getAmount();
+            if (trad instanceof MoneyTrade) {
+                money += ((MoneyTrade) trad).getAmount();
             }
         }
         return money;
@@ -165,8 +237,8 @@ public class TradeOffer {
     private int getTotalContractPerc(Tradable[] tradables) {
         int tot = 0;
         for (Tradable trad : tradables) {
-            if (trad instanceof Tradable.ContractTrade) {
-                tot += ((Tradable.ContractTrade) trad).getPercentage();
+            if (trad instanceof ContractTrade) {
+                tot += ((ContractTrade) trad).getPercentage();
             }
         }
         return tot;

@@ -13,10 +13,7 @@ import competitivecounting.bank.BankTransactionsHandler;
 import competitivecounting.bank.exceptions.BankTransactionException;
 import competitivecounting.contracts.Contract;
 import competitivecounting.interactionhandlers.*;
-import competitivecounting.items.CollectionCommandHandler;
-import competitivecounting.items.InventoryCommandHandler;
-import competitivecounting.items.PrimeCoinSeller;
-import competitivecounting.items.ShopCommandHandler;
+import competitivecounting.items.*;
 import competitivecounting.storage.Storage;
 import competitivecounting.tradeoffer.TradeHandler;
 import competitivecounting.tradeoffer.TradeOffer;
@@ -446,11 +443,14 @@ public class CountingBot {
     }
 
     private void tradeOffer(Message message) {
-        String content = message.getContent().toUpperCase();
+        String content = Item.removeEmojis(message.getContent()).toUpperCase();
         Counter author = getCounterFromMessage(message);
         String guildId = message.getGuildId().get().asString();
-        if (TradeOfferChecker.isValid(message.getContent(), message)) {
-            TradeOffer tradeOffer = TradeHandler.parse(content, author);
+        if (TradeOfferChecker.isValid(Item.removeEmojis(message.getContent()), message)) {
+            TradeOffer tradeOffer = TradeHandler.parse(content, author,message);
+            if (tradeOffer == null) {
+                return;
+            }
             if (tradeOffer.getRequestedUser() == null) {
                 CountingBot.write(message, "This user doesn't seem to have ever counted!");
                 return;
@@ -459,7 +459,7 @@ public class CountingBot {
                 CountingBot.write(message, "You can't trade with yourself!");
                 return;
             }
-            Counter requested = this.getCounter(guildId, tradeOffer.getRequestedUserId());
+            Counter requested = getCounter(guildId, tradeOffer.getRequestedUserId());
             if (!tradeOffer.isTradeOfferValid(message)) {
                 return;
             }

@@ -54,7 +54,7 @@ public class Collection {
 
     public boolean containsEquippable(Equippable equippable) {
         for (Item item : equippables) {
-            if (Objects.equal(item.getName(), equippable.getName())) {
+            if (item.isMeantBy(equippable.getName())) {
                 return true;
             }
         }
@@ -88,7 +88,7 @@ public class Collection {
 
     public Equippable getEquippable(Equippable eq) {
         for (Equippable equippable : equippables) {
-            if (Objects.equal(equippable.getName(), eq.getName())) {
+            if (equippable.isMeantBy(eq.getName())) {
                 return equippable;
             }
         }
@@ -104,7 +104,7 @@ public class Collection {
         } catch (NumberFormatException e) {
             // Not a number, try by name
             for (Equippable equippable : equippables) {
-                if (equippable.getName().equalsIgnoreCase(itemIdentifier)) {
+                if (equippable.isMeantBy(itemIdentifier)) {
                     return Optional.of(equippable);
                 }
             }

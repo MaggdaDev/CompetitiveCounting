@@ -1,9 +1,14 @@
-// Generated from TradeOffer.g4 by ANTLR 4.10.1
-package competitivecounting.Parser.TradeOfferParser;
-import org.antlr.v4.runtime.atn.*;
-import org.antlr.v4.runtime.dfa.DFA;
+package competitivecounting.Parser.TradeOfferParser;// Generated from TradeOffer.g4 by ANTLR 4.10.1
+
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.tree.ParseTreeListener;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 import java.util.List;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
@@ -15,15 +20,15 @@ public class TradeOfferParser extends Parser {
 		new PredictionContextCache();
 	public static final int
 		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
-		YOUGET=10, IGET=11, PERC=12, LIMIT=13, PERCNUM=14, ENDCONTRACTS=15, SEMIC=16, 
-		COLON=17, NUM=18, ID=19, WS=20;
+		YOUGET=10, IGET=11, PERC=12, LIMIT=13, PERCNUM=14, ENDCONTRACTS=15, ITEM=16, 
+		SEMIC=17, COLON=18, AST=19, NUM=20, TEXT=21, ID=22, WS=23;
 	public static final int
 		RULE_startRule = 0, RULE_command = 1, RULE_user = 2, RULE_tradable = 3, 
-		RULE_money = 4, RULE_contract = 5, RULE_a = 6, RULE_r = 7;
+		RULE_money = 4, RULE_itemtrade = 5, RULE_contract = 6, RULE_a = 7, RULE_r = 8;
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"startRule", "command", "user", "tradable", "money", "contract", "a", 
-			"r"
+			"startRule", "command", "user", "tradable", "money", "itemtrade", "contract", 
+			"a", "r"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -31,15 +36,16 @@ public class TradeOfferParser extends Parser {
 	private static String[] makeLiteralNames() {
 		return new String[] {
 			null, "'~tradeoffer'", "'<@'", "'>'", "'+'", "'money'", "'contract'", 
-			"'a'", "'b'", "'hello'", null, null, null, null, null, null, "';'", "':'"
+			"'a'", "'b'", "'hello'", null, null, null, null, null, null, null, "';'", 
+			"':'", "'*'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
 			null, null, null, null, null, null, null, null, null, null, "YOUGET", 
-			"IGET", "PERC", "LIMIT", "PERCNUM", "ENDCONTRACTS", "SEMIC", "COLON", 
-			"NUM", "ID", "WS"
+			"IGET", "PERC", "LIMIT", "PERCNUM", "ENDCONTRACTS", "ITEM", "SEMIC", 
+			"COLON", "AST", "NUM", "TEXT", "ID", "WS"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -119,11 +125,11 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_startRule; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterStartRule(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterStartRule(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitStartRule(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitStartRule(this);
 		}
 	}
 
@@ -133,44 +139,44 @@ public class TradeOfferParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(16);
+			setState(18);
 			command();
-			setState(17);
+			setState(19);
 			user();
-			setState(33);
+			setState(35);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,1,_ctx) ) {
 			case 1:
 				{
 				{
-				setState(18);
-				match(YOUGET);
-				setState(19);
-				match(COLON);
 				setState(20);
-				tradable(0);
+				match(YOUGET);
 				setState(21);
-				match(IGET);
-				setState(22);
 				match(COLON);
+				setState(22);
+				tradable(0);
 				setState(23);
+				match(IGET);
+				setState(24);
+				match(COLON);
+				setState(25);
 				tradable(0);
 				}
 				}
 				break;
 			case 2:
 				{
-				setState(31);
+				setState(33);
 				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case YOUGET:
 					{
 					{
-					setState(25);
-					match(YOUGET);
-					setState(26);
-					match(COLON);
 					setState(27);
+					match(YOUGET);
+					setState(28);
+					match(COLON);
+					setState(29);
 					tradable(0);
 					}
 					}
@@ -178,11 +184,11 @@ public class TradeOfferParser extends Parser {
 				case IGET:
 					{
 					{
-					setState(28);
-					match(IGET);
-					setState(29);
-					match(COLON);
 					setState(30);
+					match(IGET);
+					setState(31);
+					match(COLON);
+					setState(32);
 					tradable(0);
 					}
 					}
@@ -193,7 +199,7 @@ public class TradeOfferParser extends Parser {
 				}
 				break;
 			}
-			setState(35);
+			setState(37);
 			match(EOF);
 			}
 		}
@@ -215,11 +221,11 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_command; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterCommand(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterCommand(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitCommand(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitCommand(this);
 		}
 	}
 
@@ -229,7 +235,7 @@ public class TradeOfferParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(37);
+			setState(39);
 			match(T__0);
 			}
 		}
@@ -252,11 +258,11 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_user; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterUser(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterUser(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitUser(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitUser(this);
 		}
 	}
 
@@ -266,11 +272,11 @@ public class TradeOfferParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(39);
-			match(T__1);
-			setState(40);
-			match(NUM);
 			setState(41);
+			match(T__1);
+			setState(42);
+			match(NUM);
+			setState(43);
 			match(T__2);
 			}
 		}
@@ -293,6 +299,9 @@ public class TradeOfferParser extends Parser {
 			return getRuleContext(ContractContext.class,0);
 		}
 		public TerminalNode ENDCONTRACTS() { return getToken(TradeOfferParser.ENDCONTRACTS, 0); }
+		public ItemtradeContext itemtrade() {
+			return getRuleContext(ItemtradeContext.class,0);
+		}
 		public List<TradableContext> tradable() {
 			return getRuleContexts(TradableContext.class);
 		}
@@ -305,11 +314,11 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_tradable; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterTradable(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterTradable(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitTradable(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitTradable(this);
 		}
 	}
 
@@ -328,35 +337,41 @@ public class TradeOfferParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(47);
+			setState(50);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__4:
 				{
-				setState(44);
+				setState(46);
 				money();
 				}
 				break;
 			case T__5:
 				{
-				setState(45);
+				setState(47);
 				contract();
 				}
 				break;
 			case ENDCONTRACTS:
 				{
-				setState(46);
+				setState(48);
 				match(ENDCONTRACTS);
+				}
+				break;
+			case ITEM:
+				{
+				setState(49);
+				itemtrade();
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
 			_ctx.stop = _input.LT(-1);
-			setState(54);
+			setState(57);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,3,_ctx);
-			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+			while ( _alt!=2 && _alt!= ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
@@ -364,16 +379,16 @@ public class TradeOfferParser extends Parser {
 					{
 					_localctx = new TradableContext(_parentctx, _parentState);
 					pushNewRecursionContext(_localctx, _startState, RULE_tradable);
-					setState(49);
+					setState(52);
 					if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
-					setState(50);
+					setState(53);
 					match(T__3);
-					setState(51);
+					setState(54);
 					tradable(2);
 					}
 					} 
 				}
-				setState(56);
+				setState(59);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,3,_ctx);
 			}
@@ -399,11 +414,11 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_money; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterMoney(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterMoney(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitMoney(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitMoney(this);
 		}
 	}
 
@@ -413,12 +428,93 @@ public class TradeOfferParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(57);
+			setState(60);
 			match(T__4);
-			setState(58);
+			setState(61);
 			match(COLON);
-			setState(59);
+			setState(62);
 			match(NUM);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class ItemtradeContext extends ParserRuleContext {
+		public TerminalNode ITEM() { return getToken(TradeOfferParser.ITEM, 0); }
+		public TerminalNode COLON() { return getToken(TradeOfferParser.COLON, 0); }
+		public TerminalNode TEXT() { return getToken(TradeOfferParser.TEXT, 0); }
+		public TerminalNode AST() { return getToken(TradeOfferParser.AST, 0); }
+		public TerminalNode NUM() { return getToken(TradeOfferParser.NUM, 0); }
+		public ItemtradeContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_itemtrade; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterItemtrade(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitItemtrade(this);
+		}
+	}
+
+	public final ItemtradeContext itemtrade() throws RecognitionException {
+		ItemtradeContext _localctx = new ItemtradeContext(_ctx, getState());
+		enterRule(_localctx, 10, RULE_itemtrade);
+		try {
+			setState(77);
+			_errHandler.sync(this);
+			switch ( getInterpreter().adaptivePredict(_input,4,_ctx) ) {
+			case 1:
+				enterOuterAlt(_localctx, 1);
+				{
+				setState(64);
+				match(ITEM);
+				setState(65);
+				match(COLON);
+				setState(66);
+				match(TEXT);
+				}
+				break;
+			case 2:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(67);
+				match(ITEM);
+				setState(68);
+				match(COLON);
+				setState(69);
+				match(TEXT);
+				setState(70);
+				match(AST);
+				setState(71);
+				match(NUM);
+				}
+				break;
+			case 3:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(72);
+				match(ITEM);
+				setState(73);
+				match(COLON);
+				setState(74);
+				match(NUM);
+				setState(75);
+				match(AST);
+				setState(76);
+				match(TEXT);
+				}
+				break;
 			}
 		}
 		catch (RecognitionException re) {
@@ -448,34 +544,34 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_contract; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterContract(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterContract(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitContract(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitContract(this);
 		}
 	}
 
 	public final ContractContext contract() throws RecognitionException {
 		ContractContext _localctx = new ContractContext(_ctx, getState());
-		enterRule(_localctx, 10, RULE_contract);
+		enterRule(_localctx, 12, RULE_contract);
 		try {
-			setState(75);
+			setState(93);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,4,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,5,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				{
-				setState(61);
+				setState(79);
 				match(T__5);
-				setState(62);
+				setState(80);
 				match(COLON);
-				setState(63);
+				setState(81);
 				match(PERC);
-				setState(64);
+				setState(82);
 				match(COLON);
-				setState(65);
+				setState(83);
 				match(PERCNUM);
 				}
 				}
@@ -484,23 +580,23 @@ public class TradeOfferParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				{
-				setState(66);
+				setState(84);
 				match(T__5);
-				setState(67);
+				setState(85);
 				match(COLON);
-				setState(68);
+				setState(86);
 				match(PERC);
-				setState(69);
+				setState(87);
 				match(COLON);
-				setState(70);
+				setState(88);
 				match(PERCNUM);
-				setState(71);
+				setState(89);
 				match(SEMIC);
-				setState(72);
+				setState(90);
 				match(LIMIT);
-				setState(73);
+				setState(91);
 				match(COLON);
-				setState(74);
+				setState(92);
 				match(NUM);
 				}
 				}
@@ -525,22 +621,22 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_a; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterA(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterA(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitA(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitA(this);
 		}
 	}
 
 	public final AContext a() throws RecognitionException {
 		AContext _localctx = new AContext(_ctx, getState());
-		enterRule(_localctx, 12, RULE_a);
+		enterRule(_localctx, 14, RULE_a);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(77);
+			setState(95);
 			_la = _input.LA(1);
 			if ( !(_la==T__6 || _la==T__7) ) {
 			_errHandler.recoverInline(this);
@@ -571,23 +667,23 @@ public class TradeOfferParser extends Parser {
 		@Override public int getRuleIndex() { return RULE_r; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).enterR(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).enterR(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof TradeOfferListener ) ((TradeOfferListener)listener).exitR(this);
+			if ( listener instanceof TradeOfferListener) ((TradeOfferListener)listener).exitR(this);
 		}
 	}
 
 	public final RContext r() throws RecognitionException {
 		RContext _localctx = new RContext(_ctx, getState());
-		enterRule(_localctx, 14, RULE_r);
+		enterRule(_localctx, 16, RULE_r);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(79);
+			setState(97);
 			match(T__8);
-			setState(80);
+			setState(98);
 			match(ID);
 			}
 		}
@@ -618,54 +714,63 @@ public class TradeOfferParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u0001\u0014S\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
+		"\u0004\u0001\u0017e\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
 		"\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002\u0004\u0007\u0004\u0002"+
-		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0001"+
-		"\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001"+
-		"\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001"+
-		"\u0000\u0001\u0000\u0001\u0000\u0003\u0000 \b\u0000\u0003\u0000\"\b\u0000"+
-		"\u0001\u0000\u0001\u0000\u0001\u0001\u0001\u0001\u0001\u0002\u0001\u0002"+
-		"\u0001\u0002\u0001\u0002\u0001\u0003\u0001\u0003\u0001\u0003\u0001\u0003"+
-		"\u0003\u00030\b\u0003\u0001\u0003\u0001\u0003\u0001\u0003\u0005\u0003"+
-		"5\b\u0003\n\u0003\f\u00038\t\u0003\u0001\u0004\u0001\u0004\u0001\u0004"+
-		"\u0001\u0004\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005"+
+		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0002"+
+		"\b\u0007\b\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000"+
+		"\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000"+
+		"\u0001\u0000\u0001\u0000\u0001\u0000\u0001\u0000\u0003\u0000\"\b\u0000"+
+		"\u0003\u0000$\b\u0000\u0001\u0000\u0001\u0000\u0001\u0001\u0001\u0001"+
+		"\u0001\u0002\u0001\u0002\u0001\u0002\u0001\u0002\u0001\u0003\u0001\u0003"+
+		"\u0001\u0003\u0001\u0003\u0001\u0003\u0003\u00033\b\u0003\u0001\u0003"+
+		"\u0001\u0003\u0001\u0003\u0005\u00038\b\u0003\n\u0003\f\u0003;\t\u0003"+
+		"\u0001\u0004\u0001\u0004\u0001\u0004\u0001\u0004\u0001\u0005\u0001\u0005"+
 		"\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005"+
-		"\u0001\u0005\u0001\u0005\u0001\u0005\u0003\u0005L\b\u0005\u0001\u0006"+
-		"\u0001\u0006\u0001\u0007\u0001\u0007\u0001\u0007\u0001\u0007\u0000\u0001"+
-		"\u0006\b\u0000\u0002\u0004\u0006\b\n\f\u000e\u0000\u0001\u0001\u0000\u0007"+
-		"\bP\u0000\u0010\u0001\u0000\u0000\u0000\u0002%\u0001\u0000\u0000\u0000"+
-		"\u0004\'\u0001\u0000\u0000\u0000\u0006/\u0001\u0000\u0000\u0000\b9\u0001"+
-		"\u0000\u0000\u0000\nK\u0001\u0000\u0000\u0000\fM\u0001\u0000\u0000\u0000"+
-		"\u000eO\u0001\u0000\u0000\u0000\u0010\u0011\u0003\u0002\u0001\u0000\u0011"+
-		"!\u0003\u0004\u0002\u0000\u0012\u0013\u0005\n\u0000\u0000\u0013\u0014"+
-		"\u0005\u0011\u0000\u0000\u0014\u0015\u0003\u0006\u0003\u0000\u0015\u0016"+
-		"\u0005\u000b\u0000\u0000\u0016\u0017\u0005\u0011\u0000\u0000\u0017\u0018"+
-		"\u0003\u0006\u0003\u0000\u0018\"\u0001\u0000\u0000\u0000\u0019\u001a\u0005"+
-		"\n\u0000\u0000\u001a\u001b\u0005\u0011\u0000\u0000\u001b \u0003\u0006"+
-		"\u0003\u0000\u001c\u001d\u0005\u000b\u0000\u0000\u001d\u001e\u0005\u0011"+
-		"\u0000\u0000\u001e \u0003\u0006\u0003\u0000\u001f\u0019\u0001\u0000\u0000"+
-		"\u0000\u001f\u001c\u0001\u0000\u0000\u0000 \"\u0001\u0000\u0000\u0000"+
-		"!\u0012\u0001\u0000\u0000\u0000!\u001f\u0001\u0000\u0000\u0000\"#\u0001"+
-		"\u0000\u0000\u0000#$\u0005\u0000\u0000\u0001$\u0001\u0001\u0000\u0000"+
-		"\u0000%&\u0005\u0001\u0000\u0000&\u0003\u0001\u0000\u0000\u0000\'(\u0005"+
-		"\u0002\u0000\u0000()\u0005\u0012\u0000\u0000)*\u0005\u0003\u0000\u0000"+
-		"*\u0005\u0001\u0000\u0000\u0000+,\u0006\u0003\uffff\uffff\u0000,0\u0003"+
-		"\b\u0004\u0000-0\u0003\n\u0005\u0000.0\u0005\u000f\u0000\u0000/+\u0001"+
-		"\u0000\u0000\u0000/-\u0001\u0000\u0000\u0000/.\u0001\u0000\u0000\u0000"+
-		"06\u0001\u0000\u0000\u000012\n\u0001\u0000\u000023\u0005\u0004\u0000\u0000"+
-		"35\u0003\u0006\u0003\u000241\u0001\u0000\u0000\u000058\u0001\u0000\u0000"+
-		"\u000064\u0001\u0000\u0000\u000067\u0001\u0000\u0000\u00007\u0007\u0001"+
-		"\u0000\u0000\u000086\u0001\u0000\u0000\u00009:\u0005\u0005\u0000\u0000"+
-		":;\u0005\u0011\u0000\u0000;<\u0005\u0012\u0000\u0000<\t\u0001\u0000\u0000"+
-		"\u0000=>\u0005\u0006\u0000\u0000>?\u0005\u0011\u0000\u0000?@\u0005\f\u0000"+
-		"\u0000@A\u0005\u0011\u0000\u0000AL\u0005\u000e\u0000\u0000BC\u0005\u0006"+
-		"\u0000\u0000CD\u0005\u0011\u0000\u0000DE\u0005\f\u0000\u0000EF\u0005\u0011"+
-		"\u0000\u0000FG\u0005\u000e\u0000\u0000GH\u0005\u0010\u0000\u0000HI\u0005"+
-		"\r\u0000\u0000IJ\u0005\u0011\u0000\u0000JL\u0005\u0012\u0000\u0000K=\u0001"+
-		"\u0000\u0000\u0000KB\u0001\u0000\u0000\u0000L\u000b\u0001\u0000\u0000"+
-		"\u0000MN\u0007\u0000\u0000\u0000N\r\u0001\u0000\u0000\u0000OP\u0005\t"+
-		"\u0000\u0000PQ\u0005\u0013\u0000\u0000Q\u000f\u0001\u0000\u0000\u0000"+
-		"\u0005\u001f!/6K";
+		"\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005\u0001\u0005\u0003\u0005"+
+		"N\b\u0005\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0006"+
+		"\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0006\u0001\u0006"+
+		"\u0001\u0006\u0001\u0006\u0001\u0006\u0003\u0006^\b\u0006\u0001\u0007"+
+		"\u0001\u0007\u0001\b\u0001\b\u0001\b\u0001\b\u0000\u0001\u0006\t\u0000"+
+		"\u0002\u0004\u0006\b\n\f\u000e\u0010\u0000\u0001\u0001\u0000\u0007\bd"+
+		"\u0000\u0012\u0001\u0000\u0000\u0000\u0002\'\u0001\u0000\u0000\u0000\u0004"+
+		")\u0001\u0000\u0000\u0000\u00062\u0001\u0000\u0000\u0000\b<\u0001\u0000"+
+		"\u0000\u0000\nM\u0001\u0000\u0000\u0000\f]\u0001\u0000\u0000\u0000\u000e"+
+		"_\u0001\u0000\u0000\u0000\u0010a\u0001\u0000\u0000\u0000\u0012\u0013\u0003"+
+		"\u0002\u0001\u0000\u0013#\u0003\u0004\u0002\u0000\u0014\u0015\u0005\n"+
+		"\u0000\u0000\u0015\u0016\u0005\u0012\u0000\u0000\u0016\u0017\u0003\u0006"+
+		"\u0003\u0000\u0017\u0018\u0005\u000b\u0000\u0000\u0018\u0019\u0005\u0012"+
+		"\u0000\u0000\u0019\u001a\u0003\u0006\u0003\u0000\u001a$\u0001\u0000\u0000"+
+		"\u0000\u001b\u001c\u0005\n\u0000\u0000\u001c\u001d\u0005\u0012\u0000\u0000"+
+		"\u001d\"\u0003\u0006\u0003\u0000\u001e\u001f\u0005\u000b\u0000\u0000\u001f"+
+		" \u0005\u0012\u0000\u0000 \"\u0003\u0006\u0003\u0000!\u001b\u0001\u0000"+
+		"\u0000\u0000!\u001e\u0001\u0000\u0000\u0000\"$\u0001\u0000\u0000\u0000"+
+		"#\u0014\u0001\u0000\u0000\u0000#!\u0001\u0000\u0000\u0000$%\u0001\u0000"+
+		"\u0000\u0000%&\u0005\u0000\u0000\u0001&\u0001\u0001\u0000\u0000\u0000"+
+		"\'(\u0005\u0001\u0000\u0000(\u0003\u0001\u0000\u0000\u0000)*\u0005\u0002"+
+		"\u0000\u0000*+\u0005\u0014\u0000\u0000+,\u0005\u0003\u0000\u0000,\u0005"+
+		"\u0001\u0000\u0000\u0000-.\u0006\u0003\uffff\uffff\u0000.3\u0003\b\u0004"+
+		"\u0000/3\u0003\f\u0006\u000003\u0005\u000f\u0000\u000013\u0003\n\u0005"+
+		"\u00002-\u0001\u0000\u0000\u00002/\u0001\u0000\u0000\u000020\u0001\u0000"+
+		"\u0000\u000021\u0001\u0000\u0000\u000039\u0001\u0000\u0000\u000045\n\u0001"+
+		"\u0000\u000056\u0005\u0004\u0000\u000068\u0003\u0006\u0003\u000274\u0001"+
+		"\u0000\u0000\u00008;\u0001\u0000\u0000\u000097\u0001\u0000\u0000\u0000"+
+		"9:\u0001\u0000\u0000\u0000:\u0007\u0001\u0000\u0000\u0000;9\u0001\u0000"+
+		"\u0000\u0000<=\u0005\u0005\u0000\u0000=>\u0005\u0012\u0000\u0000>?\u0005"+
+		"\u0014\u0000\u0000?\t\u0001\u0000\u0000\u0000@A\u0005\u0010\u0000\u0000"+
+		"AB\u0005\u0012\u0000\u0000BN\u0005\u0015\u0000\u0000CD\u0005\u0010\u0000"+
+		"\u0000DE\u0005\u0012\u0000\u0000EF\u0005\u0015\u0000\u0000FG\u0005\u0013"+
+		"\u0000\u0000GN\u0005\u0014\u0000\u0000HI\u0005\u0010\u0000\u0000IJ\u0005"+
+		"\u0012\u0000\u0000JK\u0005\u0014\u0000\u0000KL\u0005\u0013\u0000\u0000"+
+		"LN\u0005\u0015\u0000\u0000M@\u0001\u0000\u0000\u0000MC\u0001\u0000\u0000"+
+		"\u0000MH\u0001\u0000\u0000\u0000N\u000b\u0001\u0000\u0000\u0000OP\u0005"+
+		"\u0006\u0000\u0000PQ\u0005\u0012\u0000\u0000QR\u0005\f\u0000\u0000RS\u0005"+
+		"\u0012\u0000\u0000S^\u0005\u000e\u0000\u0000TU\u0005\u0006\u0000\u0000"+
+		"UV\u0005\u0012\u0000\u0000VW\u0005\f\u0000\u0000WX\u0005\u0012\u0000\u0000"+
+		"XY\u0005\u000e\u0000\u0000YZ\u0005\u0011\u0000\u0000Z[\u0005\r\u0000\u0000"+
+		"[\\\u0005\u0012\u0000\u0000\\^\u0005\u0014\u0000\u0000]O\u0001\u0000\u0000"+
+		"\u0000]T\u0001\u0000\u0000\u0000^\r\u0001\u0000\u0000\u0000_`\u0007\u0000"+
+		"\u0000\u0000`\u000f\u0001\u0000\u0000\u0000ab\u0005\t\u0000\u0000bc\u0005"+
+		"\u0016\u0000\u0000c\u0011\u0001\u0000\u0000\u0000\u0006!#29M]";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

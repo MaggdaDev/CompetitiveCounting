@@ -46,7 +46,7 @@ public class ShopCommandHandler {
                         shop(message);
                         return;
                     }
-                    buy(message, commandContent.substring(9), counter);
+                    buy(message, commandContent.substring(9).trim(), counter);
                     return;
                 default:
                     CountingBot.write(message, "Unknown shop action!");

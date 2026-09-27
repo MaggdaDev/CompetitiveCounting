@@ -9,10 +9,25 @@ import java.util.List;
 public class Inventory {
     private boolean isShopUnlocked = false;
 
-    private HashMap<String, Integer> itemsBoughtAmount;
+    private final HashMap<String, Integer> itemsBoughtAmount;
 
     public Inventory() {
         itemsBoughtAmount = new HashMap<>();
+    }
+
+    public void initialize() {
+        HashMap<String, Integer> newMap = new HashMap<>();
+        for (String itemName : itemsBoughtAmount.keySet()) {
+            Item item = Item.getItemByName(Item.removeExpliciteEmojis(itemName));
+            if (item == null) {
+                System.err.println("Found item with illegal name in inventory: " + itemName + "-> delete");
+                continue;
+            }
+            int value = itemsBoughtAmount.get(itemName);
+            newMap.put(item.toString(), value);
+        }
+        itemsBoughtAmount.clear();
+        itemsBoughtAmount.putAll(newMap);
     }
 
     public boolean isShopUnlocked() {
@@ -31,6 +46,24 @@ public class Inventory {
         }
     }
 
+    public void addItems(Item toBuy, int amount) {
+        if (itemsBoughtAmount.containsKey(toBuy.toString())) {
+            itemsBoughtAmount.put(toBuy.toString(), itemsBoughtAmount.get(toBuy.toString()) + amount);
+        } else {
+            itemsBoughtAmount.put(toBuy.toString(), amount);
+        }
+    }
+
+    public void removeItems(Item toRemove, int amount) {
+        String key = toRemove.toString();
+        if (amount > itemsBoughtAmount.getOrDefault(key, 0)) {
+            throw new IllegalStateException("Contract tries to remove more items than available in inventory: " + amount + " > " + getAmountOfItem(toRemove));
+        }
+        if (itemsBoughtAmount.containsKey(key)) {
+            itemsBoughtAmount.put(key, itemsBoughtAmount.get(key) - amount);
+        }
+    }
+
     public Item[] getBoughtItemTypes() {
         List<Item> list = new ArrayList<>();
         for (Item item : Item.ALL_ITEMS) {
@@ -42,6 +75,9 @@ public class Inventory {
     }
 
     public int getAmountOfItem(Item item) {
+        if (item == null) {
+            return 0;
+        }
         return itemsBoughtAmount.getOrDefault(item.toString(), 0);
     }
 

@@ -89,6 +89,8 @@ public class Counter implements ContractOwner {
         }
         if (inventory == null) {
             inventory = new Inventory();
+        } else {
+            inventory.initialize();
         }
         if (collection == null) {
             collection = new Collection(this);
@@ -324,7 +326,7 @@ public class Counter implements ContractOwner {
         } else if (tradeOffers.containsKey(customId)) {
             TradeOffer offer = tradeOffers.get(customId);
             String answ = offer.isTradeOfferValid();
-            if (answ.toUpperCase().equals("VALID")) {
+            if (answ.equalsIgnoreCase("VALID")) {
                 offer.fullfill(message);
                 tradeOffers.remove(customId);
                 return "Accepted!";

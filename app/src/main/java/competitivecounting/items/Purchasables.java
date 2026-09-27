@@ -11,6 +11,9 @@ public class Purchasables {
     };
 
     public static Item getPurchasableByNameOrNumber(String itemAsNameOrNumber) {
+        if (!isValidPurchasable(itemAsNameOrNumber)) {
+            return null;
+        }
         try {
             int number = Integer.parseInt(itemAsNameOrNumber);
             if (1 <= number && number <= PURCHASABLE_ITEMS.length) {
@@ -19,12 +22,7 @@ public class Purchasables {
         } catch(NumberFormatException e) {
             // continue
         }
-        for (Item item : PURCHASABLE_ITEMS) {
-            if (item.getName().equalsIgnoreCase(itemAsNameOrNumber)) {
-                return item;
-            }
-        }
-        return null;
+        return Item.getItemByName(itemAsNameOrNumber);
     }
 
     public static boolean isValidPurchasable(String itemAsNameOrNumber) {
@@ -35,7 +33,7 @@ public class Purchasables {
             // continue
         }
         for (Item item : PURCHASABLE_ITEMS) {
-            if (item.getName().equalsIgnoreCase(itemAsNameOrNumber)) {
+            if (item.isMeantBy(itemAsNameOrNumber)) {
                 return true;
             }
         }

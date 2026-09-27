@@ -3,6 +3,7 @@ package competitivecounting.tradeoffer;
 import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.Util;
+import discord4j.core.object.entity.Message;
 
 public class TradeHandler {
     public final static String YOU_GET = "YOU_GET:";
@@ -11,7 +12,7 @@ public class TradeHandler {
     private static Counter initCounter, requCounter;
 
 
-    public static TradeOffer parse(String content, Counter initCounter) {
+    public static TradeOffer parse(String content, Counter initCounter, Message message) {
         String[] splitted;
         boolean containsYouGet = true;
         if (content.contains(YOU_GET)) {
@@ -45,8 +46,12 @@ public class TradeHandler {
         try {
             youGetTrades = Tradable.generateTradables(youGet, initCounter, requCounter);
             iGetTrades = Tradable.generateTradables(iGet, requCounter, initCounter);
+        } catch (TradeArgumentException e) {
+            CountingBot.write(message, e.getMessage());
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
         return new TradeOffer(initCounter, requCounter, iGetTrades, youGetTrades, userId, userPing);
     }

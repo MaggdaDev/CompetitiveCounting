@@ -9,18 +9,22 @@ YOUGET  :  'YOU_GET' | 'you_get' | 'You_Get';
 
 IGET  :  'I_GET' | 'I_get' | 'I_Get' | 'i_get';
 
-tradable  :  money | contract | ENDCONTRACTS | tradable '+' tradable;
+tradable  :  money | contract | ENDCONTRACTS | itemtrade | tradable '+' tradable;
 money  :  'money' COLON NUM;
+itemtrade : ITEM COLON TEXT | ITEM COLON TEXT AST NUM | ITEM COLON NUM AST TEXT;
 contract: ('contract' COLON PERC COLON PERCNUM) | ('contract' COLON PERC COLON PERCNUM SEMIC LIMIT COLON NUM);
 PERC  :  'perc' | 'percentage' | 'PERC';
 LIMIT  :  'LIMIT' | 'limit' | 'Limit';
 PERCNUM  :  [1-9] '%' | [1-9] [0-9] '%' | '0' [1-9] '%' | '100%';
 ENDCONTRACTS  :  'endcontracts' | 'end_contracts' | 'END_CONTRACTS' | 'ENDCONTRACTS' | 'End_Contracts';
+ITEM  :  'item' | 'ITEM' | 'Item' | 'items' | 'Items' | 'ITEMS';
 
 SEMIC  : ';';
 COLON  : ':';
+AST  : '*';
 NUM  :  [0-9]+;
 
+TEXT: [A-Za-z\u00F6\u00E4\u00FC\u00D6\u00C4\u00DC\u00DF]+;
 a  : 'a' | 'b';
 r  : 'hello' ID ;         // The rule/production r match keyword `hello` followed by the rule `ID`
 ID : [a-z]+ ;             // The rule/production `ID` match all lower-case characters

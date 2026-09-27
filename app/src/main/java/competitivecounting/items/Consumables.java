@@ -10,9 +10,9 @@ public class Consumables {
                           "A crocodile-branded handbag made of some leather from Turkey."),
     WHITE_STREAK_ENDER = new Item(new Price(20000), "Streak⚪Ender",
                                "If the majority of contributing counters agrees, this item is consumed, the streak ends and everyone gets their payout."),
-    PRIME_COIN = new Item(null, "Prime:coin:Coin",
+    PRIME_COIN = new Item(null, "Prime\uD83E\uDE99Coin",
             "When consumed, you obtain money equal to the current worth of one bit coin in US dollars."),
 
-    COUNTING_BOOSTER = new Item(null, "Counting:arrow_double_up:Booster",
+    COUNTING_BOOSTER = new Item(null, "Counting⏫Booster",
             "Consume to gain a boost on money income, trophy spawn rate and vault spawn rate for " + CountingBoosterManager.DURATION_MINUTES + " minutes.");
 }

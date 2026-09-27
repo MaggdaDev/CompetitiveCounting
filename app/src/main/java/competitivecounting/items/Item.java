@@ -60,7 +60,7 @@ public class Item {
 
     @Override
     public String toString() {
-        return name;
+        return removeEmojis(name);
     }
 
     public Price getPrice() {
@@ -71,7 +71,33 @@ public class Item {
         return name;
     }
 
+    public String getNameWithoutEmojis() {
+        return removeEmojis(name);
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public final static String EMOJI_REGEX = "<:[A-Za-z0-9_]+:\\d+>|[\\x{1F000}-\\x{1FAFF}\\x{2600}-\\x{27BF}\\x{2300}-\\x{23FF}]";
+    public static String removeEmojis(String input) {
+        return input.replaceAll(EMOJI_REGEX, "");
+    }
+
+    public static String removeExpliciteEmojis(String input) {
+        return input.replaceAll("<[^>]*>", "").replaceAll(":[^:]*:", "");
+    }
+
+    public boolean isMeantBy(String name) {
+        return getNameWithoutEmojis().equalsIgnoreCase(removeEmojis(name));
+    }
+
+    public static Item getItemByName(String name) {
+        for (Item item : ALL_ITEMS) {
+            if (item.isMeantBy(name)) {
+                return item;
+            }
+        }
+        return null;
     }
 }

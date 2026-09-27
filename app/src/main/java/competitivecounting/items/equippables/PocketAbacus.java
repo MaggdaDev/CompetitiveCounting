@@ -4,7 +4,7 @@ import competitivecounting.*;
 import discord4j.core.object.entity.Message;
 
 public class PocketAbacus extends Equippable {
-    public final static String NAME = "Pocket:abacus:Abacus";
+    public final static String NAME = "Pocket\uD83E\uDDEEAbacus";
     private final static String DESCRIPTION = "When equipped, can be used to calculate the next count!";
     private final static String COLLECTION_DESCRIPTION = "When _used_, tells you the next correct count. ({0})\n-# Numbers calculated: {1}";
     private int uses = 0;

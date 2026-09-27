@@ -1,5 +1,5 @@
-// Generated from TradeOffer.g4 by ANTLR 4.10.1
-package competitivecounting.Parser.TradeOfferParser;
+package competitivecounting.Parser.TradeOfferParser;// Generated from TradeOffer.g4 by ANTLR 4.10.1
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -70,6 +70,18 @@ public class TradeOfferBaseListener implements TradeOfferListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMoney(TradeOfferParser.MoneyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterItemtrade(TradeOfferParser.ItemtradeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitItemtrade(TradeOfferParser.ItemtradeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

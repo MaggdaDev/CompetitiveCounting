@@ -1,6 +1,7 @@
 package competitivecounting.items.equippables;
 
 import com.google.gson.*;
+import competitivecounting.items.Item;
 
 import java.lang.reflect.Type;
 
@@ -15,31 +16,9 @@ public class EquippablesDeserializer implements JsonDeserializer<Equippable> {
 
         JsonObject obj = json.getAsJsonObject();
 
-        String type = obj.get("name").getAsString();
+        String type = Item.removeExpliciteEmojis(obj.get("name").getAsString());
         Equippable ret;
-        switch (type) {
-            case VaultLocator.NAME:
-                ret = context.deserialize(obj, VaultLocator.class);
-                break;
-            case PocketAbacus.NAME:
-                ret = context.deserialize(obj, PocketAbacus.class);
-                break;
-            case GoodBadUgly.NAME:
-                ret = context.deserialize(obj, GoodBadUgly.class);
-                break;
-            case CoinMiner.NAME:
-                ret = context.deserialize(obj, CoinMiner.class);
-                break;
-            case DowsingRod.NAME:
-                ret = context.deserialize(obj, DowsingRod.class);
-                break;
-            case SponsoredMonocle.NAME:
-                ret = context.deserialize(obj, SponsoredMonocle.class);
-                break;
-            default:
-                throw new JsonParseException("Unknown type: " + type);
-        }
-        ;
+        ret = context.deserialize(obj, Item.getItemByName(type).getClass());
         return ret;
     }
 }

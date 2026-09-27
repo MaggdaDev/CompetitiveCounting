@@ -1,5 +1,4 @@
-// Generated from TradeOffer.g4 by ANTLR 4.10.1
-package competitivecounting.Parser.TradeOfferParser;
+package competitivecounting.Parser.TradeOfferParser;// Generated from TradeOffer.g4 by ANTLR 4.10.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -57,6 +56,16 @@ public interface TradeOfferListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMoney(TradeOfferParser.MoneyContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link TradeOfferParser#itemtrade}.
+	 * @param ctx the parse tree
+	 */
+	void enterItemtrade(TradeOfferParser.ItemtradeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link TradeOfferParser#itemtrade}.
+	 * @param ctx the parse tree
+	 */
+	void exitItemtrade(TradeOfferParser.ItemtradeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link TradeOfferParser#contract}.
 	 * @param ctx the parse tree
