@@ -22,7 +22,8 @@ public class CaptureHandler {
         this.captures = CountingBot.getInstance().getStorage().loadCaptures();
     }
 
-    public boolean raisedCapture(Message message, int number, String userId, HashMap<String,Long> lastCaptureTimes, Runnable onCaptureFailed, Runnable onCaptureSucceeded, TrophyHandler trophyHandler) {
+    public boolean raisedCapture(Message message, int number, String userId, HashMap<String,Long> lastCaptureTimes,
+                                 Runnable onCaptureFailed, Runnable onCaptureSucceeded, TrophyHandler trophyHandler) {
         if (!lastCaptureTimes.containsKey(userId)) {
             lastCaptureTimes.put(userId, System.currentTimeMillis());
             return false;

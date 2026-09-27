@@ -10,7 +10,6 @@ import competitivecounting.interactionhandlers.EmojiReactHandler;
 import competitivecounting.interactionhandlers.TrophyHandler;
 import competitivecounting.items.StreakEnders;
 import competitivecounting.rules.*;
-import competitivecounting.vaults.Vault;
 import competitivecounting.vaults.VaultSpawner;
 import discord4j.core.object.entity.Message;
 import reactor.core.Disposable;
@@ -154,7 +153,7 @@ public class CountingStreak {
             if (slowModeRule != null) {
                 slowModeRule.applyTimerToMessage(message);
             } else if (timeLimitRule != null && (!timeLimitNewlyAdded)) {
-                timeLimitRule.applyTimerToMessage(message, CountingBot.getCounter(guildId,lastCounterId));
+                timeLimitRule.applyTimerToMessage(message, CountingBot.getCounter(guildId,lastCounterId));  // Assure this code is never reached in case a vault is running
             } else {
                 if (user.hasTrophy(number)) {
                     message.addReaction(CountingEmojis.GOLDEN_KEKMARK).subscribe();
@@ -172,7 +171,7 @@ public class CountingStreak {
             }
             lastCounterId = user.getId();
 
-            Optional<Vault> maybeVault = vaultSpawner.maybeSpawnVault(message, lastCountingContext);
+            vaultSpawner.maybeSpawnVault(message, lastCountingContext);
             lastScoreAdd = currScoreAdd;
             return true;
         } else {
@@ -821,6 +820,13 @@ public class CountingStreak {
         return key;
     }
 
+    public void notifyStreakVaultStartsRunning() {
+        if (timeLimitRule != null) {
+            timeLimitRule.stopCurrentTimer();
+            timeLimitNewlyAdded = true;
+        }
+    }
+
     public void notifyStreakVaultComplete(String vaultName, Message message) {
         CountingBot.write(message, "This " + vaultName + " has concluded. You may continue counting now!\n" +
                 "The last number was " + Util.getNumberInBaseString(lastCount, currentBase, false) + ", counted by " + getLastCounter().getName() + ".");
@@ -895,4 +901,6 @@ public class CountingStreak {
     public CountingContext getLastCountingContext() {
         return lastCountingContext;
     }
+
+
 }

@@ -90,13 +90,13 @@ public class VaultSpawner {
         return s.toString();
     }
 
-    public Optional<Vault> maybeSpawnVault(Message message, CountingContext context) {
+    public void maybeSpawnVault(Message message, CountingContext context) {
         previousContext = context;
         if (!context.getCounter().getCollection().containsEquippable(Equippables.VAULT_LOCATOR)) {
-            return Optional.empty();
+            return;
         }
         if (activeVault != null) {
-            return Optional.empty();
+            return;
         }
         for (Vault vault : vaults) {
             if (vault.maybeSpawn(context)) {
@@ -120,7 +120,6 @@ public class VaultSpawner {
                 break;
             }
         }
-        return Optional.ofNullable(activeVault);
     }
 
     public Vault getActiveVault() {

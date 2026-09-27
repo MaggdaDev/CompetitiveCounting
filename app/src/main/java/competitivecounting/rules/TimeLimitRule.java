@@ -21,6 +21,7 @@ public class TimeLimitRule implements Rule {
     private transient CountingStreak streak;
     private int time = 10;
     private transient AnimationThread thread;
+    private transient Message lastMessage;
     private boolean hasLost = false, shouldCancel = false;
 
     public TimeLimitRule(String ownerId, CountingStreak streak) {
@@ -32,10 +33,23 @@ public class TimeLimitRule implements Rule {
         this.streak = streak;
     }
 
+    public void stopCurrentTimer() {
+        if (thread != null) {
+            thread.shouldStop = true;
+            thread = null;
+        }
+        if (lastMessage != null) {
+            lastMessage.removeReactions(CountingEmojis.KEKMARK_BOLT).subscribe();
+            lastMessage.addReaction(CountingEmojis.KEKMARK).subscribe();
+            lastMessage = null;
+        }
+    }
+
     public void applyTimerToMessage(Message message, Counter loser) {
         if (thread != null) {
             thread.shouldStop = true;
         }
+        lastMessage = message;
         thread = new AnimationThread(message, loser);
         thread.start();
     }

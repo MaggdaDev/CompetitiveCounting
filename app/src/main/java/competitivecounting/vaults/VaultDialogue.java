@@ -27,6 +27,7 @@ public class VaultDialogue extends Dialogue {
                             return true;
                         })
                 .addRunnable((m) -> {
+                    context.getStreak().notifyStreakVaultStartsRunning();
                     riddleSolver = vault.doRiddleBlockingly(message, context);
                 })
                 .addMaybeCancelRest(m -> {
