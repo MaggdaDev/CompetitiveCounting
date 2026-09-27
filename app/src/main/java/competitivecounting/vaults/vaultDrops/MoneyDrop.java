@@ -21,23 +21,33 @@ public class MoneyDrop extends VaultDrop {
         int money = draw_money();
         lastDropAmount = money;
         wasMonocleActiveAtLastDrop = contextAtVaultSpawn.getStreak().getCounterIdsOfActiveSponsoredMonocles().contains(payoutReceiver.getId());
+        int sleepAfterLoot = 0;
         if (money < 2000) {
             //
         } else if (money < 20000 ) {
             dialogue.addNpcLine("Nice!", 1000);
+            sleepAfterLoot = 1;
         } else if (money < 70000) {
             dialogue.addNpcLine("Whoa!", 1500);
+            sleepAfterLoot = 2;
         } else if (money < 300000) {
             dialogue.addNpcLine("Is there a zero too much??", 1500);
+            sleepAfterLoot = 3;
         } else if(money < 1000000) {
             dialogue.addNpcLine("This must be a bug! How does so much money even fit into one vault??", 2500);
+            sleepAfterLoot = 4;
         } else {
-            dialogue.addNpcLine("We should inform the police about this find...", 1500)
-                    .addNpcLine("There is no way so much money got into this vault by legal means...", 1500);
+            dialogue.addNpcLine("We should inform the police about this find...", 3500)
+                    .addNpcLine("There is no way so much money got into this vault by legal means...", 2500);
+            sleepAfterLoot = 5;
         }
         Price price = new Price(money, Price.Unit.MONEY);
         dialogue.addNpcLine("You found " + price + "!",0);
         dialogue.addRunnable(m -> payoutReceiver.addBonusScoreFromVault(money, message, contextAtVaultSpawn));
+
+        if (sleepAfterLoot > 0) {
+            dialogue.addSleep(sleepAfterLoot);  // Sleep before continue to give counters the chance to realize their pluck
+        }
 
         if (money >= BankCommandHandler.MIN_VAULT_PAYOUT_TO_UNLOCK_MONOCLE &&
                 !contextAtVaultSpawn.getGuild().getBank().isMonocleUnlocked(payoutReceiver.getId())) {
