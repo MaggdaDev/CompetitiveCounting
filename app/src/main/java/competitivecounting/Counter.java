@@ -686,7 +686,7 @@ public class Counter implements ContractOwner {
     }
 
     public int[] getUnlockedBases() {
-        return unlockedSystems;
+        return IntStream.concat(Arrays.stream(unlockedSystems), IntStream.of(10)).toArray();
     }
 
     public int getPrestigePoints() {
