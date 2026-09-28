@@ -422,7 +422,7 @@ public class CountingStreak {
         }
         boolean canAfford = author.canAfford((int) (totalPrice * author.getAddruleDiscountFactor()));
         if (!canAfford) {
-            String addOrRemoveOneOrMany = (ruleType.equals("notime")) ? "to remove the timed rules." : "to add" + ((amountRules > 1) ? " these " + amountRules + " new rules." : "this new rule.");
+            String addOrRemoveOneOrMany = (ruleType.equals("notime")) ? "to remove the timed rules." : "to add " + ((amountRules > 1) ? "these " + amountRules + " new rules." : "this new rule.");
             CountingBot.write(message, "You only have " + author.getScore() + " out of the needed "
                     + Util.valueAndValueWithBoniToString(totalPrice, (int) (totalPrice * author.getAddruleDiscountFactor())) + " money " + addOrRemoveOneOrMany);
         }
@@ -507,7 +507,7 @@ public class CountingStreak {
             }
             ruleNumbers = splitted[2].split(";");
         } else {
-            ruleNumbers = new String[0];
+            ruleNumbers = new String[1];
         }
 
         if (!canAffordNumberRulesWithOneType(message, author, ruleName, ruleNumbers.length)) {
@@ -689,10 +689,7 @@ public class CountingStreak {
         for (String ruleNumber : ruleArray) {
             String probablyNumber = ruleNumber.trim();
 
-            if (probablyNumber.isEmpty()) {
-                continue;
-            }
-
+            if (probablyNumber.isEmpty()) continue;
             int number;
 
             try {
@@ -707,7 +704,7 @@ public class CountingStreak {
             }
 
             if (number < rule.getMinimumValue()) {
-                return "Error: Please enter an integer greater than 1!";
+                return "Error: Please enter an integer greater than " + (rule.getMinimumValue() - 1) + "!";
             }
         }
 
@@ -723,17 +720,17 @@ public class CountingStreak {
             return "No rules!";
         } else {
             ArrayList<NumberRule> sanitisedNumberRules = sanitiseNumberRuleList(numberRules);
-            String ret = "Active rules:";
+            StringBuilder ret = new StringBuilder("Active rules:");
             for (NumberRule rule : sanitisedNumberRules) {
-                ret += "\n\t\\- " + rule.toString();
+                ret.append("\n\t\\- ").append(rule.toString());
             }
             if (slowModeRule != null) {
-                ret += "\n\t\\- " + slowModeRule.toString();
+                ret.append("\n\t\\- ").append(slowModeRule);
             }
             if (timeLimitRule != null) {
-                ret += "\n\t\\- " + timeLimitRule.toString();
+                ret.append("\n\t\\- ").append(timeLimitRule);
             }
-            return ret;
+            return ret.toString();
         }
     }
 
