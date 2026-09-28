@@ -172,6 +172,10 @@ public class Collection {
     }
 
     private boolean checkEquipability(Message message, Equippable equippable) {
+        if (isFull() && !containsEquippable(equippable)) {
+            CountingBot.write(message, "Your collection is full! You can only upgrade existing items.");
+            return false;
+        }
         if (owner.getInventory().getAmountOfItem(equippable) <= 0) {
             CountingBot.write(message, "You don't own a " + equippable.getName() + "!");
             return false;
