@@ -46,11 +46,11 @@ public class InventoryCommandHandler {
                 Item item;
                 if (itemNumber == -1) {
                     // Not a number, maybe a name?
-                    if (!Purchasables.isValidPurchasable(itemName)) {
+                    item = Item.getItemByName(itemName);
+                    if (item == null) {
                         CountingBot.write(message, "Invalid item name: " + itemName);
                         return;
                     }
-                    item = Purchasables.getPurchasableByNameOrNumber(itemName.toLowerCase());
                 } else {
                     if (itemNumber <= 0) {
                         CountingBot.write(message, "Item number must be greater than or equal to 1, but is " + itemNumber +
@@ -66,8 +66,6 @@ public class InventoryCommandHandler {
                     item = counter.getInventory().getItemByItemNumber(itemNumber);
 
                 }
-
-
                 if(counter.getInventory().getAmountOfItem(item) <= 0) {
                     CountingBot.write(message, "You don't own this item.");
                     return;
