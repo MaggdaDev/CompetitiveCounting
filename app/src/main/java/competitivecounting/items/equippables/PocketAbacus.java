@@ -49,7 +49,7 @@ public class PocketAbacus extends Equippable {
         lastUseSeconds = now;
         uses++;
         CountingStreak streak = context.getStreak();
-        String s = "Using your " + NAME + ", you computed that the next correct number will be " + Util.getNumberInBaseString(streak.getLastNum(), streak.getBase(), true) + ".";
+        String s = "Using your " + NAME + ", you computed that the next correct number will be " + Util.getNumberInBaseString(streak.getNextNum(), streak.getBase(), true) + ".";
         CountingBot.write(message, s);
         return true;
     }

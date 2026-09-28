@@ -817,6 +817,10 @@ public class CountingStreak {
         return key;
     }
 
+    public int getNextNum() {
+        return counter;
+    }
+
     public void notifyStreakVaultStartsRunning() {
         if (timeLimitRule != null) {
             timeLimitRule.stopCurrentTimer();
