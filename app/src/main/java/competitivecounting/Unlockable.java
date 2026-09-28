@@ -26,11 +26,7 @@ public enum Unlockable {
 
     UNLOCK_SHOP(10000, "unlock_shop", "Unlocks the ~unlock_shop command"),
 
-    BASE_1(-1, "base1", "Counting in unary: 1"),
-    BASE_2(-1, "base2", "Counting in binary"),
-    BASE_3(-1, "base3", "Counting in ternary"),
-    BASE_16(-1, "base16", "Counting in hexadecimal"),
-    BASE_N(-2, "base n", "Counting in base-n");
+    BASE_N(-1, "base n", "Counting in base n");
     private final int price;
     private final String name;
     private final String description;
@@ -41,14 +37,9 @@ public enum Unlockable {
     }
     
     public static int getBasePrice(String base) {
-        switch(base) {
-            case "1": case "2": case "3": case "16":
-                return Math.abs(Unlockable.BASE_1.getPrice());
-            default:
-                return Math.abs(Unlockable.BASE_N.getPrice());
-        }
+        return 1;  // todo base cleanup
     }
-    
+
     public int getPrice() {
         return price;
     }

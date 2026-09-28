@@ -7,11 +7,11 @@ package competitivecounting;
 
 import competitivecounting.Parser.TradeOfferParser.TradeOfferChecker;
 import competitivecounting.bank.Bank;
-import competitivecounting.bank.BankAccount;
 import competitivecounting.bank.BankCommandHandler;
 import competitivecounting.bank.BankTransactionsHandler;
 import competitivecounting.bank.exceptions.BankTransactionException;
 import competitivecounting.contracts.Contract;
+import competitivecounting.dialogue.Dialogue;
 import competitivecounting.interactionhandlers.*;
 import competitivecounting.items.*;
 import competitivecounting.storage.Storage;
@@ -32,10 +32,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.Disposable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -181,21 +178,40 @@ public class CountingBot {
 
     private void basesOwnedInfo(Message message) {
         Counter author = getCounterFromMessage(message);
-        if (author.getUnlockedBases().length == 0) {
+        int[] bases = author.getUnlockedBases();
+        Arrays.sort(bases);
+        if (bases.length == 0) {
             if (author.getPrestiges() == 0) {
                 write(message, "How do you know about bases? You don't even have any prestige points yet!");
             } else {
                 write(message, "You don't own any base yet. Unlock them in the ~unlock shop for some prestige points!");
             }
-        } else if (author.getUnlockedBases().length == 1) {
-            write(message, "You only own base " + author.getUnlockedBases()[0] + ".");
+        } else if (bases.length == 1) {
+            write(message, "You only own base " + bases[0] + ".");
         } else {
-            String msg = "You own the following bases: ";
-            for (int i = 0; i < author.getUnlockedBases().length - 1; i++) {
-                msg += author.getUnlockedBases()[i] + ", ";
+            StringBuilder msg;
+            if (!author.hasUnlockedAllBases()) {
+                msg = new StringBuilder("You own the following " + author.getAmountBasesUnlocked() + " bases: ");
+                for (int i = 0; i < bases.length - 1; i++) {
+                    msg.append(bases[i]).append(", ");
+                }
+                msg.append(bases[bases.length - 1]).append(".");
+                if (author.getAmountBasesUnlocked() >= BaseSystems.MAX_BASE - 31) {
+                    String joined = Arrays.stream(author.getLockedSystems())
+                            .mapToObj(String::valueOf)
+                            .collect(Collectors.joining(", "));
+                    int amountMissing = BaseSystems.MAX_BASE - author.getAmountBasesUnlocked();
+                    if (amountMissing > 1) {
+                        msg.append("\n\nYou are missing these ").append(amountMissing).append(" bases:\n")
+                                .append(joined);
+                    } else {
+                        msg.append("\n\nYou are missing the base ").append(joined).append(".");
+                    }
+
+                }
             }
-            msg += author.getUnlockedBases()[author.getUnlockedBases().length - 1] + ".";
-            write(message, msg);
+            else msg = new StringBuilder("You own every single base!");
+            write(message, msg.toString());
         }
     }
 
@@ -423,11 +439,11 @@ public class CountingBot {
             } else if (contractNumber >= contractsMatchingToGivenId.size()) {
                 CountingBot.write(message, "This number does not match a contract.");
             } else {
-                initiateRemoveContractButtonInteraction(message, author, this.getCounter(guildId, otherCounterId), contractsMatchingToGivenId.get(contractNumber));
+                initiateRemoveContractButtonInteraction(message, author, getCounter(guildId, otherCounterId), contractsMatchingToGivenId.get(contractNumber));
             }
         } else {
             Contract contract = contractsMatchingToGivenId.get(0);
-            initiateRemoveContractButtonInteraction(message, author, this.getCounter(guildId, otherCounterId), contract);
+            initiateRemoveContractButtonInteraction(message, author, getCounter(guildId, otherCounterId), contract);
         }
 
     }
@@ -552,40 +568,45 @@ public class CountingBot {
 
     private void unlockInfo(Message message, Counter author) {
         if (author.isUnlocked(Unlockable.UNLOCK_COMMAND)) {
-            String answ = "Unlock new stuff with the '~unlock' command!\nUsage: ~unlock [unlock name]\n\nYet to unlock (You have " + author.getScore() + " money):";
+            StringBuilder answ = new StringBuilder("Unlock new stuff with the '~unlock' command!\nUsage: ~unlock [unlock name]\n\nYet to unlock (You have " + author.getScore() + " money):");
             boolean anyUnlockable = false;
             int currCount = 1;
             boolean ruleCostUpgradeAlreadyDisplayed = false;
             for (int i = 0; i < Unlockable.values().length; i++) {
                 Unlockable currUnlockable = Unlockable.values()[i];
-                if (i >= Unlockable.BASE_1.ordinal()) {
+                if (i >= Unlockable.BASE_N.ordinal()) {
                     if (author.getPrestiges() == 0) {
                         continue;
                     }
                 }
                 if (currUnlockable == Unlockable.BASE_N) {
-                    answ += "\n" + String.valueOf(currCount) + ".  '" + currUnlockable.getName() + "': " + currUnlockable.getDescription();
-                    answ += " (" + Math.abs(currUnlockable.getPrice()) + " prestige point(s))";
-                    anyUnlockable = true;
+                    if (!author.hasUnlockedAllBases()) {
+                        answ.append("\n").append(currCount).append(".  '").append(currUnlockable.getName()).append("': ").append(currUnlockable.getDescription());
+                        answ.append(" (").append(Math.abs(currUnlockable.getPrice())).append(" prestige point) - You own ").append(author.getAmountBasesUnlocked())
+                                .append(" of ").append(BaseSystems.MAX_BASE).append(" bases!");
+                        anyUnlockable = true;
+                    }
                 } else if (!author.isUnlocked(currUnlockable)) {
-                    if (currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName()) && ruleCostUpgradeAlreadyDisplayed) {
+                    boolean isThisRuleCostUpgradeOne = currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName());
+                    if (isThisRuleCostUpgradeOne && ruleCostUpgradeAlreadyDisplayed) {
                         continue;
-                    } else if (currUnlockable.getName().equals(Unlockable.RULE_COST_UPGRADE_1.getName())) {
+                    } else if (isThisRuleCostUpgradeOne) {
                         ruleCostUpgradeAlreadyDisplayed = true;
                     }
-                    answ += "\n" + String.valueOf(currCount) + ".  '" + currUnlockable.getName() + "': " + currUnlockable.getDescription();
+                    answ.append("\n").append(currCount).append(".  '").append(currUnlockable.getName()).append("': ").append(currUnlockable.getDescription());
                     currCount++;
                     if (currUnlockable.getPrice() > 0) {
-                        answ += " (" + currUnlockable.getPrice() + " money)";
+                        answ.append(" (").append(currUnlockable.getPrice()).append(" money)");
                     } else {
-                        answ += " (" + Math.abs(currUnlockable.getPrice()) + " prestige point(s))";
+                        String pluralOrNot = currUnlockable.getPrice() < -1 ? "s" : "";
+                        answ.append(" (").append(Math.abs(currUnlockable.getPrice())).append(" prestige point").append(pluralOrNot).append(")");
                     }
                     anyUnlockable = true;
                 }
 
             }
             if (anyUnlockable) {
-                CountingBot.write(message, answ);
+                CountingBot.write(message, answ.toString());
             } else {
                 CountingBot.write(message, "You already own everything!");
             }
@@ -621,7 +642,7 @@ public class CountingBot {
             long scoreB = b.getPrestiges() * 1000000L + (mode.equals("networth") ? b.getAccWorth() : b.getPossibleTotal());
             return Long.compare(scoreB, scoreA);
         });
-        String ret = "Scoreboard: ";
+        StringBuilder ret = new StringBuilder("Scoreboard: ");
         Bank bank = guilds.get(guildId).getBank();
         String bankString = "The CrocBank Inc. \uD83D\uDC0A: " + bank.getTotalScore() + " money";
         boolean bankDisplayed = !bank.isUnlocked(); // Dont show bank if not unlocked
@@ -635,25 +656,25 @@ public class CountingBot {
             long bankCompareValue = counter.getPrestiges() * 1_000_000L + (mode.equals("networth") ? counter.getAccWorth() : counter.getPossibleTotal());
 
             if (!bankDisplayed && (bank.getTotalScore() > bankCompareValue)) {
-                ret += "\n" + position + ") " +  bankString;
+                ret.append("\n").append(position).append(") ").append(bankString);
                 bankDisplayed = true;
                 position += 1;
             }
-            ret += "\n" + position + ") " + counter.getName() + ": ";
+            ret.append("\n").append(position).append(") ").append(counter.getName()).append(": ");
             if (mode.equals("bal")) {
-                ret += counter.getPossibleTotal() + " money";
+                ret.append(counter.getPossibleTotal()).append(" money");
             } else if (mode.equals("networth")) {
-                ret += counter.getAccWorth() + " net worth";
+                ret.append(counter.getAccWorth()).append(" net worth");
             }
             if (counter.getPrestiges() != 0) {
-                ret += " (Amount of Prestiges: " + counter.getPrestiges() + ")";
+                ret.append(" (Amount of Prestiges: ").append(counter.getPrestiges()).append(")");
             }
             position += 1;
         }
         if (!bankDisplayed) {
-            ret += "\n" + position + ") " + bankString;
+            ret.append("\n").append(position).append(") ").append(bankString);
         }
-        return ret;
+        return ret.toString();
     }
 
     private void count(Message message) {
@@ -679,11 +700,19 @@ public class CountingBot {
                 if (content.equals("1")) {
                     streaks.put(channelKey, new CountingStreak(channelKey, 10, guildId));
                 } else {
+                        if (author.hasUnlockedAllBases() && !author.hasTrophy(-72)) {
+                            new Dialogue()
+                                    .addSleep(2)
+                                    .addNpcLine("You seem to have unlocked every single system!", 2000)
+                                    .addNpcLine("You truly are a very diverse counter.", 1500)
+                                    .addRunnable(currMsg -> streaks.get(channelKey).getTrophyHandler().spawnTrophy(message, -72))
+                                    .play(message);
+                        }
                     int base = Integer.parseInt(splitted[2]);
-                    if (author != null && author.isBaseUnlocked(base)) {
+                    if (author.isBaseUnlocked(base)) {
                         streaks.put(channelKey, new CountingStreak(channelKey, base, guildId));
                     } else {
-                        CountingBot.write(message, "Unlock this base with prestige-points to start a streak.");
+                        CountingBot.write(message, "Unlock this base with prestige points to start a streak.");
                         return;
                     }
                 }

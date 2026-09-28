@@ -124,6 +124,8 @@ public class TrophyHandler {
         switch (trophy) {
             case -753:
                 return startText + "_Relic of Prestige from the Fallen Empire_";
+            case -754:
+                return startText + "_\"Like a child, touching a hot stove\"_";
             case -2147483648:
                 return startText + "_To Infinity!_";
             case -200:
@@ -134,6 +136,8 @@ public class TrophyHandler {
                 return startText + "_Gucci Fendi & Prada Collector_";
             case -4:
                 return trophyEmojiString + "Trophy of the Fourth Virtue: _Tropaeum Temperantiae_";
+            case -72:
+                return startText + "_All your base are belong to us_";
             default:
                 return startText;
         }

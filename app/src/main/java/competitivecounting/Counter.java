@@ -19,6 +19,8 @@ import competitivecounting.tradeoffer.TradeOffer;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -107,7 +109,7 @@ public class Counter implements ContractOwner {
 
 
     public void unlock(Unlockable unlockable, Message message) {
-        if (unlockable.ordinal() >= Unlockable.BASE_1.ordinal()) {
+        if (unlockable.ordinal() >= Unlockable.BASE_N.ordinal()) {
             if (this.isUnlocked(unlockable)) {
                 CountingBot.write(message, "You have already unlocked this.");
                 return;
@@ -117,7 +119,6 @@ public class Counter implements ContractOwner {
                 return;
             }
             this.addUnlocked(message, unlockable);
-
         } else {
             if (this.isUnlocked(unlockable)) {
                 CountingBot.write(message, "You have already unlocked this.");
@@ -151,24 +152,6 @@ public class Counter implements ContractOwner {
         }
         newUnlocked[this.unlocked.length] = unlockable.ordinal();
         this.unlocked = newUnlocked;
-
-        if (unlockable.ordinal() >= Unlockable.BASE_1.ordinal()) {
-            switch (unlockable) {
-                case BASE_1:
-                    unlockBase(message, "1");
-                    break;
-                case BASE_16:
-                    unlockBase(message, "16");
-                    break;
-                case BASE_2:
-                    unlockBase(message, "2");
-                    break;
-                case BASE_3:
-                    unlockBase(message, "3");
-                    break;
-            }
-        }
-
     }
 
     public int getOwedToBank() {
@@ -183,10 +166,14 @@ public class Counter implements ContractOwner {
 
     public void unlockBase(Message message, String base) {
         if (!BaseSystems.isNumInSystem(base, 10) || Integer.parseInt(base) > BaseSystems.MAX_BASE || Integer.parseInt(base) < 1) {
-            CountingBot.write(message, "Invalid base! (note: base can not exceed 72.)");
+            CountingBot.write(message, "Invalid base! (note: base can not exceed " + BaseSystems.MAX_BASE + ".)");
             return;
         }
         int system = Integer.parseInt(base);
+        if (hasUnlockedAllBases()) {
+            CountingBot.write(message, "You have already unlocked all available bases!");
+            return;
+        }
         if (isBaseUnlocked(system)) {
             CountingBot.write(message, "You have already unlocked this base.");
             return;
@@ -209,7 +196,10 @@ public class Counter implements ContractOwner {
         this.unlockedSystems = newUnlockedSys;
         this.prestigePoints -= Unlockable.getBasePrice(base);
 
-        CountingBot.write(message, "You have unlocked base " + base + " and paid " + Unlockable.getBasePrice(base) + " prestige points. You can start streaks in this base system now, and you get a " + Counter.SYSTEM_OWNED_FACT + "x bonus on your counts in this base.");
+        CountingBot.write(message, "You have unlocked base " + base + " and paid " + Unlockable.getBasePrice(base) + " prestige point. You can start streaks in this base system now, and you get a " + Counter.SYSTEM_OWNED_FACT + "x bonus on your counts in this base.");
+        if (hasUnlockedAllBases()) {
+            CountingBot.write(message, "Congratulations! This was the last base left to unlock, and you now own all " + BaseSystems.MAX_BASE + " available bases!");
+        }
         CountingBot.getInstance().save();
     }
 
@@ -676,6 +666,23 @@ public class Counter implements ContractOwner {
             }
         }
         return false;
+    }
+
+    public boolean hasUnlockedAllBases() {
+        return unlockedSystems.length == BaseSystems.MAX_BASE - 1;
+    }
+
+    public int getAmountBasesUnlocked() {
+        return unlockedSystems.length + 1;  // (base 10 always unlocked)
+    }
+
+    public int[] getLockedSystems() {
+        List<Integer> unlockedList = Arrays.stream(unlockedSystems).boxed().collect(Collectors.toList());
+
+        return IntStream.range(1, BaseSystems.MAX_BASE)
+                .filter(i -> !unlockedList.contains(i))
+                .filter(i -> !(i == 10))
+                .toArray();
     }
 
     public int[] getUnlockedBases() {

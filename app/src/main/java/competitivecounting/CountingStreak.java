@@ -633,24 +633,24 @@ public class CountingStreak {
                 currTimePrice *= timePriceFact;
                 break;
             case "notime":
+                int priceWithDiscounts = (int) (currTimePrice * author.getAddruleDiscountFactor());
                 if (!author.canAfford(currTimePrice)) {
                     CountingBot.write(message, "You only have " + author.getScore() + " out of the needed " +
-                            Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice * author.getAddruleDiscountFactor())) + " money to remove the current time rule.");
+                            Util.valueAndValueWithBoniToString(currTimePrice, priceWithDiscounts) + " money to remove the current time rule.");
                     break;
                 }
-                if (slowModeRule != null) {
-                    slowModeRule.stop();
-                    CountingBot.write(message, "You paid " + Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice * author.getAddruleDiscountFactor())) +
-                            " to remove: " + slowModeRule.toString());
-                    slowModeRule = null;
-                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
-                    currTimePrice *= timePriceFact;
-                } else if (timeLimitRule != null) {
-                    timeLimitRule.cancel();
-                    CountingBot.write(message, "You paid " + Util.valueAndValueWithBoniToString(currTimePrice, (int) (currTimePrice * author.getAddruleDiscountFactor())) +
-                            " to remove: " + timeLimitRule.toString());
-                    timeLimitRule = null;
-                    author.subtractScore((int) (author.getAddruleDiscountFactor() * currTimePrice));
+                Object targetRule = slowModeRule != null ? slowModeRule : timeLimitRule;
+                if (targetRule != null) {
+                    if (slowModeRule != null) {
+                        slowModeRule.stop();
+                        slowModeRule = null;
+                    } else {
+                        timeLimitRule.cancel();
+                        timeLimitRule = null;
+                    }
+
+                    CountingBot.write(message, "You paid " + Util.valueAndValueWithBoniToString(currTimePrice, priceWithDiscounts) + " to remove: " + targetRule);
+                    author.subtractScore(priceWithDiscounts);
                     currTimePrice *= timePriceFact;
                 } else {
                     CountingBot.write(message, "No active time rule to remove!");
@@ -720,6 +720,7 @@ public class CountingStreak {
             return "No rules!";
         } else {
             ArrayList<NumberRule> sanitisedNumberRules = sanitiseNumberRuleList(numberRules);
+            if (sanitisedNumberRules.size() > 20) return getCompactRulesInfo();  // output would be too long otherwise and we save on building the string for no reason
             StringBuilder ret = new StringBuilder("Active rules:");
             for (NumberRule rule : sanitisedNumberRules) {
                 ret.append("\n\t\\- ").append(rule.toString());
@@ -730,7 +731,9 @@ public class CountingStreak {
             if (timeLimitRule != null) {
                 ret.append("\n\t\\- ").append(timeLimitRule);
             }
-            return ret.toString();
+            String maybeResult =  ret.toString();
+            System.out.println(maybeResult.length());
+            if (maybeResult.length() > 499) return getCompactRulesInfo(); else return maybeResult;
         }
     }
 
@@ -756,14 +759,15 @@ public class CountingStreak {
                         ))
                         .map(NumberRule::getValueInBase)
                         .collect(Collectors.joining(", "));  // scheis java 2.0
+                values += (entry.getValue().size() > 10) ? " (total: " + entry.getValue().size() + ")" : "";
                 builder.append(values);
             }
         }
         if (slowModeRule != null) {
-            builder.append("\n\t\\- ").append(slowModeRule.toString());
+            builder.append("\n\t\\- ").append(slowModeRule);
         }
         if (timeLimitRule != null) {
-            builder.append("\n\t\\- ").append(timeLimitRule.toString());
+            builder.append("\n\t\\- ").append(timeLimitRule);
         }
         return builder.toString();
     }
@@ -773,12 +777,8 @@ public class CountingStreak {
         switch (mode) {
             case 0: // ~base
                 ret = "The current base is **" + currentBase + "** with these characters:\n";
-                if (currentBase == 1) {
-                    ret += "1&1";
-                } else {
-                    for (int i = 0; i < currentBase; i++) {
-                        ret += BaseSystems.digitToChar(i) + " ";
-                    }
+                for (int i = 0; i < currentBase; i++) {
+                    ret += BaseSystems.digitToChar(i) + " ";
                 }
             case 1: // ~streak
                 ret = "Base: " + currentBase + (currentBase == 1 ? ", character: " : ", characters: ");
