@@ -111,7 +111,8 @@ public class VaultSpawner {
                     }
                 }
                 activeVault = vault;
-                ((VaultLocator) context.getCounter().getCollection().getEquippable(Equippables.VAULT_LOCATOR)).incrementLocatedVaults();
+                context.getCounter().getCollection().getEquippable(Equippables.VAULT_LOCATOR)
+                        .ifPresent(e -> ((VaultLocator) e).incrementLocatedVaults());
                 new VaultDialogue(message, context, m -> {
                     activeVault.reset();
                     activeVault = null;

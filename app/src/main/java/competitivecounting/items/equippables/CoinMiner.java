@@ -44,7 +44,8 @@ public class CoinMiner extends Equippable {
                         .addWaitForEmojiReaction(CountingEmojis.COIN, (msg, emojiReactor) -> {
                             if (emojiReactor.getCollection().containsEquippable(Equippables.COIN_MINER)) {
                                 emojiReactor.getInventory().addItem(Consumables.PRIME_COIN);
-                                ((CoinMiner)emojiReactor.getCollection().getEquippable(Equippables.COIN_MINER)).incrementCoinsMinedStat();
+                                emojiReactor.getCollection().getEquippable(Equippables.COIN_MINER).ifPresent(e ->
+                                        ((CoinMiner) e).incrementCoinsMinedStat());
                                 CountingBot.write(msg, "Congratulations, you mined a " + Consumables.PRIME_COIN.getName() + ", " + emojiReactor.getName() + "!");
                                 return true;
                             }

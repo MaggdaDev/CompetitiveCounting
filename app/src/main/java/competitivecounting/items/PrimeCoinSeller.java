@@ -55,7 +55,7 @@ public class PrimeCoinSeller {
                 })
                 .addRunnable(m -> {
                     if (counter.getInventory().getAmountOfItem(Consumables.PRIME_COIN) < 1) {
-                        CountingBot.write(m, "Can't sell " + Consumables.PRIME_COIN.getName() + ", as you know longer own one.");
+                        CountingBot.write(m, "Can't sell the " + Consumables.PRIME_COIN.getName() + ", as you no longer own one.");
                     } else {
                         counter.getInventory().removeItem(Consumables.PRIME_COIN);
                         counter.addBonusScore(localCurrentBitCoinPrice, m);

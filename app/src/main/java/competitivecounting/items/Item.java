@@ -92,6 +92,10 @@ public class Item {
         return getNameWithoutEmojis().equalsIgnoreCase(removeExpliciteEmojis(removeEmojis(name)));
     }
 
+    public boolean isMeantBy(Item item) {
+        return isMeantBy(item.toString());
+    }
+
     public static Item getItemByName(String name) {
         for (Item item : ALL_ITEMS) {
             if (item.isMeantBy(name)) {

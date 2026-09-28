@@ -57,8 +57,8 @@ public class TrophyHandler {
             message.addReaction(CountingEmojis.SPECIAL_TROPHY).subscribe();
         }
         Counter spawnerCounter = CountingBot.getCounter(message.getGuildId().get().asString(), message.getAuthor().get().getId().asString());
-        spawnerCounter.getCollection().getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName()).ifPresent(eq -> {
-                ((DowsingRod) eq).trophySpawned(message, number);
+        spawnerCounter.getCollection().getEquippable(Equippables.DOWSING_ROD).ifPresent(eq -> {
+            ((DowsingRod) eq).trophySpawned(message, number);
         });
         reactHandler.addOnTrophyReact((messageReactedTo, reactingUser) -> {
             if (messageReactedTo.getId().equals(message.getId())) {
@@ -69,11 +69,13 @@ public class TrophyHandler {
                 }
                 String guildId = messageReactedTo.getGuildId().get().asString();
                 Counter reactingCounter = CountingBot.getInstance().getCounter(guildId, reactingUserId);
-                reactingCounter.getCollection().getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName()).ifPresent(rod -> {
-                    if (Objects.equal(reactingCounter.getId(), spawnerCounter.getId())) {
-                        ((DowsingRod) rod).ownSpawnedTrophyClaimed(number);   // TODO test logic spawner claims, non-spawner claims etc
-                    }
-                });
+                reactingCounter.getCollection()
+                        .getEquippable(Equippables.DOWSING_ROD)
+                        .ifPresent(rod -> {
+                            if (Objects.equal(reactingCounter.getId(), spawnerCounter.getId())) {
+                                ((DowsingRod) rod).ownSpawnedTrophyClaimed(number);   // TODO test logic spawner claims, non-spawner claims etc
+                            }
+                        });
                 if (reactingCounter.hasTrophy(number)) {
                     if (number > 0) {
                         reactingCounter.addTrophyShard();

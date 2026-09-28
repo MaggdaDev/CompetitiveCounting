@@ -33,7 +33,10 @@ public class Collection {
     }
 
     public void addItem(Equippable item) {
-        equippables.add(item);
+        getEquippable(item).ifPresentOrElse(
+                Equippable::upgrade,
+                () -> equippables.add(item)
+        );
     }
 
     public List<Equippable> getEquippables() {
@@ -54,7 +57,7 @@ public class Collection {
 
     public boolean containsEquippable(Equippable equippable) {
         for (Item item : equippables) {
-            if (item.isMeantBy(equippable.getName())) {
+            if (item.isMeantBy(equippable)) {
                 return true;
             }
         }
@@ -86,13 +89,13 @@ public class Collection {
         return sb.toString();
     }
 
-    public Equippable getEquippable(Equippable eq) {
+    public Optional<Equippable> getEquippable(Equippable eq) {
         for (Equippable equippable : equippables) {
-            if (equippable.isMeantBy(eq.getName())) {
-                return equippable;
+            if (equippable.isMeantBy(eq)) {
+                return Optional.of(equippable);
             }
         }
-        throw new IllegalArgumentException("Equippable not found in collection: " + eq.getName());
+        return Optional.empty();
     }
 
     public Optional<Equippable> getEquippableByNameOrNumber(String itemIdentifier) {
@@ -112,27 +115,54 @@ public class Collection {
         return Optional.empty();
     }
 
-    public Mono<Boolean> equipAsync(Message message, Equippable equippable) {
-        if (!checkEquipability(message, equippable)) {
+    public Mono<Boolean> equipAsync(Message message, Equippable equipableTemplate) {
+        if (!checkEquipability(message, equipableTemplate)) {
             return Mono.just(false);
         }
-        new Dialogue()
-                .addNpcLine("New item! Do you want to extend your collection with a " + equippable.getName()
-                        + "? This action cannot be reverted.", 0)
-                .addSinglePersonThumbsUpDownConfirmation(
-                        m -> {},
-                        m -> CountingBot.write(message, "You have declined to equip the " + equippable.getName() + "."),
-                        true, new AtomicReference<>(message.getAuthor().get().getId().asString()),
-                        30,
-                        m2 -> {
-                            CountingBot.write(message, "Equipping the " + equippable.getName() + " timed out.");
-                            return true;
-                        })
-                .addRunnable(m -> {
-                    if(checkEquipability(message, equippable)) {
-                        addItem(equippable.createObject(owner));
-                        owner.getInventory().removeItem(equippable);
-                        CountingBot.write(message, "You have equipped a " + equippable.getName() + "!");
+        Dialogue d = new Dialogue();
+        if (containsEquippable(equipableTemplate)) {
+            Equippable equippedEquippable = getEquippable(equipableTemplate).orElseThrow();
+            d.addNpcLine("Your collection already contains a " + equippedEquippable.getName()
+                            + "! Do you want to upgrade it by one level?", 0)
+                    .addSinglePersonThumbsUpDownConfirmation(
+                            m -> {
+                            },
+                            m -> CountingBot.write(message, "You have declined to upgrade your " + equippedEquippable.getName() + "."),
+                            true, new AtomicReference<>(owner.getId()),
+                            30,
+                            m2 -> {
+                                CountingBot.write(message, "Upgrading your " + equippedEquippable.getName()
+                                        + " timed out, " + owner.getName() + ".");
+                                return true;
+                            });
+        } else {
+            d.addNpcLine("New item! Do you want to extend your collection with a " + equipableTemplate.getName()
+                            + "? This action cannot be reverted.", 0)
+                    .addSinglePersonThumbsUpDownConfirmation(
+                            m -> {
+                            },
+                            m -> CountingBot.write(message, "You have declined to add the " + equipableTemplate.getName() + " to your collection."),
+                            true, new AtomicReference<>(owner.getId()),
+                            30,
+                            m2 -> {
+                                CountingBot.write(message, "Adding the " + equipableTemplate.getName()
+                                        + " to your collection timed out, " + owner.getName() + ".");
+                                return true;
+                            });
+        }
+        d.addRunnable(m -> {
+                    if (checkEquipability(message, equipableTemplate)) {
+                        boolean upgraded = containsEquippable(equipableTemplate);
+                        String oldName = upgraded ?
+                                getEquippable(equipableTemplate).orElseThrow().getName() : equipableTemplate.getName();
+                        addItem(equipableTemplate.createObject(owner));
+                        owner.getInventory().removeItem(equipableTemplate);
+                        Equippable equippedEquippable = getEquippable(equipableTemplate).orElseThrow();
+                        if (upgraded) {
+                            CountingBot.write(message, "You have upgraded your " + oldName + " to a " + equippedEquippable.getName() + "!");
+                        } else {
+                            CountingBot.write(message, "You have added a " + equippedEquippable.getName() + " to your collection!");
+                        }
                         CountingBot.getInstance().save();
                     }
                 })
@@ -143,10 +173,6 @@ public class Collection {
     private boolean checkEquipability(Message message, Equippable equippable) {
         if (isFull()) {
             CountingBot.write(message, "Your collection is full!");
-            return false;
-        }
-        if (containsEquippable(equippable)) {
-            CountingBot.write(message, "You have already equipped a " + equippable.getName() + "!");
             return false;
         }
         if (owner.getInventory().getAmountOfItem(equippable) <= 0) {
@@ -164,7 +190,7 @@ public class Collection {
     public double modifyTrophyRateFromEquippables(double trophyChance, CountingContext context) {
         int number = context.getCurrentNumber();
         // Dowsing Rod
-        Optional<Equippable> maybeDowsingRod = getEquippableByNameOrNumber(Equippables.DOWSING_ROD.getName());
+        Optional<Equippable> maybeDowsingRod = getEquippable(Equippables.DOWSING_ROD);
         if (maybeDowsingRod.isPresent()) {
             trophyChance = ((DowsingRod) maybeDowsingRod.get()).modifyTrophyRate(trophyChance, number);
         }

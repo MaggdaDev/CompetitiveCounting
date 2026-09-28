@@ -567,6 +567,7 @@ public class Counter implements ContractOwner {
         }
         addScoreWithoutPayingContracts(contractHandler.getNetto(score, message));
     }
+
     public void addScoreWithoutPayingContracts(int scoreAdd) {
         if (scoreAdd < 0) {
             throw new IllegalArgumentException("Cannot add negative bonus score!");
@@ -585,8 +586,11 @@ public class Counter implements ContractOwner {
 
     public void addBonusScoreFromVault(int money, Message message, CountingContext context) {
         if (context.getStreak().getCounterIdsOfActiveSponsoredMonocles().contains(getId())) {
-            ((SponsoredMonocle) collection.getEquippable(Equippables.SPONSORED_MONOCLE)).notifyMoneyTransfer(money);
-            context.getGuild().getBank().addMoney(money);
+            collection.getEquippable(Equippables.SPONSORED_MONOCLE)
+                    .ifPresent(e -> {
+                        ((SponsoredMonocle) e).notifyMoneyTransfer(money);
+                        context.getGuild().getBank().addMoney(money);
+                    });
         } else {
             addBonusScore(money, message);
         }
@@ -746,7 +750,7 @@ public class Counter implements ContractOwner {
 
     public int getScoreInBankAccount() {
         Bank bank = CountingBot.getInstance().getGuilds().get(guildId).getBank();
-        if (! bank.isUnlocked()) {
+        if (!bank.isUnlocked()) {
             return 0;
         }
         BankAccount account = bank.getAccount(getId());
