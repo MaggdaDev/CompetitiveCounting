@@ -8,6 +8,7 @@ import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.equippables.*;
 import com.google.common.base.Objects;
 import discord4j.core.object.entity.Message;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -205,7 +206,7 @@ public class Collection {
         return trophyChance;
     }
 
-    public double modifyVaultRateFromEquippables(double vaultChance, CountingContext context) {
+    public double modifyVaultRateFromEquippables(double vaultChance, @Nullable CountingContext context) {
         for (Equippable equippable : equippables) {
             if (equippable instanceof VaultRateModifier) {
                 vaultChance = ((VaultRateModifier) equippable).modifyVaultRate(vaultChance, context);

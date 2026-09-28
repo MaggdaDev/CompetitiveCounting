@@ -10,9 +10,9 @@ public class CoinMiner extends Equippable {
     public static final String NAME = "Coin⛏Miner";
     public static final String DESCRIPTION = "Equip to gain a small chance to mine a " + Consumables.PRIME_COIN.getName() + " while counting primes.";
     private int coinsMined = 0;
-    private final static double spawnChance = 0.0015;
+    private final static double BASE_SPAWN_CHANCE = 0.0015;
     public static final String EQUIPPED_DESCRIPTION = "On each prime number that you count, a " + Consumables.PRIME_COIN.getName() +
-            " may spawn with a small probability. Anyone with a " + NAME +
+            " may spawn with a {1} probability. Anyone with a " + NAME +
             " equipped may claim it.\n-# " + Consumables.PRIME_COIN.getName() + "s mined: {0}";
     public static final long COIN_CLAIM_TIMEOUT_SECONDS = 20;
 
@@ -22,7 +22,9 @@ public class CoinMiner extends Equippable {
 
     @Override
     public String getCollectionDescription() {
-        return EQUIPPED_DESCRIPTION.replace("{0}", "" + coinsMined);
+        return EQUIPPED_DESCRIPTION
+                .replace("{0}", "" + coinsMined)
+                .replace("{1}", Util.oddsStringFromProbAndModifiedProb(BASE_SPAWN_CHANCE, getSpawnChance()));
     }
 
     @Override
@@ -37,7 +39,7 @@ public class CoinMiner extends Equippable {
         }
         if (PrimeVault.isPrime(context.getCurrentNumber())) {
             double rand = Math.random();
-            if (rand <= spawnChance) {
+            if (rand <= getSpawnChance()) {
                 // Spawn
                 new Dialogue()
                         .addEmojiReaction(CountingEmojis.COIN)
@@ -64,6 +66,10 @@ public class CoinMiner extends Equippable {
                         .play(message);
             }
         }
+    }
+
+    private double getSpawnChance() {
+        return modifyProbabilityFromLevel(BASE_SPAWN_CHANCE);
     }
 
     private void incrementCoinsMinedStat() {

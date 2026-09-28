@@ -6,6 +6,7 @@ import competitivecounting.dialogue.Dialogue;
 import competitivecounting.vaults.CommunityVault;
 import competitivecounting.vaults.publicgoodsvault.VaultOfPublicGoods;
 import discord4j.core.object.entity.Message;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -57,7 +58,10 @@ public class SponsoredMonocle extends Equippable implements VaultRateModifier, T
         return true;
     }
 
-    private double modifyRate(double rate, CountingContext context) {
+    private double modifyRate(double rate, @Nullable CountingContext context) {
+        if (context == null) {
+            return rate;
+        }
         if (context.getCounter() != owner) {
             return rate;
         }
@@ -68,7 +72,7 @@ public class SponsoredMonocle extends Equippable implements VaultRateModifier, T
     }
 
     @Override
-    public double modifyVaultRate(double rate, CountingContext context) {
+    public double modifyVaultRate(double rate, @Nullable CountingContext context) {
         return modifyRate(rate, context);
     }
 

@@ -44,11 +44,11 @@ public class Util {
         return "<@" + id + ">";
     }
 
-    public static String valueAndValueWithBoniToString(int value, int valueWithBoni) {
-        if (value == valueWithBoni) {
-            return String.valueOf(value);
+    public static String valueAndValueWithBoniToString(int baseValue, int valueWithBoni) {
+        if (baseValue == valueWithBoni) {
+            return String.valueOf(baseValue);
         } else {
-            return "~~" + value + "~~ " + valueWithBoni;
+            return "~~" + baseValue + "~~ " + valueWithBoni;
         }
     }
 
@@ -67,5 +67,11 @@ public class Util {
 
     public static double multiplyProbabilityThreshold(double threshold, double multiplier) {
         return 1. - Math.pow(1. - threshold, multiplier);
+    }
+
+    public static String oddsStringFromProbAndModifiedProb(double probability, double modifiedProbability) {
+        int odds = (int) Math.round(1. / probability);
+        int oddsWithBoni = (int) Math.round(1. / modifiedProbability);
+        return "1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni);
     }
 }

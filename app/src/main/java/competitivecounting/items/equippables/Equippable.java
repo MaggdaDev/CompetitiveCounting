@@ -7,6 +7,10 @@ import discord4j.core.object.entity.Message;
 public abstract class Equippable extends Item {
     protected transient Counter owner;
     protected int level;
+
+    public final static double ADDITIONAL_FACTOR_PER_LEVEL = 0.1;
+
+
     public Equippable(Price price, String name, String description, Counter owner) {
         super(price, name, description);
         initialize(owner);
@@ -51,5 +55,21 @@ public abstract class Equippable extends Item {
 
     public void upgrade() {
         level++;
+    }
+
+    protected double flatIncreaseStatFromLevel(double baseStat) {
+        return baseStat * getMultiplierFromLevel();
+    }
+
+    protected double decreaseInverseStatFromLevel(double baseStat) {
+        return baseStat / getMultiplierFromLevel();
+    }
+
+    protected double modifyProbabilityFromLevel(double baseProbability) {
+        return Util.multiplyProbabilityThreshold(baseProbability, getMultiplierFromLevel());
+    }
+
+    protected double getMultiplierFromLevel() {
+        return 1. + (level - 1.) * ADDITIONAL_FACTOR_PER_LEVEL;
     }
 }

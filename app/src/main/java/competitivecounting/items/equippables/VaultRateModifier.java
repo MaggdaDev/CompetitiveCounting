@@ -1,7 +1,8 @@
 package competitivecounting.items.equippables;
 
 import competitivecounting.CountingContext;
+import org.jetbrains.annotations.Nullable;
 
 public interface VaultRateModifier {
-    public double modifyVaultRate(double rate, CountingContext context);
+    double modifyVaultRate(double rate, @Nullable CountingContext context);
 }

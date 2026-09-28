@@ -12,8 +12,8 @@ import java.util.Objects;
 public class DowsingRod extends Equippable {    // TODO implements TrophyRateModifier
     public final static String NAME = "Wünschel\uD83E\uDE84Rute";
     public final static double WISH_MULTIPLIER = 10.;
-    public final static String COLLECTION_DESCRIPTION_EMPTY = "_Use_ to wish for a trophy that gains x" + (int)WISH_MULTIPLIER + " spawn-probability!\n-# Successful wishes: {0}";
-    public final static String COLLECTION_DESCRIPTION_WISHED = "Currently wishing for the #{0} trophy (x" + (int)WISH_MULTIPLIER + " spawn rate). _Use_ to change wish!\n-# Successful wishes: {1}";
+    public final static String COLLECTION_DESCRIPTION_EMPTY = "_Use_ to wish for a trophy that gains {1} spawn-probability!\n-# Successful wishes: {0}";
+    public final static String COLLECTION_DESCRIPTION_WISHED = "Currently wishing for the #{2} trophy ({1} spawn rate). _Use_ to change wish!\n-# Successful wishes: {0}";
     private final static String DESCRIPTION = "When equipped, can be used to wish for a trophy!";
     private int successfulWishes = 0;
     private int currentWish = -1;
@@ -60,7 +60,8 @@ public class DowsingRod extends Equippable {    // TODO implements TrophyRateMod
                         return false;
                     }
                     currentWish = trophyNumber;
-                    CountingBot.write(message, "The #" + currentWish + " trophy will now spawn with a x" + (int)WISH_MULTIPLIER + " probability on your counts.");
+                    CountingBot.write(message, "The #" + currentWish + " trophy will now spawn with a " + getWishMultiplierString()
+                            + " probability on your counts.");
                     return true;
                 })
                 .addRunnable(m -> currentDialogue = null);
@@ -68,17 +69,32 @@ public class DowsingRod extends Equippable {    // TODO implements TrophyRateMod
         return true;
     }
 
+    private double getWishMultiplier() {
+        return flatIncreaseStatFromLevel(WISH_MULTIPLIER);
+    }
+
+    private String getWishMultiplierString() {
+        int baseMult = (int) Math.round(WISH_MULTIPLIER);
+        int actualMult = (int) Math.round(getWishMultiplier());
+        return "x" + Util.valueAndValueWithBoniToString(baseMult, actualMult);
+    }
+
     public double modifyTrophyRate(double trophyChance, int number) {
         if (number == currentWish) {
-            return Util.multiplyProbabilityThreshold(trophyChance, WISH_MULTIPLIER);
+            return Util.multiplyProbabilityThreshold(trophyChance, getWishMultiplier());
         }
         return trophyChance;
     }
 
     @Override
     public String getCollectionDescription() {
-        return currentWish == -1 ? COLLECTION_DESCRIPTION_EMPTY.replace("{0}", String.valueOf(successfulWishes)) :
-                COLLECTION_DESCRIPTION_WISHED.replace("{0}", String.valueOf(currentWish)).replace("{1}", String.valueOf(successfulWishes));
+        return currentWish == -1 ? COLLECTION_DESCRIPTION_EMPTY
+                .replace("{0}", String.valueOf(successfulWishes))
+                .replace("{1}", getWishMultiplierString()):
+                COLLECTION_DESCRIPTION_WISHED
+                        .replace("{2}", String.valueOf(currentWish))
+                        .replace("{0}", String.valueOf(successfulWishes))
+                        .replace("{1}", getWishMultiplierString());
     }
 
     @Override

@@ -34,60 +34,68 @@ public class VaultSpawner {
         }
     }
 
-    public static void vaultInfo(Message message, Optional<CountingStreak> streak, Counter counter) {
-        String s = streak.isEmpty() ? getStaticVaultInfo(counter, streak) : streak.get().getVaultSpawner().getStreakVaultInfo(counter, streak.get());
-        CountingBot.write(message, s);
-    }
-
-    private String getStreakVaultInfo(Counter counter, CountingStreak streak) {
-        StringBuilder ret = new StringBuilder(getStaticVaultInfo(counter, Optional.of(streak)));
-        if (previousContext == null) {
-            return ret.toString();
-        }
-
-        List<Vault> eligibleVaults = new ArrayList<>();
-        for (Vault vault : vaults) {
-            if (vault.canSpawn(previousContext)) {
-                eligibleVaults.add(vault);
-            }
-        }
-        ret.append("\n");
-        if (eligibleVaults.isEmpty()) {
-            ret.append("The last count did not meet the requirements of any vault!");
-        } else if (eligibleVaults.size() == 1) {
-            ret.append("The last count only met the requirements for the ").append(eligibleVaults.get(0).getVaultName()).append(".");
+    public static void vaultInfo(Message message, Optional<CountingStreak> streak, Counter commandIssuer) {
+        StringBuilder s = new StringBuilder();
+        commandIssuer.getCollection().getEquippable(Equippables.VAULT_LOCATOR).ifPresentOrElse(
+                eq -> {
+                    s.append("Your ")
+                            .append(eq.getName())
+                            .append(" allows you to locate locked vaults");
+                    if (eq.getLevel() > 1) {
+                        s.append(" with ")
+                                .append(Util.bonusMultToAddPercString(((VaultLocator) eq).getVaultChanceBonusMultiplier()))
+                                .append(" bonus chance!\n");
+                    } else {
+                        s.append("!\n");
+                    }
+                },
+                () -> s.append("If you add a " + VaultLocator.NAME + " to your collection, you will be able to locate locked "
+                        + "vaults containing potentially enormous sums of money and rare items.\n")
+        );
+        CountingContext lastContext = streak.map(CountingStreak::getLastCountingContext).orElse(null);
+        int amountOfEligibleVaults = 0;
+        boolean lastCounterMissingVaultLocator = false;
+        if (lastContext == null) {
+            s.append("If you meet their requirements, you will spawn them at their respective spawn rate:\n");
         } else {
-            ret.append("The last count met the requirements of the following vaults: \n");
-            for (int i = 0; i < eligibleVaults.size(); i++) {
-                ret.append(eligibleVaults.get(i).getVaultName());
-                if (i == eligibleVaults.size() - 2) {
-                    ret.append(" & ");
-                } else if (i <= eligibleVaults.size() - 3) {
-                    ret.append(", ");
+            for (Vault vault : ALL_VAULTS) {
+                if (vault.canSpawn(lastContext)) {
+                    amountOfEligibleVaults++;
                 }
             }
+            lastCounterMissingVaultLocator = !lastContext.getCounter().getCollection().containsEquippable(Equippables.VAULT_LOCATOR);
+            if (lastCounterMissingVaultLocator) {
+                s.append("On the last count, no vault could have been located, as ")
+                        .append(lastContext.getCounter().getName())
+                        .append(" does not have a ")
+                        .append(VaultLocator.NAME)
+                        .append(" in their collection.\n");
+            } else if (amountOfEligibleVaults == 0) {
+                s.append("The last count did not meet the requirements of any vault!\n");
+            } else if (amountOfEligibleVaults == 1) {
+                s.append("On the last count, one vault could potentially be located with the following chance:\n");
+            } else {
+                s.append("On the last count, multiple vaults could potentially be located with the following chances:\n");
+            }
         }
-        ret.append((hasRunningVault()) ? "\n\nThere is currently a **" + activeVault.getVaultName() + "** active!" : "");
-        return ret.toString();
-
-    }
-
-    private static String getStaticVaultInfo(Counter counter, Optional<CountingStreak> streak) {
-        StringBuilder s = new StringBuilder("If you have equipped a " + VaultLocator.NAME + ", you are are capable of finding rare vaults! If you meet their requirements, they will spawn at their respective spawn rate:\n");
         for (Vault vault : ALL_VAULTS) {
-            int odds = (int) Math.round(1. / vault.getSpawnChance());
             double spawnChance = vault.getSpawnChance();
-            spawnChance = counter.getCountingBoosterManager().modifyVaultRate(spawnChance);
-            if (streak.isPresent()) {
-                CountingContext lastContext = streak.get().getLastCountingContext();
-                if (lastContext != null) {
-                    spawnChance = counter.getCollection().modifyVaultRateFromEquippables(spawnChance, lastContext);
+            spawnChance = commandIssuer.getCountingBoosterManager().modifyVaultRate(spawnChance);
+            if (lastContext != null) {
+                if (lastCounterMissingVaultLocator || !vault.canSpawn(lastContext)) {
+                    continue;
                 }
+                spawnChance = lastContext.getCounter().getCollection().modifyVaultRateFromEquippables(spawnChance, lastContext);
+            } else {
+                spawnChance = commandIssuer.getCollection().modifyVaultRateFromEquippables(spawnChance, null);
             }
-            int oddsWithBoni = (int) Math.round(1. / spawnChance);
-            s.append("- ").append(vault.getVaultName()).append(": ").append(vault.getSpawnConditionsDescription()).append(spawnChance <= 0 ? "" : " (1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni) + ")\n");
+            s.append("- ")
+                    .append(vault.getVaultName())
+                    .append(": ")
+                    .append(vault.getSpawnConditionsDescription())
+                    .append(spawnChance <= 0 ? "" : " (" + Util.oddsStringFromProbAndModifiedProb(vault.getSpawnChance(), spawnChance) + ")\n");
         }
-        return s.toString();
+        CountingBot.write(message, s.toString());
     }
 
     public void maybeSpawnVault(Message message, CountingContext context) {
