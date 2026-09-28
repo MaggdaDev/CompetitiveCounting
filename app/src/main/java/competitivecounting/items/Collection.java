@@ -172,10 +172,6 @@ public class Collection {
     }
 
     private boolean checkEquipability(Message message, Equippable equippable) {
-        if (isFull()) {
-            CountingBot.write(message, "Your collection is full!");
-            return false;
-        }
         if (owner.getInventory().getAmountOfItem(equippable) <= 0) {
             CountingBot.write(message, "You don't own a " + equippable.getName() + "!");
             return false;
