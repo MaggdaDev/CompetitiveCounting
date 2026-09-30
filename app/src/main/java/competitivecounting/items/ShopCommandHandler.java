@@ -125,7 +125,8 @@ public class ShopCommandHandler {
         }
         counter.subtractScore(toBuy.getPrice());
         if (toBuy instanceof SponsoredMonocle) {
-            bank.addMoney(toBuy.getPrice().getPrice());
+            String transactionReason = "Purchase of an exquisite handcrafted " + toBuy.getName() + ".";
+            bank.addProfit(toBuy.getPrice().getPrice(), counter, transactionReason, message);// TODO test
         }
         if (toBuy == Consumables.HAND_BAG) {
             CountingBot.getInstance().handBagBought(message);

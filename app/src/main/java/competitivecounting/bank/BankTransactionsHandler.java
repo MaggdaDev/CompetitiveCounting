@@ -31,10 +31,10 @@ public class BankTransactionsHandler {
             throw new NotEnoughMoneyException(amount, counter.getScore(), NotEnoughMoneyException.MoneyOwner.COUNTER);
         }
         counter.subtractScore(amount);
-        bank.addMoney(amount);
+        bank.addMoney(amount);  // Excluded from crocstocks
     }
 
-    public void deposit(String guildId, String authorId, int depositAmount) throws BankTransactionException, NotEnoughMoneyException {
+    public void deposit(String guildId, String authorId, int depositAmount, Message message) throws BankTransactionException, NotEnoughMoneyException {
         Counter counter = guilds.get(guildId).getCounter(authorId);
         Bank bank = guilds.get(guildId).getBank();
         if (counter == null || bank == null) {
@@ -43,7 +43,7 @@ public class BankTransactionsHandler {
         if (!counter.canAfford(depositAmount)) {
             throw new NotEnoughMoneyException(depositAmount, counter.getScore(), NotEnoughMoneyException.MoneyOwner.COUNTER);
         }
-        if (depositAmount < 1000) {
+        if (depositAmount < Bank.DEPOSIT_COST) {
             return; // Feedback is given by CommandHandler
         }
         DepositLimitUpgrade depositLimitUpgrade = bank.getAccount(authorId).getUpgrades().getDepositLimitUpgrade();
@@ -52,7 +52,7 @@ public class BankTransactionsHandler {
         if (currentlyDepositedAmount > depositLimit) {
             int tooMuch = currentlyDepositedAmount - depositLimit;
             bank.withdraw(authorId, tooMuch);
-            bank.addMoney(tooMuch);
+            bank.addProfit(tooMuch, counter, "Illegal deposit of money exceeding the deposit limit.", message); // TODO test
             throw new BankDepositException("Woah! That's my fault. You seem to have more money in your account than is allowed.\n" +
                     "But don't worry, I have rounded that down for you. Your balance is now " + depositLimit + " money.");
         }
@@ -63,7 +63,7 @@ public class BankTransactionsHandler {
             throw new BankDepositException(startOfSentence);
         }
         counter.subtractScore(depositAmount);
-        bank.deposit(authorId, depositAmount);
+        bank.deposit(authorId, depositAmount, message);
     }
 
     public void withdraw(String guildId, String counterId, int withdrawAmount, Message message) throws BankTransactionException, NotEnoughMoneyException {

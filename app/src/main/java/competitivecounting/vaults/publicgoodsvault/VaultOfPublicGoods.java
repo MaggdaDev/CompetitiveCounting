@@ -11,7 +11,6 @@ import competitivecounting.dialogue.Dialogue;
 import competitivecounting.dialogue.ParallelDialogElementsBuilder;
 import competitivecounting.interactionhandlers.SlashCommandHandler;
 import competitivecounting.items.CrocStonk;
-import competitivecounting.items.equippables.GoodBadUgly;
 import competitivecounting.vaults.CommunityVault;
 import competitivecounting.vaults.RiddleDialogue;
 import competitivecounting.vaults.Vault;
@@ -40,8 +39,8 @@ public class VaultOfPublicGoods extends Vault {
             EXPLANATION_FEE = 999;
 
     private int currentStage = -1;
-    private HashMap<String, Integer> crocCoinsPerPerson = new HashMap<>(),
-            currentStageContributions = new HashMap<>();
+    private final HashMap<String, Integer> crocCoinsPerPerson = new HashMap<>();
+    private final HashMap<String, Integer> currentStageContributions = new HashMap<>();
     private final HashMap<String, PublicGoodsDocumentation> documentations = new HashMap<>();
     private int currentPot = 0;
     private final static double PUBLIC_GOODS_MULTIPLIER = 2. + 1e-9;
@@ -49,7 +48,7 @@ public class VaultOfPublicGoods extends Vault {
             TOTAL_STAGES = 4,
             MONEY_PER_CROC_COIN = 400;
     private final static int MIN_CROC_FEE = 0, MAX_CROC_FEE = 3;
-    private double THRESHOLD_PER_MAX_POT = 2. / 3.;
+    private final static double THRESHOLD_PER_MAX_POT = 2. / 3.;
     private CountDownLatch latch = null;
     private int currentCrocFee = -1;
     private int threshold;
@@ -58,6 +57,7 @@ public class VaultOfPublicGoods extends Vault {
     private String stageStr;
     private Counter winner;
     private Bank bank;
+    private int bankStashForThisGame;
 
     public VaultOfPublicGoods() {
         super(0, context -> {
@@ -72,7 +72,7 @@ public class VaultOfPublicGoods extends Vault {
             }
             return true;
         });
-        addLootToLootPool(new BigMoneyDrop(95));
+        addLootToLootPool(new BigMoneyDrop(95, this));
         addLootToLootPool(new ItemDrop(5, CrocStonk.instance));
 
         addOnDropReceivedListener((counter, drop) -> {
@@ -305,7 +305,6 @@ public class VaultOfPublicGoods extends Vault {
                     }
                     d.addNpcLine("Your final Croc Coin scores are now being converted to money at a fair rate of " + MONEY_PER_CROC_COIN + " money per CC - ", 2500)
                             .addRunnable(this::cashout)
-                            .addNpcLine(" - and have been discreetly transferred to your bank accounts.", 3500)
                             .addNpcLine("Now, let's see who wins the key for this " + getVaultName() + "...\n" + SPONSOR_TAG, 2500)
                             .setNpcLineConverter(BankCommandHandler::toCrocText)
                             .playBlocking(m);
@@ -374,15 +373,37 @@ public class VaultOfPublicGoods extends Vault {
     }
 
     private void cashout(Message message) {
+        int totalPayout = 0;
+        for (var entry : crocCoinsPerPerson.entrySet()) {
+            int crocCoins = entry.getValue();
+            totalPayout += crocCoins * MONEY_PER_CROC_COIN;
+        }
+        if (totalPayout > bank.getTotalScore() + bankStashForThisGame) {
+            new Dialogue()
+                    .addNpcLine(" - or not, as the CrocBank Inc. does currently not have sufficient funds.", 4500)
+                    .addNpcLine("May I recommend using `~bank donate 1000000`? ", 4500);    // TODO test
+            return;
+        }
         for (var entry : crocCoinsPerPerson.entrySet()) {
             String userId = entry.getKey();
             int crocCoins = entry.getValue();
-            int moneyToAdd = crocCoins * MONEY_PER_CROC_COIN;
+            int moneyPayout = crocCoins * MONEY_PER_CROC_COIN;
+            bankStashForThisGame -= moneyPayout;
             Counter counter = CountingBot.getCounter(bank.getGuildId(), userId);
-            counter.addToBankOrToScoreIfFull(moneyToAdd, bank, message);
-            documentations.get(userId).setCashout(moneyToAdd);
-            System.out.println("Counter " + counter.getName() + " cashed out " + crocCoins + " CC for " + moneyToAdd + " money.");
+            counter.addToBankOrToScoreIfFull(moneyPayout, bank, message);
+            documentations.get(userId).setCashout(moneyPayout);
+            System.out.println("Counter " + counter.getName() + " cashed out " + crocCoins + " CC for " + moneyPayout + " money.");
         }
+        if (bankStashForThisGame > 0) {
+            bank.addProfit(bankStashForThisGame, null, "Profit from a " + getVaultName() + ".", message); // TODO test
+            System.out.println("CrocBank Inc. collected " + bankStashForThisGame + " money from the game.");
+        } else {
+            System.out.println("CrocBank loss of " + (-bankStashForThisGame) + " money from the game.");
+            bank.removeMoney(-bankStashForThisGame);
+        }
+        new Dialogue()
+                .addNpcLine(" - and have been discreetly transferred to your bank accounts.", 3500)
+                .playBlocking(message);
     }
 
     private String getYouAreRegisteredText(List<Counter> contributingCounters) {
@@ -449,7 +470,7 @@ public class VaultOfPublicGoods extends Vault {
     }
 
     private boolean collectMoneyFromAllCounters(List<Counter> contributingCounters, Bank bank, Message message) {
-        int totalBankPlus = 0;
+        bankStashForThisGame = 0;
         for (Counter counter : contributingCounters) {
             int totalMoney = counter.getScore() + counter.getScoreInBankAccount();
             if (totalMoney < BUY_IN) {
@@ -459,15 +480,14 @@ public class VaultOfPublicGoods extends Vault {
         for (Counter counter : contributingCounters) {
             int moneyToTakeFromCounter = Math.min(BUY_IN, counter.getScore());
             counter.subtractScore(moneyToTakeFromCounter);
-            totalBankPlus += moneyToTakeFromCounter;
+            bankStashForThisGame += moneyToTakeFromCounter;
             int moneyToTakeFromBank = BUY_IN - moneyToTakeFromCounter;
             if (moneyToTakeFromBank > 0) {
                 bank.getAccount(counter.getId()).withdraw(moneyToTakeFromBank);
-                totalBankPlus += moneyToTakeFromBank;
+                bankStashForThisGame += moneyToTakeFromBank;
             }
             documentations.get(counter.getId()).setBuyIn(BUY_IN);
         }
-        bank.addMoney(totalBankPlus);
         return true;
     }
 

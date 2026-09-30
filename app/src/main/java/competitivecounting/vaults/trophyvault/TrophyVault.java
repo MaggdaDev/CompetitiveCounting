@@ -29,7 +29,7 @@ public class TrophyVault extends Vault {
         });
         wiki = new TrophyVaultWikipedia();
 
-        addLootToLootPool(new MoneyDrop(95));
+        addLootToLootPool(new MoneyDrop(95, this));
         addLootToLootPool(new ItemDrop(5, Equippables.DOWSING_ROD));
     }
 

@@ -16,6 +16,7 @@ import competitivecounting.items.equippables.Equippable;
 import competitivecounting.items.equippables.Equippables;
 import competitivecounting.items.equippables.SponsoredMonocle;
 import competitivecounting.tradeoffer.TradeOffer;
+import competitivecounting.vaults.Vault;
 import discord4j.core.object.entity.Message;
 
 import java.util.*;
@@ -574,12 +575,13 @@ public class Counter implements ContractOwner {
 
     }
 
-    public void addBonusScoreFromVault(int money, Message message, CountingContext context) {
+    public void addBonusScoreFromVault(int money, Message message, CountingContext context, Vault vault) {
         if (context.getStreak().getCounterIdsOfActiveSponsoredMonocles().contains(getId())) {
             collection.getEquippable(Equippables.SPONSORED_MONOCLE)
                     .ifPresent(e -> {
                         ((SponsoredMonocle) e).notifyMoneyTransfer(money);
-                        context.getGuild().getBank().addMoney(money);
+                        String transactionReason = "Payout from a " + vault.getVaultName() + " with an active CrocBank Inc. sponsorship.";
+                        context.getGuild().getBank().addProfit(money, this, transactionReason,message); // TODO test
                     });
         } else {
             addBonusScore(money, message);
@@ -781,5 +783,7 @@ public class Counter implements ContractOwner {
         }
     }
 
-
+    public int getCrocStocks() {
+        return inventory.getAmountOfItem(CrocStonk.instance);
+    }
 }

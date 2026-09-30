@@ -15,7 +15,7 @@ public class VaultOfLongStrides extends Vault {
 
     public VaultOfLongStrides() {
         super(SPAWN_CHANCE, (context) -> context.getCurrentNumber() - context.getLastNumber() >= MIN_STRIDE_LENGTH);
-        addLootToLootPool(new MoneyDrop(95));
+        addLootToLootPool(new MoneyDrop(95, this));
         addLootToLootPool(new ItemDrop(5, Equippables.POCKET_ABACUS));
     }
 

@@ -5,6 +5,7 @@ import competitivecounting.bank.bankupgrades.BankUpgrade;
 import competitivecounting.bank.exceptions.*;
 import competitivecounting.dialogue.Dialogue;
 import competitivecounting.interactionhandlers.TrophyHandler;
+import competitivecounting.items.CrocStonk;
 import competitivecounting.items.equippables.Equippables;
 import competitivecounting.items.equippables.SponsoredMonocle;
 import discord4j.core.object.entity.Message;
@@ -111,7 +112,7 @@ public class BankCommandHandler {
                         depositAmount = parseStringToNaturalNumberAtIndex(splitMessage, 2, message);
                     }
                     int newBalance2 = bank.getBalance(authorId) + depositAmount - Bank.DEPOSIT_COST;
-                    transactionsHandler.deposit(guildId, authorId, depositAmount);
+                    transactionsHandler.deposit(guildId, authorId, depositAmount, message);
                     shouldSaveJson = true;
                     sendDepositMessage(message, depositAmount, newBalance2);
                     break;
@@ -139,6 +140,16 @@ public class BankCommandHandler {
                     upgrade(message, splitMessage, bank, authorId);
                     shouldSaveJson = true;
                     break;
+                case "stock":
+                case "stocks":
+                case "crocstocks":
+                case "crockstock":
+                case "stonk":
+                case "stonks":
+                case "crocstonk":
+                case "crocstonks":
+                    stonkInfo(message, bank, authorId);
+                    break;
                 default:
                     sendCommandNotUnderstoodMessage(message);
                     break;
@@ -163,6 +174,44 @@ public class BankCommandHandler {
             bankWrite(message, e.getMessage());
         }
         return shouldSaveJson;
+    }
+
+    private void stonkInfo(Message message, Bank bank, String authorId) {
+        BankAccount account = bank.getAccount(authorId);
+        Counter counter = CountingBot.getCounter(bank.getGuildId(), authorId);
+        int crocStocks = counter.getCrocStocks();
+        int totalCrocStocks = bank.getTotalCrocStocksEmitted();
+        double ownershipPerCrocStock = CrocStonk.getBankOwnershipPerCrocStock(totalCrocStocks);
+        StringBuilder s = new StringBuilder("\n# ").append(CrocStonk.NAME).append("s\n");
+        if (crocStocks == 0) {
+            s.append("You don't own any ").append(CrocStonk.NAME).append("s.");
+            if (counter.getCollection().getEquippable(Equippables.SPONSORED_MONOCLE).isPresent()    // TODO test
+                    || counter.getInventory().getAmountOfItem(Equippables.SPONSORED_MONOCLE) > 0) {
+                s.append(" Maybe your ")
+                        .append(Equippables.SPONSORED_MONOCLE.getName())
+                        .append(" could help?\n");
+            } else if (account.isMonocleUnlocked()) {
+                s.append(" Maybe a ")
+                        .append(Equippables.SPONSORED_MONOCLE.getName())
+                        .append(" could help?\n");
+            } else {
+                s.append(" Maybe winning a large amount of money in a vault could help?\n");
+            }
+        } else {
+            s.append("You own ").append(crocStocks).append(" ").append(CrocStonk.NAME)
+                    .append(crocStocks > 1 ? "s" : "")
+                    .append(" (=")
+                    .append(Util.ratioToPercentageString(ownershipPerCrocStock * crocStocks)).append(" of the CrocBank Inc.)\n");
+        }
+        s.append("Total number of ").append(CrocStonk.NAME).append("s emitted: ").append(totalCrocStocks).append(" (=")
+                .append(Util.ratioToPercentageString(ownershipPerCrocStock * totalCrocStocks)).append(" of the CrocBank Inc.)\n");
+        if (crocStocks > 0) {
+            s.append("\n## Total profit: ")
+                    .append(account.getTotalCrocStockProfit())
+                    .append("\nRecent profit:\n")
+                    .append(account.getRecentStockProfitsString());
+        }
+        bankWrite(message, s.toString());
     }
 
 
@@ -227,11 +276,13 @@ public class BankCommandHandler {
             throw new BankUpgradeException("It clearly said you needed " + upgradeCost + " money for this upgrade, and you only came here with " + counter.getScore() + " money in your purse. Go count some more or something.");
         }
         counter.subtractScore(upgradeCost);
-        bank.addMoney(upgradeCost);
         String oldLevel = upgrade.getCurrentName();
         String newLevel = upgrade.getNextName();
         upgrade.incrementLvl();
         bankWrite(message, "Congratulations! You have given " + upgradeCost + " money to the CrocBank Inc. to upgrade your deplorable '" + oldLevel + "' to a superior '" + newLevel + "'. " + upgrade.getBoughtFeedback());
+
+        String transactionReason = "Acquisition of the " + upgrade.getNextName() + "."; // TODO test
+        bank.addProfit(upgradeCost, counter, transactionReason, message);
     }
 
     public void handBagBought(Message message) {
@@ -448,7 +499,7 @@ public class BankCommandHandler {
         int fromBank = reducedFee - fromScore;
         user.subtractScore(fromScore);
         bank.withdraw(user.getId(), fromBank);
-        bank.addMoney(reducedFee);
+        bank.addProfit(reducedFee, user, reason, m);    // TODO test
         CountingBot.write(m, "-# " + user.getName() + ", you have been charged " + reducedFee + " money by the CrocBank Inc. "
                 + " for the following service: " + reason + ".");
         System.out.println("Charged " + reducedFee + " money from user " + user.getName() + " as fee. (" + fromScore + " from score, " + fromBank + " from bank account)");

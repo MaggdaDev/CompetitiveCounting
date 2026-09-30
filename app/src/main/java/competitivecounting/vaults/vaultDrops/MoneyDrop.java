@@ -6,14 +6,17 @@ import competitivecounting.Price;
 import competitivecounting.bank.BankCommandHandler;
 import competitivecounting.dialogue.Dialogue;
 import competitivecounting.items.equippables.SponsoredMonocle;
+import competitivecounting.vaults.Vault;
 import discord4j.core.object.entity.Message;
 
 public class MoneyDrop extends VaultDrop {
 
     private int lastDropAmount = 0;
     private boolean wasMonocleActiveAtLastDrop = false;
-    public MoneyDrop(double weight) {
+    private final Vault vault;
+    public MoneyDrop(double weight, Vault vault) {
         super(weight);
+        this.vault = vault;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class MoneyDrop extends VaultDrop {
         }
         Price price = new Price(money, Price.Unit.MONEY);
         dialogue.addNpcLine("You found " + price + "!",0);
-        dialogue.addRunnable(m -> payoutReceiver.addBonusScoreFromVault(money, message, contextAtVaultSpawn));
+        dialogue.addRunnable(m -> payoutReceiver.addBonusScoreFromVault(money, message, contextAtVaultSpawn, vault));
 
         if (sleepAfterLoot > 0) {
             dialogue.addSleep(sleepAfterLoot);  // Sleep before continue to give counters the chance to realize their pluck

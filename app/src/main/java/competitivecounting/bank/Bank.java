@@ -1,10 +1,12 @@
 package competitivecounting.bank;
 
+import competitivecounting.Counter;
 import competitivecounting.CountingBot;
 import competitivecounting.bank.exceptions.BankTransactionException;
 import competitivecounting.contracts.Contract;
 import competitivecounting.contracts.ContractHandler;
 import competitivecounting.contracts.ContractOwner;
+import competitivecounting.items.CrocStonk;
 import discord4j.core.object.entity.Message;
 
 import java.util.ArrayList;
@@ -48,13 +50,44 @@ public class Bank implements ContractOwner {
         }
     }
 
+    public void addProfit(int forBank, Counter source, String reason, Message message) {
+        int totalProfit = forBank;
+        double percentPerCrocStock = CrocStonk.getBankOwnershipPerCrocStock(getTotalCrocStocksEmitted());
+        for (Counter counter: CountingBot.getInstance().getGuilds().get(guildId).getCounters().values()) {
+            BankAccount account = getAccount(counter.getId());
+            double crocStocks = counter.getCrocStocks();
+            int forUser = (int) (crocStocks * percentPerCrocStock * totalProfit);
+            counter.addBonusScore(forUser, message);
+            account.documentProfit(forUser, totalProfit, source, reason);
+            forBank -= forUser;
+        }
+        System.out.println("After distributing profits to croc stock owners, " + forBank +
+                " is left for the bank (initially " + totalProfit + ") for reason: " + reason +
+                " from source: " + source.getName());
+        addMoney(forBank);
+    }
+
+    public int getTotalCrocStocksEmitted() {
+        int total = 0;
+        for (Counter counter: CountingBot.getInstance().getGuilds().get(guildId).getCounters().values()) {
+            total += counter.getCrocStocks();
+        }
+        return total;
+    }
+
     public void addMoney(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Bank tries to add negative money: " + amount);
+        }
         totalScore += amount;
     }
 
     public void removeMoney(int amount) {
         // should ideally only be used from within the loan function. removes money because it gives it to the user.
         // i'm not using withdraw since that would subtract from the user's BankAccount
+        if (amount > totalScore) {
+            throw new IllegalStateException("Bank tries to remove more money than it has: " + amount + " > " + totalScore);
+        }
         totalScore -= amount;
     }
 
@@ -104,9 +137,11 @@ public class Bank implements ContractOwner {
         return accounts.containsKey(counterId);
     }
 
-    public void deposit(String counterId, int amount) {
+    public void deposit(String counterId, int amount, Message message) {
         totalScore += amount;
-        accounts.get(counterId).depositWithoutFeeOrAffectingTotalBankScore(amount - DEPOSIT_COST);
+        accounts.get(counterId).depositWithoutFeeOrAffectingTotalBankScore(amount);
+        Counter user = CountingBot.getCounter(guildId, counterId);
+        BankCommandHandler.chargeFee(user, DEPOSIT_COST, "Deposit fee for a deposit of " + amount + " money.", message);
     }
 
     public int getTotalScore() { return this.totalScore; }

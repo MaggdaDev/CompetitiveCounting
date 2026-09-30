@@ -33,7 +33,7 @@ public class PrimeVault extends Vault {
 
     public PrimeVault() {
         super(SPAWN_CHANCE, context -> isPrime(context.getCurrentNumber()));
-        addLootToLootPool(new MoneyDrop(95));
+        addLootToLootPool(new MoneyDrop(95, this));
         addLootToLootPool(new ItemDrop(5, new CoinMiner(null)));
     }
 

@@ -1,8 +1,10 @@
 package competitivecounting.vaults.vaultDrops;
 
+import competitivecounting.vaults.Vault;
+
 public class BigMoneyDrop extends MoneyDrop {
-    public BigMoneyDrop(double weight) {
-        super(weight);
+    public BigMoneyDrop(double weight, Vault vault) {
+        super(weight, vault);
     }
 
     @Override

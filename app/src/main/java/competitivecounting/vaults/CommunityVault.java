@@ -50,7 +50,7 @@ public class CommunityVault extends Vault {
             }
             return false;
         });
-        super.addLootToLootPool(new MoneyDrop(95));
+        super.addLootToLootPool(new MoneyDrop(95, this));
         super.addLootToLootPool(new ItemDrop(5, new GoodBadUgly(null)));
     }
 

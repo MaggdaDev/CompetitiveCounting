@@ -74,4 +74,8 @@ public class Util {
         int oddsWithBoni = (int) Math.round(1. / modifiedProbability);
         return "1 in " + Util.valueAndValueWithBoniToString(odds, oddsWithBoni);
     }
+
+    public static String ratioToPercentageString(double ratio) {
+        return Math.round(ratio * 100.0d) + "%";
+    }
 }
